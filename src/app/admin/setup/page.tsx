@@ -48,13 +48,16 @@ export default function AdminSetupPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('password_label')}</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {t('password_label')} <span className="text-xs text-gray-500 font-normal">(mind. 8 Zeichen)</span>
+              </label>
               <input
                 name="password"
                 type="password"
                 required
+                minLength={8}
                 className="appearance-none rounded-lg relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm"
-                placeholder={t('password_placeholder')}
+                placeholder="Mindestens 8 Zeichen"
               />
             </div>
           </div>

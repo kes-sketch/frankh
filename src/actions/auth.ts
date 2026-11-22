@@ -160,78 +160,146 @@ export async function logoutUser() {
   return { success: true };
 }
 
+export async function checkHasAdmin(): Promise<boolean> {
+  try {
+    const adminCount = await prisma.user.count({ where: { role: 'ADMIN' } });
+    return adminCount > 0;
+  } catch (e) {
+    console.error('Error checking admin count:', e);
+    return true;
+  }
+}
+
 export async function setupAdmin(formData: FormData) {
   const ip = await getClientIp();
-  const rl = await checkRateLimit(`setup_admin_${ip}`, 3, 3600); // 3 attempts per hour
+  const rl = await checkRateLimit(`setup_admin_${ip}`, 10, 3600); // 10 attempts per hour
   if (!rl.success) {
-    return { error: 'Demasiadas tentativas de configuração. Acesso restrito.' };
+    return { error: 'Zu viele Versuche. Bitte warten Sie eine Weile.' };
   }
 
   const email = String(formData.get('email') || '').trim().toLowerCase();
   const password = String(formData.get('password') || '');
 
   if (!email || !password) {
-    return { error: 'Todos os campos são obrigatórios.' };
+    return { error: 'E-Mail und Passwort sind erforderlich.' };
   }
 
-  if (password.length < 12) {
-    return { error: 'A palavra-passe de administrador deve conter pelo menos 12 carateres.' };
+  if (password.length < 8) {
+    return { error: 'Das Passwort muss mindestens 8 Zeichen lang sein.' };
   }
 
   // Atomically check that there is no existing admin
   const adminCount = await prisma.user.count({ where: { role: 'ADMIN' } });
   if (adminCount > 0) {
-    return { error: 'Já existe um administrador configurado. A inicialização está bloqueada.' };
+    return { error: 'Ein Administrator wurde bereits eingerichtet.' };
   }
 
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: { username: 'Admin' }
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+  let userId: string | null = null;
+
+  if (serviceRoleKey && supabaseUrl) {
+    try {
+      const { createClient: createServiceClient } = await import('@supabase/supabase-js');
+      const supabaseAdmin = createServiceClient(supabaseUrl, serviceRoleKey, {
+        auth: { autoRefreshToken: false, persistSession: false }
+      });
+
+      const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+      if (!listError && users) {
+        const existing = users.find(u => u.email?.toLowerCase() === email);
+        if (existing) {
+          userId = existing.id;
+          await supabaseAdmin.auth.admin.updateUserById(userId, {
+            password,
+            email_confirm: true,
+            user_metadata: { username: 'Admin' }
+          });
+        }
+      }
+
+      if (!userId) {
+        const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true,
+          user_metadata: { username: 'Admin' }
+        });
+        if (createError) {
+          console.error('[setupAdmin] Supabase admin error:', createError);
+          return { error: createError.message || 'Fehler beim Erstellen des Administrationskontos.' };
+        }
+        userId = newUser.user.id;
+      }
+    } catch (e: any) {
+      console.error('[setupAdmin] Error with service role client:', e);
+    }
+  }
+
+  if (!userId) {
+    const supabase = await createClient();
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { username: 'Admin' } }
+    });
+    if (error) {
+      console.error('[setupAdmin] Supabase error:', error.message);
+      return { error: error.message || 'Fehler beim Erstellen des Administrationskontos.' };
+    }
+    userId = data.user?.id || null;
+  }
+
+  if (!userId) {
+    return { error: 'Benutzer-ID konnte nicht ermittelt werden.' };
+  }
+
+  // Register in Prisma DB
+  await prisma.user.upsert({
+    where: { email },
+    update: { role: 'ADMIN', id: userId },
+    create: {
+      id: userId,
+      email,
+      role: 'ADMIN',
     }
   });
 
-  if (error) {
-    console.error('[setupAdmin] Supabase error:', error.message);
-    return { error: 'Erro ao criar a conta de administrador.' };
-  }
-
-  if (data.user) {
-    // Re-verify no other admin was created concurrently
-    const recheckCount = await prisma.user.count({ where: { role: 'ADMIN' } });
-    if (recheckCount > 0) {
-      return { error: 'Já foi configurado um administrador.' };
-    }
-
-    await prisma.user.upsert({
-      where: { email: data.user.email || email },
-      update: { role: 'ADMIN', id: data.user.id },
-      create: {
-        id: data.user.id,
-        email: data.user.email || email,
-        role: 'ADMIN',
-      }
+  // Log in immediately so session cookies are stored
+  try {
+    const supabase = await createClient();
+    await supabase.auth.signInWithPassword({
+      email,
+      password,
     });
+  } catch (signInErr: any) {
+    console.warn('[setupAdmin] Auto sign-in error:', signInErr?.message);
   }
 
+  revalidatePath('/admin', 'layout');
   revalidatePath('/', 'layout');
   return { success: true };
 }
 
 export async function loginAdmin(formData: FormData) {
   const ip = await getClientIp();
-  const rl = await checkRateLimit(`login_admin_${ip}`, 5, 900); // 5 attempts per 15 mins
+  const rl = await checkRateLimit(`login_admin_${ip}`, 15, 900); // 15 attempts per 15 mins
   if (!rl.success) {
-    return { error: 'Demasiadas tentativas de início de sessão. Acesso temporariamente suspenso.' };
+    return { error: 'Zu viele Anmeldeversuche. Bitte warten Sie 15 Minuten.' };
   }
 
   const email = String(formData.get('email') || '').trim().toLowerCase();
   const password = String(formData.get('password') || '');
 
   if (!email || !password) {
-    return { error: 'O e-mail e a palavra-passe são obrigatórios.' };
+    return { error: 'E-Mail und Passwort sind erforderlich.' };
+  }
+
+  // If no admin exists in the system yet, automatically setup the first admin!
+  const adminCount = await prisma.user.count({ where: { role: 'ADMIN' } });
+  if (adminCount === 0) {
+    return await setupAdmin(formData);
   }
 
   const supabase = await createClient();
@@ -241,14 +309,14 @@ export async function loginAdmin(formData: FormData) {
   });
 
   if (error) {
-    return { error: 'Credenciais incorretas.' };
+    return { error: 'Ungültige Anmeldedaten. Bitte überprüfen Sie Ihre E-Mail und Ihr Passwort.' };
   }
 
   if (data.user) {
     const user = await prisma.user.findUnique({ where: { id: data.user.id } });
     if (!user || user.role !== 'ADMIN') {
       await supabase.auth.signOut({ scope: 'global' });
-      return { error: 'Acesso negado. Não tem privilégios de administrador.' };
+      return { error: 'Zugriff verweigert. Sie besitzen keine Administratorrechte.' };
     }
   }
 
