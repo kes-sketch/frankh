@@ -16,6 +16,7 @@ import {
   importWordPressPages,
   importWordPressArticles,
   importWooCommerceShipping,
+  importWooCommerceReviews,
   syncWooCommerceRankMathSEO,
   type WcProductImportItemResult
 } from '@/actions/woocommerce';
@@ -45,12 +46,18 @@ export default function WooCommerceImportModal() {
   const [includeOrders, setIncludeOrders] = useState(true);
   const [includePages, setIncludePages] = useState(true);
   const [includeArticles, setIncludeArticles] = useState(true);
+  const [includeReviews, setIncludeReviews] = useState(true);
 
   // Additional Imported Stats for Summary
   const [shippingSummary, setShippingSummary] = useState<{ zones: number; methods: number } | null>(null);
   const [ordersImportedCount, setOrdersImportedCount] = useState<number | null>(null);
   const [pagesImportedCount, setPagesImportedCount] = useState<number | null>(null);
   const [articlesImportedCount, setArticlesImportedCount] = useState<number | null>(null);
+  const [reviewsImportedCount, setReviewsImportedCount] = useState<number | null>(null);
+
+  // Step Tracker
+  const [currentStep, setCurrentStep] = useState<string>('IDLE');
+  const [currentStepText, setCurrentStepText] = useState<string>('');
 
   // Categories Selection State
   const [availableCategories, setAvailableCategories] = useState<Array<{ id: number; name: string; count: number; slug: string }>>([]);
@@ -114,6 +121,9 @@ export default function WooCommerceImportModal() {
     setOrdersImportedCount(null);
     setPagesImportedCount(null);
     setArticlesImportedCount(null);
+    setReviewsImportedCount(null);
+    setCurrentStep('IDLE');
+    setCurrentStepText('');
   };
 
   // Step 1: Connect and load categories / products metadata
@@ -233,7 +243,9 @@ export default function WooCommerceImportModal() {
     }
 
     try {
-      // 0. Synchroniser les catégories : si mode 'CATEGORIES', synchroniser uniquement les catégories sélectionnées
+      // Étape 1 : Catégories
+      setCurrentStep('CATEGORIES');
+      setCurrentStepText('Étape 1/7 : Synchronisation des catégories et de leur hiérarchie...');
       setImportingCategories(true);
       const catIdsToSync = importMode === 'CATEGORIES' ? selectedCategoryIds : undefined;
       const catRes = await importWooCommerceCategories(url, consumerKey, consumerSecret, catIdsToSync);
@@ -245,8 +257,10 @@ export default function WooCommerceImportModal() {
         return;
       }
 
-      // 0.1 Importer les zones et options de livraison
+      // Étape 2 : Livraison
       if (includeShipping) {
+        setCurrentStep('SHIPPING');
+        setCurrentStepText('Étape 2/7 : Importation des zones & modes de livraison...');
         try {
           const shipRes = await importWooCommerceShipping(url, consumerKey, consumerSecret);
           if (shipRes.success) {
@@ -257,8 +271,10 @@ export default function WooCommerceImportModal() {
         }
       }
 
-      // 0.2 Importer les commandes
+      // Étape 3 : Commandes
       if (includeOrders) {
+        setCurrentStep('ORDERS');
+        setCurrentStepText('Étape 3/7 : Importation des commandes historiques & comptes clients...');
         try {
           const ordRes = await importWooCommerceOrders(url, consumerKey, consumerSecret);
           if (ordRes.success) {
@@ -269,8 +285,10 @@ export default function WooCommerceImportModal() {
         }
       }
 
-      // 0.3 Importer les pages institutionnelles
+      // Étape 4 : Pages
       if (includePages) {
+        setCurrentStep('PAGES');
+        setCurrentStepText('Étape 4/7 : Importation des pages institutionnelles & mentions légales...');
         try {
           const pgsRes = await importWordPressPages(url, consumerKey, consumerSecret);
           if (pgsRes.success) {
@@ -281,8 +299,10 @@ export default function WooCommerceImportModal() {
         }
       }
 
-      // 0.4 Importer les articles de blog
+      // Étape 5 : Articles de blog
       if (includeArticles) {
+        setCurrentStep('ARTICLES');
+        setCurrentStepText('Étape 5/7 : Importation des articles de blog & médias...');
         try {
           const artRes = await importWordPressArticles(url, consumerKey, consumerSecret);
           if (artRes.success) {
@@ -292,6 +312,10 @@ export default function WooCommerceImportModal() {
           console.error('Erreur import articles:', artErr);
         }
       }
+
+      // Étape 6 : Produits, Variantes, Médias Cloudinary & SEO
+      setCurrentStep('PRODUCTS');
+      setCurrentStepText('Étape 6/7 : Importation des produits, médias Cloudinary & SEO...');
 
       // Case A: Import Individual Products
       if (importMode === 'INDIVIDUAL') {
@@ -321,6 +345,23 @@ export default function WooCommerceImportModal() {
         setLiveAlreadyExistsCount(currentAlreadyExists);
         setLiveFailedCount(currentFailed);
         setImportedProducts(newItems.length);
+
+        // Étape 7 : Avis clients & Évaluations
+        if (includeReviews) {
+          setCurrentStep('REVIEWS');
+          setCurrentStepText('Étape 7/7 : Importation des avis clients & notes d\'évaluation...');
+          try {
+            const revRes = await importWooCommerceReviews(url, consumerKey, consumerSecret);
+            if (revRes.success) {
+              setReviewsImportedCount(revRes.count || 0);
+            }
+          } catch (revErr) {
+            console.error('Erreur import avis:', revErr);
+          }
+        }
+
+        setCurrentStep('DONE');
+        setCurrentStepText('Importation terminée avec succès !');
 
         // Open summary completion modal
         setSummaryStats({
@@ -411,6 +452,23 @@ export default function WooCommerceImportModal() {
           setImportedProducts(accumulatedLogs.length);
         }
       }
+
+      // Étape 7 : Avis clients & Évaluations
+      if (includeReviews) {
+        setCurrentStep('REVIEWS');
+        setCurrentStepText('Étape 7/7 : Importation des avis clients & notes d\'évaluation...');
+        try {
+          const revRes = await importWooCommerceReviews(url, consumerKey, consumerSecret);
+          if (revRes.success) {
+            setReviewsImportedCount(revRes.count || 0);
+          }
+        } catch (revErr) {
+          console.error('Erreur import avis:', revErr);
+        }
+      }
+
+      setCurrentStep('DONE');
+      setCurrentStepText('Importation terminée avec succès !');
 
       // Import loop complete! Open summary notification modal
       setSummaryStats({
@@ -587,96 +645,122 @@ export default function WooCommerceImportModal() {
                       className={`p-3 rounded-xl border text-left transition flex flex-col ${importMode === 'SEO_SYNC' ? 'border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20' : 'border-gray-200 hover:bg-gray-50'}`}
                     >
                       <span className="font-bold text-xs text-emerald-900 flex items-center gap-1">
-                        <span>🎯</span> Sincronizar SEO
+                        <span>🎯</span> Synchroniser SEO
                       </span>
-                      <span className="text-[10px] text-emerald-700 mt-0.5 font-medium">RankMath / Yoast (Rápido)</span>
+                      <span className="text-[10px] text-emerald-700 mt-0.5 font-medium">RankMath & Yoast (Rapide)</span>
                     </button>
                   </div>
                 </div>
               )}
 
-              {/* Additional Data Options (Shipping, Orders, Pages, Articles) */}
+              {/* Additional Data Options (Shipping, Orders, Pages, Articles, Reviews) */}
               {credentialsVerified && !loading && importMode !== 'SEO_SYNC' && (
                 <div className="bg-stone-50 border border-stone-200 rounded-xl p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold uppercase tracking-wider text-stone-800">
-                      Dados Adicionais a Importar
+                      Données complémentaires à importer
                     </span>
-                    <span className="text-[10px] text-stone-500">Recuperação integral do site WordPress</span>
+                    <span className="text-[10px] text-stone-500">Récupération intégrale de votre boutique WooCommerce</span>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     {/* 1. Shipping Zones & Methods */}
-                    <label className={`flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer transition select-none ${includeShipping ? 'bg-red-50/50 border-red-300 ring-1 ring-red-400/20' : 'bg-white border-stone-200 hover:bg-stone-50'}`}>
+                    <label className={`flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer transition select-none ${includeShipping ? 'bg-blue-50/60 border-blue-300 ring-1 ring-blue-400/20' : 'bg-white border-stone-200 hover:bg-stone-50'}`}>
                       <input 
                         type="checkbox"
                         checked={includeShipping}
                         onChange={(e) => setIncludeShipping(e.target.checked)}
-                        className="rounded text-red-600 focus:ring-red-500 h-4 w-4 mt-0.5"
+                        className="rounded text-blue-600 focus:ring-blue-500 h-4 w-4 mt-0.5"
                       />
                       <div className="text-xs">
                         <span className="font-bold text-stone-900 block flex items-center gap-1.5">
-                          🚚 Zonas & Opções de Envio
+                          🚚 Zones & Frais de Livraison
                         </span>
                         <span className="text-[11px] text-stone-500 block mt-0.5">
-                          Zonas atendidas, custos por palete e métodos de entrega
+                          Zones desservies, frais d'expédition et options de transport
                         </span>
                       </div>
                     </label>
 
                     {/* 2. Orders */}
-                    <label className={`flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer transition select-none ${includeOrders ? 'bg-red-50/50 border-red-300 ring-1 ring-red-400/20' : 'bg-white border-stone-200 hover:bg-stone-50'}`}>
+                    <label className={`flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer transition select-none ${includeOrders ? 'bg-blue-50/60 border-blue-300 ring-1 ring-blue-400/20' : 'bg-white border-stone-200 hover:bg-stone-50'}`}>
                       <input 
                         type="checkbox"
                         checked={includeOrders}
                         onChange={(e) => setIncludeOrders(e.target.checked)}
-                        className="rounded text-red-600 focus:ring-red-500 h-4 w-4 mt-0.5"
+                        className="rounded text-blue-600 focus:ring-blue-500 h-4 w-4 mt-0.5"
                       />
                       <div className="text-xs">
                         <span className="font-bold text-stone-900 block flex items-center gap-1.5">
-                          📦 Encomendas & Histórico
+                          📦 Commandes & Historique Clients
                         </span>
                         <span className="text-[11px] text-stone-500 block mt-0.5">
-                          Recuperar encomendas anteriores, clientes e moradas
+                          Historique des commandes, coordonnées et adresses de livraison
                         </span>
                       </div>
                     </label>
 
                     {/* 3. Pages */}
-                    <label className={`flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer transition select-none ${includePages ? 'bg-red-50/50 border-red-300 ring-1 ring-red-400/20' : 'bg-white border-stone-200 hover:bg-stone-50'}`}>
+                    <label className={`flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer transition select-none ${includePages ? 'bg-blue-50/60 border-blue-300 ring-1 ring-blue-400/20' : 'bg-white border-stone-200 hover:bg-stone-50'}`}>
                       <input 
                         type="checkbox"
                         checked={includePages}
                         onChange={(e) => setIncludePages(e.target.checked)}
-                        className="rounded text-red-600 focus:ring-red-500 h-4 w-4 mt-0.5"
+                        className="rounded text-blue-600 focus:ring-blue-500 h-4 w-4 mt-0.5"
                       />
                       <div className="text-xs">
                         <span className="font-bold text-stone-900 block flex items-center gap-1.5">
-                          📄 Páginas Institucionais
+                          📄 Pages Institutionnelles
                         </span>
                         <span className="text-[11px] text-stone-500 block mt-0.5">
-                          Políticas de devolução, termos e condições, contactos
+                          Mentions légales, politique de confidentialité, retours et contact
                         </span>
                       </div>
                     </label>
 
                     {/* 4. Blog Articles */}
-                    <label className={`flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer transition select-none ${includeArticles ? 'bg-red-50/50 border-red-300 ring-1 ring-red-400/20' : 'bg-white border-stone-200 hover:bg-stone-50'}`}>
+                    <label className={`flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer transition select-none ${includeArticles ? 'bg-blue-50/60 border-blue-300 ring-1 ring-blue-400/20' : 'bg-white border-stone-200 hover:bg-stone-50'}`}>
                       <input 
                         type="checkbox"
                         checked={includeArticles}
                         onChange={(e) => setIncludeArticles(e.target.checked)}
-                        className="rounded text-red-600 focus:ring-red-500 h-4 w-4 mt-0.5"
+                        className="rounded text-blue-600 focus:ring-blue-500 h-4 w-4 mt-0.5"
                       />
                       <div className="text-xs">
                         <span className="font-bold text-stone-900 block flex items-center gap-1.5">
-                          📝 Artigos & Dicas de Aquecimento
+                          📝 Articles de Blog & Actualités
                         </span>
                         <span className="text-[11px] text-stone-500 block mt-0.5">
-                          Guias de biomassa, conselhos de manutenção e artigos
+                          Guides d'achat, conseils d'entretien électroménager et articles
                         </span>
                       </div>
                     </label>
+
+                    {/* 5. Reviews */}
+                    <label className={`flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer transition select-none sm:col-span-2 ${includeReviews ? 'bg-amber-50/60 border-amber-300 ring-1 ring-amber-400/20' : 'bg-white border-stone-200 hover:bg-stone-50'}`}>
+                      <input 
+                        type="checkbox"
+                        checked={includeReviews}
+                        onChange={(e) => setIncludeReviews(e.target.checked)}
+                        className="rounded text-amber-600 focus:ring-amber-500 h-4 w-4 mt-0.5"
+                      />
+                      <div className="text-xs">
+                        <span className="font-bold text-stone-900 block flex items-center gap-1.5">
+                          ⭐ Avis Clients & Évaluations Étoilées
+                        </span>
+                        <span className="text-[11px] text-stone-500 block mt-0.5">
+                          Notes de 1 à 5 étoiles, avis vérifiés et commentaires clients associés aux produits
+                        </span>
+                      </div>
+                    </label>
+                  </div>
+
+                  {/* Informational Banner */}
+                  <div className="p-2.5 bg-blue-50/60 rounded-lg border border-blue-100 flex items-center gap-2 text-[11px] text-blue-800">
+                    <span className="text-sm">✨</span>
+                    <span>
+                      <strong>Inclus automatiquement :</strong> Téléchargement et optimisation des visuels sur <strong>Cloudinary</strong>, et extraction des métadonnées SEO (<strong>RankMath & Yoast</strong>).
+                    </span>
                   </div>
                 </div>
               )}
@@ -837,41 +921,89 @@ export default function WooCommerceImportModal() {
               {loading && (
                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-3">
                   
-                  {/* Progress Header */}
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="font-bold text-gray-900 flex items-center gap-2">
-                        <span className="relative flex h-2 w-2">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
-                        </span>
-                        {importingCategories ? 'Synchronisation des catégories...' : 'Importation des produits en cours...'}
-                      </span>
-                      <span className="font-mono text-xs font-bold text-blue-600">
-                        {importedProducts} / {totalProducts} {totalProducts > 0 ? `(${Math.min(100, Math.round((importedProducts / totalProducts) * 100))}%)` : ''}
+                  {/* Step-by-Step Tracker */}
+                  <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-xs space-y-2">
+                    <div className="flex items-center justify-between text-xs font-bold text-gray-700">
+                      <span>Progression de l'import par étapes :</span>
+                      <span className="text-[11px] font-mono text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                        {currentStep === 'DONE' ? 'Terminé' : (currentStepText ? currentStepText.split(':')[0] : 'En cours')}
                       </span>
                     </div>
 
-                    <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
-                        style={{ width: `${totalProducts > 0 ? Math.min(100, Math.round((importedProducts / totalProducts) * 100)) : 100}%` }}
-                      />
+                    <div className="flex flex-wrap gap-1.5 items-center">
+                      {[
+                        { key: 'CATEGORIES', label: '1. Catégories', icon: '📁', active: true },
+                        { key: 'SHIPPING', label: '2. Livraison', icon: '🚚', active: includeShipping },
+                        { key: 'ORDERS', label: '3. Commandes', icon: '📦', active: includeOrders },
+                        { key: 'PAGES', label: '4. Pages', icon: '📄', active: includePages },
+                        { key: 'ARTICLES', label: '5. Blog', icon: '📝', active: includeArticles },
+                        { key: 'PRODUCTS', label: '6. Produits & SEO', icon: '🛍️', active: true },
+                        { key: 'REVIEWS', label: '7. Avis clients', icon: '⭐', active: includeReviews },
+                      ].filter(s => s.active).map((st, i, arr) => {
+                        const enabledKeys = arr.map(s => s.key);
+                        const curIdx = currentStep === 'DONE' ? enabledKeys.length : enabledKeys.indexOf(currentStep);
+                        const isDone = curIdx !== -1 && i < curIdx;
+                        const isCurrent = curIdx !== -1 && i === curIdx;
+
+                        return (
+                          <div 
+                            key={st.key}
+                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition ${
+                              isDone 
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-300' 
+                                : isCurrent 
+                                  ? 'bg-blue-600 text-white border-blue-700 shadow-xs animate-pulse ring-2 ring-blue-400/30' 
+                                  : 'bg-gray-100 text-gray-400 border-gray-200'
+                            }`}
+                          >
+                            <span>{isDone ? '✓' : st.icon}</span>
+                            <span>{st.label}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="p-2.5 bg-blue-50/80 border border-blue-200 rounded-lg text-xs font-semibold text-blue-900 flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-blue-600 animate-ping shrink-0" />
+                      <span>{currentStepText || 'Traitement en cours...'}</span>
                     </div>
                   </div>
 
-                  {/* Live Counters */}
-                  <div className="grid grid-cols-3 gap-2 pt-1 text-center">
-                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg py-1.5 px-2">
-                      <span className="block text-[11px] font-bold text-emerald-700">✓ {liveSuccessCount} Réussite{liveSuccessCount > 1 ? 's' : ''}</span>
-                    </div>
-                    <div className="bg-amber-50 border border-amber-200 rounded-lg py-1.5 px-2">
-                      <span className="block text-[11px] font-bold text-amber-700">⚠️ {liveAlreadyExistsCount} Already exist</span>
-                    </div>
-                    <div className="bg-rose-50 border border-rose-200 rounded-lg py-1.5 px-2">
-                      <span className="block text-[11px] font-bold text-rose-700">✕ {liveFailedCount} Échec{liveFailedCount > 1 ? 's' : ''}</span>
-                    </div>
-                  </div>
+                  {/* Products Progress Bar & Counters */}
+                  {(currentStep === 'PRODUCTS' || importLogs.length > 0 || totalProducts > 0) && (
+                    <>
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="font-bold text-gray-900 flex items-center gap-2">
+                            <span>📦 Traitement des produits :</span>
+                          </span>
+                          <span className="font-mono text-xs font-bold text-blue-600">
+                            {importedProducts} / {totalProducts} {totalProducts > 0 ? `(${Math.min(100, Math.round((importedProducts / totalProducts) * 100))}%)` : ''}
+                          </span>
+                        </div>
+
+                        <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                          <div 
+                            className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                            style={{ width: `${totalProducts > 0 ? Math.min(100, Math.round((importedProducts / totalProducts) * 100)) : 100}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Live Counters */}
+                      <div className="grid grid-cols-3 gap-2 pt-1 text-center">
+                        <div className="bg-emerald-50 border border-emerald-200 rounded-lg py-1.5 px-2">
+                          <span className="block text-[11px] font-bold text-emerald-700">✓ {liveSuccessCount} Réussite{liveSuccessCount > 1 ? 's' : ''}</span>
+                        </div>
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg py-1.5 px-2">
+                          <span className="block text-[11px] font-bold text-amber-700">⚠️ {liveAlreadyExistsCount} Already exist</span>
+                        </div>
+                        <div className="bg-rose-50 border border-rose-200 rounded-lg py-1.5 px-2">
+                          <span className="block text-[11px] font-bold text-rose-700">✕ {liveFailedCount} Échec{liveFailedCount > 1 ? 's' : ''}</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
 
                   {/* Live Log Filter Tabs */}
                   {importLogs.length > 0 && (
@@ -1001,7 +1133,7 @@ export default function WooCommerceImportModal() {
                         : importMode === 'CATEGORIES' 
                           ? `Importer les catégories sélectionnées`
                           : importMode === 'SEO_SYNC'
-                            ? `Sincronizar Meta Tags SEO RankMath`
+                            ? `Synchroniser le SEO RankMath & Yoast`
                             : `Importer tout le catalogue`}
                     </span>
                   )}
@@ -1026,7 +1158,7 @@ export default function WooCommerceImportModal() {
                 </div>
                 <div>
                   <h2 className="text-lg font-bold text-gray-900">Importation WooCommerce terminée</h2>
-                  <p className="text-xs text-gray-500">Compte rendu complet du traitement de vos produits.</p>
+                  <p className="text-xs text-gray-500">Compte rendu complet du traitement de vos produits et contenus.</p>
                 </div>
               </div>
               <button 
@@ -1080,30 +1212,41 @@ export default function WooCommerceImportModal() {
               )}
 
               {/* Extra Imported Data Badges */}
-              {(shippingSummary || ordersImportedCount !== null || pagesImportedCount !== null || articlesImportedCount !== null) && (
-                <div className="bg-stone-50 border border-stone-200 rounded-xl p-3.5 space-y-2 text-xs">
-                  <span className="font-bold text-stone-900 block">Outros dados recuperados com sucesso:</span>
+              {(shippingSummary || ordersImportedCount !== null || pagesImportedCount !== null || articlesImportedCount !== null || reviewsImportedCount !== null || summaryStats.success > 0 || summaryStats.alreadyExists > 0) && (
+                <div className="bg-stone-50 border border-stone-200 rounded-xl p-3.5 space-y-2.5 text-xs">
+                  <span className="font-bold text-stone-900 block">Récapitulatif des contenus & optimisations :</span>
                   <div className="flex flex-wrap gap-2 text-[11px]">
+                    {reviewsImportedCount !== null && (
+                      <span className="px-2.5 py-1 bg-amber-50 text-amber-800 font-semibold rounded-lg border border-amber-200 flex items-center gap-1.5 shadow-xs">
+                        ⭐ {reviewsImportedCount} Avis clients & notes d'évaluation
+                      </span>
+                    )}
                     {shippingSummary && (
                       <span className="px-2.5 py-1 bg-emerald-50 text-emerald-800 font-semibold rounded-lg border border-emerald-200 flex items-center gap-1.5 shadow-xs">
-                        🚚 {shippingSummary.zones} Zonas de Envio ({shippingSummary.methods} métodos de entrega)
+                        🚚 {shippingSummary.zones} Zones de livraison ({shippingSummary.methods} méthodes de transport)
                       </span>
                     )}
                     {ordersImportedCount !== null && (
                       <span className="px-2.5 py-1 bg-blue-50 text-blue-800 font-semibold rounded-lg border border-blue-200 flex items-center gap-1.5 shadow-xs">
-                        📦 {ordersImportedCount} Encomendas anteriores
+                        📦 {ordersImportedCount} Commandes clients historiques
                       </span>
                     )}
                     {pagesImportedCount !== null && (
                       <span className="px-2.5 py-1 bg-purple-50 text-purple-800 font-semibold rounded-lg border border-purple-200 flex items-center gap-1.5 shadow-xs">
-                        📄 {pagesImportedCount} Páginas institucionais
+                        📄 {pagesImportedCount} Pages institutionnelles
                       </span>
                     )}
                     {articlesImportedCount !== null && (
                       <span className="px-2.5 py-1 bg-amber-50 text-amber-800 font-semibold rounded-lg border border-amber-200 flex items-center gap-1.5 shadow-xs">
-                        📝 {articlesImportedCount} Artigos de blog
+                        📝 {articlesImportedCount} Articles de blog & guides
                       </span>
                     )}
+                    <span className="px-2.5 py-1 bg-emerald-50 text-emerald-800 font-semibold rounded-lg border border-emerald-200 flex items-center gap-1.5 shadow-xs">
+                      🎯 Méta-données SEO RankMath & Yoast synchronisées
+                    </span>
+                    <span className="px-2.5 py-1 bg-sky-50 text-sky-800 font-semibold rounded-lg border border-sky-200 flex items-center gap-1.5 shadow-xs">
+                      ☁️ Médias et visuels hébergés sur Cloudinary
+                    </span>
                   </div>
                 </div>
               )}

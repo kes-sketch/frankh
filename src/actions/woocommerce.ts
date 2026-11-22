@@ -27,7 +27,7 @@ async function uploadImageFromUrlToCloudinary(imageUrl: string): Promise<string 
 
     return new Promise<string>((resolve, reject) => {
       cloudinary.uploader.upload_stream(
-        { folder: 'lenha/woocommerce-import' },
+        { folder: 'frankhausgeraete/woocommerce-import' },
         (error, result) => {
           if (error || !result) {
             console.error("Cloudinary upload error:", error);
@@ -234,6 +234,7 @@ export interface ProcessWcProductsResult {
   importedCount: number;
   alreadyExistsCount: number;
   failedCount: number;
+  reviewsCount?: number;
   items: WcProductImportItemResult[];
 }
 
@@ -560,6 +561,7 @@ async function processAndSaveWcProducts(
   let importedCount = 0;
   let alreadyExistsCount = 0;
   let failedCount = 0;
+  let reviewsCount = 0;
   const items: WcProductImportItemResult[] = [];
 
   const allowedSet = (allowedCategoryIds && allowedCategoryIds.length > 0) ? new Set(allowedCategoryIds) : null;
@@ -836,6 +838,7 @@ async function processAndSaveWcProducts(
               await prisma.review.createMany({
                 data: reviewsToInsert
               });
+              reviewsCount += reviewsToInsert.length;
             }
           }
         }
@@ -870,6 +873,7 @@ async function processAndSaveWcProducts(
     importedCount,
     alreadyExistsCount,
     failedCount,
+    reviewsCount,
     items
   };
 }
@@ -940,6 +944,7 @@ export async function importWooCommerceProductsBatch(
       successCount: batchResult.importedCount,
       alreadyExistsCount: batchResult.alreadyExistsCount,
       failedCount: batchResult.failedCount,
+      reviewsCount: batchResult.reviewsCount || 0,
       results: batchResult.items
     };
 
@@ -971,6 +976,7 @@ export async function importWooCommerceSelectedProducts(
     let totalImported = 0;
     let totalAlreadyExists = 0;
     let totalFailed = 0;
+    let totalReviews = 0;
     const allResults: WcProductImportItemResult[] = [];
 
     // Chunk requests by 5 to respect Cloudinary & network timeout limits
@@ -997,6 +1003,7 @@ export async function importWooCommerceSelectedProducts(
         totalImported += batchResult.importedCount;
         totalAlreadyExists += batchResult.alreadyExistsCount;
         totalFailed += batchResult.failedCount;
+        totalReviews += batchResult.reviewsCount || 0;
         allResults.push(...batchResult.items);
       }
     }
@@ -1014,6 +1021,7 @@ export async function importWooCommerceSelectedProducts(
       successCount: totalImported,
       alreadyExistsCount: totalAlreadyExists,
       failedCount: totalFailed,
+      reviewsCount: totalReviews,
       results: allResults
     };
   } catch (error: any) {
@@ -1499,6 +1507,110 @@ export async function importWooCommerceShipping(
   } catch (error: any) {
     console.error('Error importing WooCommerce shipping:', error);
     return { success: false, message: error.message || 'Erreur lors de l\'import des zones et méthodes de livraison.' };
+  }
+}
+
+/**
+ * Import WooCommerce Product Reviews
+ */
+export async function importWooCommerceReviews(
+  url: string,
+  consumerKey: string,
+  consumerSecret: string
+) {
+  await requireAdmin();
+  const baseUrl = url.replace(/\/$/, '');
+  const apiUrl = `${baseUrl}/wp-json/wc/v3/products/reviews`;
+
+  try {
+    let totalImported = 0;
+    let page = 1;
+    let hasMore = true;
+
+    while (hasMore && page <= 50) {
+      const response = await fetch(`${apiUrl}?per_page=100&page=${page}`, {
+        headers: {
+          'Authorization': 'Basic ' + Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64'),
+          'Content-Type': 'application/json'
+        },
+        cache: 'no-store'
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erreur API WooCommerce Reviews: ${response.status} ${response.statusText}`);
+      }
+
+      const reviews = await response.json();
+      if (!Array.isArray(reviews) || reviews.length === 0) {
+        hasMore = false;
+        break;
+      }
+
+      for (const r of reviews) {
+        const comment = r.review ? r.review.replace(/(<([^>]+)>)/gi, "").trim() : '';
+        const reviewerName = r.reviewer || 'Client';
+        const reviewerEmail = r.reviewer_email || null;
+        const rating = Number(r.rating) || 5;
+        const createdAt = new Date(r.date_created || Date.now());
+
+        let productId: string | null = null;
+        if (r.product_name) {
+          const cleanName = unescapeHtml(r.product_name).trim();
+          const prod = await prisma.product.findFirst({
+            where: {
+              isDeleted: false,
+              OR: [
+                { title: cleanName },
+                { slug: slugify(cleanName) }
+              ]
+            },
+            select: { id: true }
+          });
+          if (prod) productId = prod.id;
+        }
+
+        if (!productId) {
+          // Fallback to first available product if none found
+          const anyProd = await prisma.product.findFirst({
+            where: { isDeleted: false },
+            select: { id: true }
+          });
+          if (anyProd) productId = anyProd.id;
+        }
+
+        if (productId) {
+          const existing = await prisma.review.findFirst({
+            where: {
+              productId,
+              reviewerName,
+              comment: comment.slice(0, 200)
+            }
+          });
+
+          if (!existing) {
+            await prisma.review.create({
+              data: {
+                productId,
+                reviewerName,
+                reviewerEmail,
+                rating,
+                comment,
+                isApproved: r.status === 'approved',
+                createdAt
+              }
+            });
+            totalImported++;
+          }
+        }
+      }
+      page++;
+    }
+
+    revalidatePath('/admin/reviews');
+    return { success: true, count: totalImported };
+  } catch (error: any) {
+    console.error('Error importing WooCommerce reviews:', error);
+    return { success: false, message: error.message || 'Erreur lors de l\'import des avis clients.' };
   }
 }
 

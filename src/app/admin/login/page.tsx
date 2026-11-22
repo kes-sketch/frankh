@@ -101,8 +101,8 @@ export default function AdminLoginPage() {
               disabled={isPending}
               className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:opacity-50 transition-colors"
             >
-              {isPending 
-                ? (isInitialSetup ? "Wird erstellt..." : t('logging_in')) 
+              {isPending
+                ? (isInitialSetup ? "Wird erstellt..." : t('logging_in'))
                 : (isInitialSetup ? "Konto erstellen & Einloggen" : t('login_btn'))
               }
             </button>
