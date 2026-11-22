@@ -69,6 +69,7 @@ export default function ProductGallery({
                 src={img} 
                 alt={`${title} - Miniatura ${idx + 1}`} 
                 title={`${title} - Miniatura ${idx + 1}`} 
+                referrerPolicy="no-referrer"
                 className="w-full h-full object-contain" 
               />
             </button>
@@ -116,6 +117,7 @@ export default function ProductGallery({
             alt={title} 
             title={title} 
             priority
+            referrerPolicy="no-referrer"
             className="w-full h-full object-contain p-4 sm:p-6 transition-all duration-300" 
           />
         ) : (

@@ -2134,7 +2134,7 @@ export async function importBackupShipping(shipping: any[]) {
           rate: Number(m.cost) || 0,
           isActive: m.enabled !== false
         }
-      }).catch(() => {});
+      }).catch(() => { });
       mCount++;
     }
   }
@@ -2175,7 +2175,7 @@ export async function importBackupPages(pages: any[]) {
         metaTitle: title,
         metaDescription: unescapeHtml(p.excerpt || '').slice(0, 160)
       }
-    }).catch(() => {});
+    }).catch(() => { });
     count++;
   }
 
@@ -2224,7 +2224,7 @@ export async function importBackupArticles(articles: any[]) {
         metaTitle: title,
         metaDescription: unescapeHtml(a.excerpt || '').slice(0, 160)
       }
-    }).catch(() => {});
+    }).catch(() => { });
     count++;
   }
 
@@ -2273,7 +2273,7 @@ export async function importBackupReviews(reviews: any[]) {
           isApproved: true,
           createdAt: r.date ? new Date(r.date) : new Date()
         }
-      }).catch(() => {});
+      }).catch(() => { });
       count++;
     }
   }
@@ -2360,7 +2360,7 @@ export async function importBackupOrders(orders: any[]) {
                   quantity: Number(it.quantity) || 1,
                   price: Number(it.price) || 0
                 }
-              }).catch(() => {});
+              }).catch(() => { });
             }
           }
         }
@@ -2428,16 +2428,23 @@ export async function importBackupProductsBatch(products: any[]) {
       }
     }
 
-    // Image handling: try first image to Cloudinary, fallback to original URL
-    const uploadedImages: string[] = [];
-    if (Array.isArray(p.images)) {
-      for (const imgUrl of p.images.slice(0, 3)) {
-        try {
-          const cloud = await uploadImageFromUrlToCloudinary(imgUrl);
-          uploadedImages.push(cloud || imgUrl);
-        } catch {
-          uploadedImages.push(imgUrl);
+    // Image handling: collect from p.images, and fallback to p.variations if empty
+    let sourceImages = Array.isArray(p.images) ? [...p.images] : [];
+    if (sourceImages.length === 0 && Array.isArray(p.variations)) {
+      for (const v of p.variations) {
+        if (v.image && !sourceImages.includes(v.image)) {
+          sourceImages.push(v.image);
         }
+      }
+    }
+
+    const uploadedImages: string[] = [];
+    for (const imgUrl of sourceImages.slice(0, 3)) {
+      try {
+        const cloud = await uploadImageFromUrlToCloudinary(imgUrl);
+        uploadedImages.push(cloud || imgUrl);
+      } catch {
+        uploadedImages.push(imgUrl);
       }
     }
     if (uploadedImages.length > 0) primaryImg = uploadedImages[0];
@@ -2854,7 +2861,7 @@ export async function importFrankhFullBackup(jsonContent: string) {
                     quantity: Number(it.quantity) || 1,
                     price: Number(it.price) || 0
                   }
-                }).catch(() => {});
+                }).catch(() => { });
               }
             }
           }

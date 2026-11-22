@@ -146,11 +146,21 @@ export default function ProductsTable({ products, categories }: { products: any[
                     />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap align-top">
-                    {product.images && product.images[0] ? (
-                      <Image width={800} height={800} src={product.images[0]} alt={product.title} className="h-12 w-12 rounded object-cover border border-gray-200" />
-                    ) : (
-                      <div className="h-12 w-12 rounded bg-gray-100 flex items-center justify-center text-xs text-gray-500 border border-gray-200">N/A</div>
-                    )}
+                    {(() => {
+                      const displayImg = (product.images && product.images[0]) || (Array.isArray(product.variations) && (product.variations as any)[0]?.image) || null;
+                      return displayImg ? (
+                        <Image 
+                          width={800} 
+                          height={800} 
+                          src={displayImg} 
+                          alt={product.title} 
+                          referrerPolicy="no-referrer"
+                          className="h-12 w-12 rounded object-cover border border-gray-200" 
+                        />
+                      ) : (
+                        <div className="h-12 w-12 rounded bg-gray-100 flex items-center justify-center text-xs text-gray-500 border border-gray-200">N/A</div>
+                      );
+                    })()}
                   </td>
                   <td className="px-6 py-4 align-top w-full">
                     {isEditing ? (
