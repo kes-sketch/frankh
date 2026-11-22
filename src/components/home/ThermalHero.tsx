@@ -80,102 +80,79 @@ export default function ThermalHero({ config, showcaseProducts, isPreview, secti
   const isTrustBadgesVisible = config?.showTrustBadges !== false && config?.showTrustBadges !== 'false';
 
   // Background settings
-  const bgImageUrl = config?.bgImageUrl || 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=1600';
+  const bgImageUrl = config?.bgImageUrl || 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&q=80&w=1600';
   const rawBgOpacity = config?.bgOverlayOpacity !== undefined && config?.bgOverlayOpacity !== ''
     ? parseFloat(config.bgOverlayOpacity.toString())
-    : 0.60;
-  // Normalized opacity between 0.1 and 1.0
-  const bgOpacity = isNaN(rawBgOpacity) ? 0.60 : Math.min(Math.max(rawBgOpacity, 0.1), 1.0);
+    : 0.50;
+  const bgOpacity = isNaN(rawBgOpacity) ? 0.50 : Math.min(Math.max(rawBgOpacity, 0.1), 1.0);
 
-  // Hero Left Content
-  const campaignBadge = config?.campaignBadge ?? 'Campanha de Inverno 2026 • Stock Garantido em Armazém';
-  const titlePrefix = config?.titlePrefix ?? 'Promoção de Inverno!';
-  const titleGradient = config?.titleGradient ?? 'FOGÃO A PELLETS & LENHA';
-  const description = config?.description ?? 'Rendimento térmico máximo, economia comprovada e conforto para toda a família. Descubra a gama completa de equipamentos certificados Eco-Design com entrega direta em sua casa.';
-  const cta1Text = config?.cta1Text ?? 'Ver Ofertas em Destaque';
+  // Hero Left Content (German Hausgeräte defaults)
+  const campaignBadge = config?.campaignBadge ?? 'Aktion 2026 • Jetzt bis zu 40% Rabatt auf Premium-Hausgeräte';
+  const titlePrefix = config?.titlePrefix ?? 'PROFITIEREN SIE VON DEN';
+  const titleGradient = config?.titleGradient ?? 'AKTUELLEN ANGEBOTEN';
+  const description = config?.description ?? 'Entdecken Sie energieeffiziente Marken-Hausgeräte von Miele, Bosch, Siemens & Liebherr. Schnelle Speditionslieferung, 30 Tage Rückgaberecht und 2 Jahre Herstellergarantie.';
+  const cta1Text = config?.cta1Text ?? 'Jetzt Angebote entdecken';
   const cta1Link = config?.cta1Link ?? '/shop';
-  const cta2Text = config?.cta2Text ?? 'Calcular Envio de Palete';
-  const cta2Link = config?.cta2Link ?? '#simulador-envio';
+  const cta2Text = config?.cta2Text ?? 'Showroom Oberreichenbach';
+  const cta2Link = config?.cta2Link ?? '/contact';
 
   // Trust Badges
-  const badge1Title = config?.badge1Title ?? 'ENplus A1';
-  const badge1Subtitle = config?.badge1Subtitle ?? 'Pellets Certificados';
-  const badge2Title = config?.badge2Title ?? '48 a 72h';
-  const badge2Subtitle = config?.badge2Subtitle ?? 'Entrega Rápida';
-  const badge3Title = config?.badge3Title ?? '100% Seguro';
-  const badge3Subtitle = config?.badge3Subtitle ?? 'MB WAY & Multibanco';
+  const badge1Title = config?.badge1Title ?? 'Kostenloser Versand';
+  const badge1Subtitle = config?.badge1Subtitle ?? 'Ab 50 € deutschlandweit';
+  const badge2Title = config?.badge2Title ?? '2 Jahre Garantie';
+  const badge2Subtitle = config?.badge2Subtitle ?? 'Volle Herstellergarantie';
+  const badge3Title = config?.badge3Title ?? 'Sichere Zahlung';
+  const badge3Subtitle = config?.badge3Subtitle ?? 'Klarna, PayPal & Rechnung';
 
-  // Default Top Sellers for rotation
+  // Default German Hausgeräte Top Sellers for showcase rotation
   const defaultShowcaseProducts: HeroShowcaseProduct[] = useMemo(() => [
     {
-      id: 'hero-fogao-salamandra-11kw',
-      title: config?.showcaseTitle || 'Fogão / Salamandra Eco 11kW',
-      subtitle: config?.showcaseSubtitle || 'Combustão limpa • Pellets & Lenha • EcoDesign 2026',
+      id: 'hero-kuehl-gefrier-fridge',
+      title: config?.showcaseTitle || 'Liebherr French Door Kühl-Gefrierkombination NoFrost',
+      subtitle: config?.showcaseSubtitle || 'BioFresh Frischezonen • DuoCooling • Edelstahl Antifingerprint',
       price: typeof config?.showcasePrice === 'number'
         ? config.showcasePrice
-        : (config?.showcasePrice ? parseFloat(config.showcasePrice.toString().replace(/[^0-9.,]/g, '').replace(',', '.')) : 1417.50) || 1417.50,
+        : (config?.showcasePrice ? parseFloat(config.showcasePrice.toString().replace(/[^0-9.,]/g, '').replace(',', '.')) : 1299.00) || 1299.00,
       compareAtPrice: typeof config?.showcaseComparePrice === 'number'
         ? config.showcaseComparePrice
-        : (config?.showcaseComparePrice ? parseFloat(config.showcaseComparePrice.toString().replace(/[^0-9.,]/g, '').replace(',', '.')) : 1890.00) || 1890.00,
-      image: config?.showcaseImage || 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800',
-      badge: config?.showcaseBadge || 'POUPANÇA -25%',
-      badgeTech: config?.showcaseBadgeTech || '🔥 Alto Rendimento 92%',
-      badgeTech2: config?.showcaseBadgeTech2 || 'Até 110 m²'
+        : (config?.showcaseComparePrice ? parseFloat(config.showcaseComparePrice.toString().replace(/[^0-9.,]/g, '').replace(',', '.')) : 1799.00) || 1799.00,
+      image: config?.showcaseImage || 'https://images.unsplash.com/photo-1584992236310-6edddc08acff?auto=format&fit=crop&q=80&w=800',
+      badge: config?.showcaseBadge || 'TOP-ANGEBOT -28%',
+      badgeTech: config?.showcaseBadgeTech || '❄️ NoFrost & BioFresh',
+      badgeTech2: config?.showcaseBadgeTech2 || 'Energieklasse A'
     },
     {
-      id: '1adf6ece-6164-4377-8045-667089cf42e3',
-      title: 'Palete de Pellets ENplus A1 (70 Sacos de 15kg)',
-      subtitle: '1050kg • Elevado poder calorífico • 100% Madeira Natural',
-      price: 369.90,
-      compareAtPrice: 420.00,
-      image: 'https://res.cloudinary.com/t7r98hdh/image/upload/v1794069048/lenha/woocommerce-import/nhemnuopqbcehe1hoozw.jpg',
-      badge: 'TOP VENDAS -12%',
-      badgeTech: '⭐ Certificado ENplus A1',
-      badgeTech2: '70 Sacos • 1050 kg'
+      id: 'hero-waschmaschine-miele',
+      title: 'Miele W1 TwinDos Waschmaschine 9kg 1600 U/min',
+      subtitle: 'Automatische Waschmitteldosierung • PowerWash • Schontrommel',
+      price: 1149.00,
+      compareAtPrice: 1399.00,
+      image: 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?auto=format&fit=crop&q=80&w=800',
+      badge: 'BESTSELLER -18%',
+      badgeTech: '🧺 TwinDos Dosiersystem',
+      badgeTech2: 'A+++ Effizienz'
     },
     {
-      id: '475369b3-c985-499a-8016-91f2e536502f',
-      title: 'Salamandra a Pellets 9kW com Controlo Wi-Fi',
-      subtitle: 'Ventilação forçada • Controlo por App • Programação Diária',
-      price: 1090.00,
-      compareAtPrice: 1350.00,
-      image: 'https://res.cloudinary.com/t7r98hdh/image/upload/v1794069904/lenha/woocommerce-import/rgvkzaiphxkaibnnicek.jpg',
-      badge: 'POUPANÇA 260 €',
-      badgeTech: '🔥 Rendimento 91%',
-      badgeTech2: 'Até 95 m²'
+      id: 'hero-kaffeevollautomat-delonghi',
+      title: 'De\'Longhi PrimaDonna Soul Kaffeevollautomat',
+      subtitle: 'Bean Adapt Technologie • LatteCrema System • 4,3" Farbdisplay',
+      price: 849.00,
+      compareAtPrice: 1199.00,
+      image: 'https://images.unsplash.com/photo-1517668808822-9ebb02f2a0e6?auto=format&fit=crop&q=80&w=800',
+      badge: 'SPAR-TIPP -29%',
+      badgeTech: '☕ 19 Bar & Milchsystem',
+      badgeTech2: 'Smart Coffee App'
     },
     {
-      id: 'd9d64f7c-ed4c-42ec-b4a1-79e9791b357c',
-      title: 'Recuperador de Calor a Lenha 14kW Ventilado',
-      subtitle: 'Ferro fundido maciço • Vidro cerâmico • Ventilação turbo',
-      price: 975.00,
-      compareAtPrice: 1190.00,
-      image: 'https://res.cloudinary.com/t7r98hdh/image/upload/v1794069321/lenha/woocommerce-import/xw2f6rymeahauygmv5lk.jpg',
-      badge: 'POUPANÇA -18%',
-      badgeTech: '🔥 Potência 14kW',
-      badgeTech2: 'Até 140 m²'
-    },
-    {
-      id: 'dbcf4a1b-3548-4797-bd0d-4293a1b3d036',
-      title: 'Ar Condicionado Split Inverter 12.000 BTU R32 Wi-Fi',
-      subtitle: 'Wi-Fi integrado • Silencioso 19dB • Função Aquecimento & Frio',
-      price: 529.00,
-      compareAtPrice: 649.00,
-      image: 'https://res.cloudinary.com/t7r98hdh/image/upload/v1794070891/lenha/woocommerce-import/ip28kt7renygynww33k4.jpg',
-      badge: 'CLASSE A+++',
-      badgeTech: '❄️ Inverter R32 Wi-Fi',
-      badgeTech2: '12.000 BTU'
-    },
-    {
-      id: '8cd0eb50-2bdf-416e-9b8b-4624404253a2',
-      title: 'Palete de Lenha de Sobro +- 500 Kg',
-      subtitle: 'Seca em estufa (< 18% humidade) • Pronta a queimar',
-      price: 199.00,
-      compareAtPrice: 240.00,
-      image: 'https://res.cloudinary.com/t7r98hdh/image/upload/v1794069072/lenha/woocommerce-import/uew0ltmcqaulf0z9cgyi.jpg',
-      badge: 'STOCK LIMITADO',
-      badgeTech: '🪵 Lenha de Sobro Seca',
-      badgeTech2: '500 kg'
+      id: 'hero-geschirrspueler-bosch',
+      title: 'Bosch Serie 8 Vollintegrierter Geschirrspüler',
+      subtitle: 'Zeolith-Trocknung • Flüsterleise 42dB • Home Connect WLAN',
+      price: 799.00,
+      compareAtPrice: 1049.00,
+      image: 'https://images.unsplash.com/photo-1585837575652-267c041d77d4?auto=format&fit=crop&q=80&w=800',
+      badge: 'AKTION -24%',
+      badgeTech: '🍽️ Zeolith-Trocknung',
+      badgeTech2: '14 Maßgedecke'
     }
   ], [config]);
 
@@ -215,12 +192,12 @@ export default function ThermalHero({ config, showcaseProducts, isPreview, secti
 
   const showcaseImageFit = config?.showcaseImageFit === 'cover' ? 'cover' : 'contain';
   const showcaseBgImage = config?.showcaseBgImage || '';
-  const showcaseBtnText = config?.showcaseBtnText ?? 'Adicionar ao Carrinho';
+  const showcaseBtnText = config?.showcaseBtnText ?? 'In den Warenkorb';
 
   const savingsText = useMemo(() => {
     if (currentItem.compareAtPrice && currentItem.compareAtPrice > currentItem.price) {
       const diff = currentItem.compareAtPrice - currentItem.price;
-      return `Poupe ${diff.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}`;
+      return `Sie sparen ${diff.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}`;
     }
     return null;
   }, [currentItem]);
@@ -241,26 +218,8 @@ export default function ThermalHero({ config, showcaseProducts, isPreview, secti
     setTimeout(() => setAdded(false), 2500);
   };
 
-  const handleCta2Click = (e: React.MouseEvent) => {
-    if (cta2Link.startsWith('#')) {
-      e.preventDefault();
-      const targetId = cta2Link.replace('#', '');
-      const el = 
-        document.getElementById(targetId) ||
-        document.getElementById('simulador-envio') ||
-        document.getElementById('simulador-envios') ||
-        document.getElementById('sec_shipping') ||
-        document.querySelector('[id*="simulador"]');
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } else {
-        window.location.hash = targetId;
-      }
-    }
-  };
-
   return (
-    <section className="relative bg-stone-950 text-white overflow-hidden py-14 lg:py-20 border-b border-stone-800 group">
+    <section className="relative bg-stone-950 text-white overflow-hidden py-12 lg:py-18 border-b border-stone-800 group">
       {/* Admin preview edit button */}
       {isPreview && sectionId && (
         <HeroPreviewEditButton sectionId={sectionId} blockNum={0} />
@@ -270,13 +229,13 @@ export default function ThermalHero({ config, showcaseProducts, isPreview, secti
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         {/* Glow ambient effects */}
         <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-red-600/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-10 left-1/3 w-80 h-80 bg-orange-600/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-10 left-1/3 w-80 h-80 bg-red-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        {/* User Background Image with controllable opacity - Only on desktop to ensure immediate stable LCP on mobile */}
+        {/* User Background Image */}
         {bgImageUrl && (
           <Image
             src={bgImageUrl}
-            alt="Lenha & Carvão Silva Dias - Climatização e Biomassa"
+            alt="Frank Hausgeräte - Premium Haushaltsgeräte"
             fill
             priority
             fetchPriority="high"
@@ -288,19 +247,19 @@ export default function ThermalHero({ config, showcaseProducts, isPreview, secti
         )}
 
         {/* Gradient overlay for high text legibility */}
-        <div className="absolute inset-0 bg-gradient-to-r from-stone-950/95 via-stone-950/75 to-stone-950/40 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-stone-950/98 via-stone-950/85 to-stone-950/40 pointer-events-none" />
         <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-transparent to-stone-950/40 pointer-events-none" />
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className={`grid grid-cols-1 ${isShowcaseVisible ? 'lg:grid-cols-12 gap-10 lg:gap-8 items-center' : 'max-w-4xl'}`}>
+        <div className={`grid grid-cols-1 ${isShowcaseVisible ? 'lg:grid-cols-12 gap-8 lg:gap-10 items-center' : 'max-w-4xl'}`}>
 
           {/* Left Column: Headlines & Call to Actions */}
           <div className={`${isShowcaseVisible ? 'lg:col-span-7' : 'w-full'} space-y-6`}>
             {campaignBadge && (
               <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 bg-red-950/70 border border-red-600/40 rounded-full text-xs backdrop-blur-md shadow-sm">
-                <span className="relative flex h-2.5 w-2.5 shrink-0">
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500 animate-pulse" />
                 </span>
                 <span className="text-white font-bold tracking-wide">
                   {campaignBadge}
@@ -308,17 +267,17 @@ export default function ThermalHero({ config, showcaseProducts, isPreview, secti
               </div>
             )}
 
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.1] text-white">
-              {titlePrefix && <>{titlePrefix}<br /></>}
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-[1.15] text-white">
+              {titlePrefix && <span className="block text-stone-100">{titlePrefix}</span>}
               {titleGradient && (
-                <span className="text-amber-400 font-extrabold">
+                <span className="text-red-500 font-black">
                   {titleGradient}
                 </span>
               )}
             </h1>
 
             {description && (
-              <p className="text-stone-200 text-sm sm:text-base max-w-xl leading-relaxed">
+              <p className="text-stone-300 text-sm sm:text-base max-w-xl leading-relaxed">
                 {description}
               </p>
             )}
@@ -338,17 +297,16 @@ export default function ThermalHero({ config, showcaseProducts, isPreview, secti
               )}
 
               {cta2Text && (
-                <a
+                <Link
                   href={cta2Link}
-                  onClick={handleCta2Click}
                   className="px-6 py-3.5 bg-stone-900/90 hover:bg-stone-800/90 active:scale-95 text-stone-200 border border-stone-700 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 shadow-sm cursor-pointer backdrop-blur-sm"
                 >
-                  <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                  <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                   <span>{cta2Text}</span>
-                </a>
+                </Link>
               )}
             </div>
 
@@ -371,7 +329,7 @@ export default function ThermalHero({ config, showcaseProducts, isPreview, secti
             )}
           </div>
 
-          {/* Right Column: Visual Showcase Card with Automatic Rotation */}
+          {/* Right Column: Visual Showcase Card */}
           {isShowcaseVisible && (
             <div
               className="lg:col-span-5 relative"
@@ -380,7 +338,7 @@ export default function ThermalHero({ config, showcaseProducts, isPreview, secti
             >
               <div className="relative bg-gradient-to-b from-stone-900/95 via-stone-850/95 to-stone-950/95 border border-stone-700/70 rounded-3xl p-4 sm:p-6 shadow-2xl backdrop-blur-xl transition-all duration-300">
 
-                {/* Card Top Bar: Badge + Navigation Controls */}
+                {/* Card Top Bar */}
                 <div className="flex items-center justify-between mb-3.5">
                   <div className="flex items-center gap-2">
                     {currentItem.badge && (
@@ -389,7 +347,7 @@ export default function ThermalHero({ config, showcaseProducts, isPreview, secti
                       </span>
                     )}
                     <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider bg-stone-800/80 px-2 py-0.5 rounded border border-stone-700/60">
-                      Mais Vendidos • {currentIndex + 1}/{showcaseList.length}
+                      Top-Angebot • {currentIndex + 1}/{showcaseList.length}
                     </span>
                   </div>
 
@@ -399,7 +357,7 @@ export default function ThermalHero({ config, showcaseProducts, isPreview, secti
                       <button
                         type="button"
                         onClick={handlePrev}
-                        title="Artigo anterior"
+                        title="Vorheriges Produkt"
                         className="w-7 h-7 rounded-full bg-stone-800 hover:bg-red-600 border border-stone-700 text-stone-300 hover:text-white flex items-center justify-center transition-all cursor-pointer"
                       >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -409,7 +367,7 @@ export default function ThermalHero({ config, showcaseProducts, isPreview, secti
                       <button
                         type="button"
                         onClick={handleNext}
-                        title="Próximo artigo"
+                        title="Nächstes Produkt"
                         className="w-7 h-7 rounded-full bg-stone-800 hover:bg-red-600 border border-stone-700 text-stone-300 hover:text-white flex items-center justify-center transition-all cursor-pointer"
                       >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -420,10 +378,9 @@ export default function ThermalHero({ config, showcaseProducts, isPreview, secti
                   )}
                 </div>
 
-                {/* Showcase Image / Visual Container */}
+                {/* Showcase Image */}
                 {isShowcaseImageVisible && (
                   <div className="aspect-4/3 rounded-2xl bg-stone-950/90 border border-stone-800 relative overflow-hidden group/img flex items-center justify-center p-3">
-                    {/* Optional Showcase Background Image */}
                     {showcaseBgImage && (
                       <div
                         className="absolute inset-0 bg-cover bg-center z-0 transition-opacity"
@@ -434,20 +391,20 @@ export default function ThermalHero({ config, showcaseProducts, isPreview, secti
                       />
                     )}
 
-                    {/* Product Image with smooth transition */}
                     <div className={`relative w-full h-full transition-all duration-300 ${isAnimating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
                       {currentItem.image ? (
                         <Image
                           src={currentItem.image}
                           alt={currentItem.title}
                           fill
+                          referrerPolicy="no-referrer"
                           className={`${showcaseImageFit === 'cover' ? 'object-cover' : 'object-contain p-2'} object-center group-hover/img:scale-105 transition-transform duration-700 z-10`}
                           sizes="(max-width: 768px) 100vw, 500px"
                           priority
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-4xl">
-                          🔥
+                          ❄️
                         </div>
                       )}
                     </div>
@@ -469,7 +426,7 @@ export default function ThermalHero({ config, showcaseProducts, isPreview, secti
                   </div>
                 )}
 
-                {/* Product Info with transition */}
+                {/* Product Info */}
                 <div className={`mt-4 space-y-2 transition-opacity duration-300 ${isAnimating ? 'opacity-0' : 'opacity-100'}`}>
                   <div>
                     <h3 className="text-white font-bold text-base sm:text-lg leading-tight line-clamp-1">
@@ -484,11 +441,11 @@ export default function ThermalHero({ config, showcaseProducts, isPreview, secti
 
                   <div className="flex items-baseline gap-3 pt-1">
                     <span className="text-red-400 font-extrabold text-2xl sm:text-3xl">
-                      {currentItem.price.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}
+                      {currentItem.price.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
                     </span>
                     {currentItem.compareAtPrice && currentItem.compareAtPrice > currentItem.price && (
                       <span className="text-stone-500 line-through text-sm">
-                        {currentItem.compareAtPrice.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}
+                        {currentItem.compareAtPrice.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
                       </span>
                     )}
                     {savingsText && (
@@ -515,7 +472,7 @@ export default function ThermalHero({ config, showcaseProducts, isPreview, secti
                         }}
                         className={`h-1.5 rounded-full transition-all cursor-pointer ${idx === currentIndex ? 'w-6 bg-red-500' : 'w-1.5 bg-stone-700 hover:bg-stone-500'
                           }`}
-                        title={`Ir para produto ${idx + 1}`}
+                        title={`Zu Produkt ${idx + 1}`}
                       />
                     ))}
                   </div>
@@ -534,7 +491,7 @@ export default function ThermalHero({ config, showcaseProducts, isPreview, secti
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                       </svg>
-                      <span>Adicionado ao Carrinho!</span>
+                      <span>In den Warenkorb gelegt!</span>
                     </>
                   ) : (
                     <>

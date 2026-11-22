@@ -39,23 +39,23 @@ type FooterProps = {
 };
 
 export default function Footer({ 
-  supportPhone = '+351 253 000 000', 
-  supportEmail = 'info@lenhaecarvaosilvadias.com',
-  footerBgColor = '#1C1917',
+  supportPhone = '', 
+  supportEmail = 'kontakt@frankhausgeraete.de',
+  footerBgColor = '#111827',
   footerTextColor = '#ffffff',
   footerHeadingColor = '#ffffff',
-  footerAddress1 = 'Alto Almosquia, 2750-000 Cascais – Portugal',
-  footerNewsletterTitle = 'A Nossa Newsletter',
-  footerNewsletterText = 'Subscreva para receber ofertas sazonais exclusivas e conselhos úteis sobre pellets e biomassa.',
-  footerNewsletterPlaceholder = 'O seu endereço de e-mail...',
-  footerCopyright = '© 2026 SILVA DIAS – Comércio de Lenha e Carvão, Lda. Todos os direitos reservados.',
+  footerAddress1 = 'Wildbader Straße 51, 75394 Oberreichenbach – Deutschland',
+  footerNewsletterTitle = 'Exklusive Angebote sichern',
+  footerNewsletterText = 'Abonnieren Sie unseren Newsletter und verpassen Sie keine Rabattaktionen auf Marken-Hausgeräte.',
+  footerNewsletterPlaceholder = 'Ihre E-Mail-Adresse...',
+  footerCopyright = '© 2026 FRANK HAUSGERÄTE. Alle Rechte vorbehalten.',
   footerColumns = [],
   categories = [],
   footerLogoImage = '',
-  footerDescription = 'Especialistas em biomassa, pellets certificados ENplus A1, lenha seca e equipamentos térmicos de alta eficiência (salamandras, recuperadores de calor e climatização) com entregas em Portugal Continental.',
+  footerDescription = 'Ihr zuverlässiger Fachhändler für Premium-Hausgeräte in Deutschland. Große Auswahl an Groß- und Kleingeräten von Miele, Bosch, Siemens, Liebherr mit 2 Jahren Garantie und schnellem Speditionsversand.',
   footerShowAddress = true,
   footerShowEmail = true,
-  footerShowPhone = true,
+  footerShowPhone = false,
   contactSlug = 'contact'
 }: FooterProps) {
   // Mobile accordion state for collapsible footer sections on small screens
@@ -78,22 +78,16 @@ export default function Footer({
           {/* Column 1: Store Brand & Contacts */}
           <div className="lg:col-span-1 space-y-4">
             <div className="flex items-center">
-              {footerLogoImage && footerLogoImage !== '/logo.png' && footerLogoImage !== '/logo.jpg' ? (
-                <Image src={footerLogoImage} alt="Footer Logo" width={200} height={48} className="max-h-12 w-auto object-contain" />
+              {footerLogoImage && footerLogoImage !== '/logo.png' && footerLogoImage !== '/logo.jpg' && !footerLogoImage.includes('logo-flame') ? (
+                <Image src={footerLogoImage} alt="FRANK HAUSGERÄTE" width={200} height={48} className="max-h-12 w-auto object-contain" />
               ) : (
                 <div className="flex items-center gap-2.5">
-                  <div className="relative h-9 w-auto shrink-0 flex items-center justify-center">
-                    <Image
-                      src="/logo-flame.png"
-                      alt="Lenha & Carvão Silva Dias"
-                      width={51}
-                      height={82}
-                      className="h-8 w-auto object-contain"
-                    />
+                  <div className="bg-[#DC2626] text-white font-black text-xl italic px-3 py-1 rounded-lg tracking-tight shadow-sm flex items-center justify-center">
+                    Frank
                   </div>
                   <div>
-                    <span className="font-extrabold text-base tracking-tight text-white block leading-tight">LENHA &amp; CARVÃO</span>
-                    <span className="text-[10px] font-bold tracking-wider text-red-500 uppercase block">SILVA DIAS</span>
+                    <span className="font-extrabold text-base tracking-tight text-white block leading-tight">HAUSGERÄTE</span>
+                    <span className="text-[10px] font-bold tracking-wider text-red-500 uppercase block">Fachhandel &amp; Service</span>
                   </div>
                 </div>
               )}
@@ -154,7 +148,7 @@ export default function Footer({
             ))
           ) : (
             <>
-              {/* Column 2: Informações Legais & Entregas */}
+              {/* Column 2: Rechtliches (German Legal Compliance) */}
               <div className="lg:col-span-1 border-t border-stone-800 pt-4 md:border-none md:pt-0">
                 <button 
                   type="button" 
@@ -162,46 +156,47 @@ export default function Footer({
                   className="w-full flex md:hidden items-center justify-between font-bold text-sm sm:text-base mb-2 cursor-pointer"
                   style={{ color: footerHeadingColor }}
                 >
-                  <span>Informações &amp; Apoio</span>
+                  <span>Rechtliches</span>
                   <svg className={`w-4 h-4 transition-transform ${openSection === 'legal' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
-                <h3 className="hidden md:block font-bold text-base mb-5" style={{ color: footerHeadingColor }}>Informações &amp; Apoio</h3>
+                <h3 className="hidden md:block font-bold text-base mb-5" style={{ color: footerHeadingColor }}>Rechtliches</h3>
                 <ul className={`space-y-3 text-xs sm:text-sm text-stone-300 ${openSection === 'legal' ? 'block pb-3' : 'hidden md:block'}`}>
-                  <li><Link href="/order-tracking" className="hover:text-red-400 transition">Rastrear Encomenda</Link></li>
-                  <li><Link href="/devolucoes" className="hover:text-red-400 transition">Política de Devolução</Link></li>
-                  <li><Link href="/envios-e-entregas" className="hover:text-red-400 transition">Expedição com Plataforma</Link></li>
-                  <li><Link href="/termos-e-condicoes" className="hover:text-red-400 transition">Termos e Condições</Link></li>
-                  <li><Link href="/privacidade" className="hover:text-red-400 transition">Política de Privacidade</Link></li>
-                  <li><Link href={`/${contactSlug}`} className="hover:text-red-400 transition">Contacte-nos</Link></li>
+                  <li><Link href="/impressum" className="hover:text-red-400 transition">Impressum</Link></li>
+                  <li><Link href="/agb" className="hover:text-red-400 transition">AGB &amp; Kundeninfo</Link></li>
+                  <li><Link href="/datenschutz" className="hover:text-red-400 transition">Datenschutzerklärung</Link></li>
+                  <li><Link href="/widerrufsbelehrung" className="hover:text-red-400 transition">Widerrufsbelehrung</Link></li>
+                  <li><Link href="/elektrog" className="hover:text-red-400 transition">Batterie- &amp; ElektroG</Link></li>
+                  <li><Link href="/zahlungsarten" className="hover:text-red-400 transition">Zahlungsarten</Link></li>
                 </ul>
               </div>
 
-              {/* Column 3: A Minha Conta */}
+              {/* Column 3: Kundenservice & Hilfe */}
               <div className="lg:col-span-1 border-t border-stone-800 pt-4 md:border-none md:pt-0">
                 <button 
                   type="button" 
-                  onClick={() => toggleSection('account')} 
+                  onClick={() => toggleSection('service')} 
                   className="w-full flex md:hidden items-center justify-between font-bold text-sm sm:text-base mb-2 cursor-pointer"
                   style={{ color: footerHeadingColor }}
                 >
-                  <span>A Minha Conta</span>
-                  <svg className={`w-4 h-4 transition-transform ${openSection === 'account' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <span>Kundenservice</span>
+                  <svg className={`w-4 h-4 transition-transform ${openSection === 'service' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
-                <h3 className="hidden md:block font-bold text-base mb-5" style={{ color: footerHeadingColor }}>A Minha Conta</h3>
-                <ul className={`space-y-3 text-xs sm:text-sm text-stone-300 ${openSection === 'account' ? 'block pb-3' : 'hidden md:block'}`}>
-                  <li><Link href="/account" className="hover:text-red-400 transition">Painel do Cliente</Link></li>
-                  <li><Link href="/cart" className="hover:text-red-400 transition">Ver Carrinho de Compras</Link></li>
-                  <li><Link href="/account/orders" className="hover:text-red-400 transition">Histórico de Encomendas</Link></li>
-                  <li><Link href="/checkout" className="hover:text-red-400 transition">Finalizar Compra</Link></li>
-                  <li><Link href="/#simulador-envio" className="hover:text-red-400 transition">Simulador de Envio</Link></li>
+                <h3 className="hidden md:block font-bold text-base mb-5" style={{ color: footerHeadingColor }}>Kundenservice</h3>
+                <ul className={`space-y-3 text-xs sm:text-sm text-stone-300 ${openSection === 'service' ? 'block pb-3' : 'hidden md:block'}`}>
+                  <li><Link href="/order-tracking" className="hover:text-red-400 transition">Bestellung verfolgen</Link></li>
+                  <li><Link href="/versand-und-lieferung" className="hover:text-red-400 transition">Versand &amp; Spedition</Link></li>
+                  <li><Link href="/rueckgabe" className="hover:text-red-400 transition">30 Tage Rückgaberecht</Link></li>
+                  <li><Link href="/account" className="hover:text-red-400 transition">Kundenkonto</Link></li>
+                  <li><Link href="/cart" className="hover:text-red-400 transition">Warenkorb</Link></li>
+                  <li><Link href={`/${contactSlug}`} className="hover:text-red-400 transition">Kontakt &amp; Beratung</Link></li>
                 </ul>
               </div>
 
-              {/* Column 4: Categorias */}
+              {/* Column 4: Beliebte Kategorien */}
               <div className="lg:col-span-1 border-t border-stone-800 pt-4 md:border-none md:pt-0">
                 <button 
                   type="button" 
@@ -209,29 +204,29 @@ export default function Footer({
                   className="w-full flex md:hidden items-center justify-between font-bold text-sm sm:text-base mb-2 cursor-pointer"
                   style={{ color: footerHeadingColor }}
                 >
-                  <span>Categorias</span>
+                  <span>Sortiment</span>
                   <svg className={`w-4 h-4 transition-transform ${openSection === 'categories' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
-                <h3 className="hidden md:block font-bold text-base mb-5" style={{ color: footerHeadingColor }}>Categorias</h3>
+                <h3 className="hidden md:block font-bold text-base mb-5" style={{ color: footerHeadingColor }}>Sortiment</h3>
                 <ul className={`space-y-3 text-xs sm:text-sm text-stone-300 ${openSection === 'categories' ? 'block pb-3' : 'hidden md:block'}`}>
                   {categories && categories.length > 0 ? (
                     categories.slice(0, 7).map((cat) => (
                       <li key={cat.id}>
-                        <Link href={`/categoria-de-produto/${cat.slug || cat.id}`} className="hover:text-red-400 transition">
+                        <Link href={`/shop?category=${cat.slug || cat.id}`} className="hover:text-red-400 transition">
                           {cat.name}
                         </Link>
                       </li>
                     ))
                   ) : (
                     <>
-                      <li><Link href="/combustiveis/lenha-e-pellets" className="hover:text-red-400 transition">Pellets &amp; Lenha</Link></li>
-                      <li><Link href="/climatizacao-e-aquecimento/aquecimento" className="hover:text-red-400 transition">Salamandras</Link></li>
-                      <li><Link href="/climatizacao-e-aquecimento/aquecimento/recuperadores-de-calor" className="hover:text-red-400 transition">Recuperadores de Calor</Link></li>
-                      <li><Link href="/climatizacao-e-aquecimento/aquecimento/fogoes-a-lenha" className="hover:text-red-400 transition">Fogões a Lenha</Link></li>
-                      <li><Link href="/climatizacao-e-aquecimento/climatizacao" className="hover:text-red-400 transition">Climatização</Link></li>
-                      <li><Link href="/termoacumulador" className="hover:text-red-400 transition">Termoacumuladores</Link></li>
+                      <li><Link href="/shop?category=kuehlen-gefrieren" className="hover:text-red-400 transition">Kühlen &amp; Gefrieren</Link></li>
+                      <li><Link href="/shop?category=waschen-trocknen" className="hover:text-red-400 transition">Waschen &amp; Trocknen</Link></li>
+                      <li><Link href="/shop?category=kochen-backen" className="hover:text-red-400 transition">Kochen &amp; Backen</Link></li>
+                      <li><Link href="/shop?category=geschirrspueler" className="hover:text-red-400 transition">Geschirrspüler</Link></li>
+                      <li><Link href="/shop?category=kaffeevollautomaten" className="hover:text-red-400 transition">Kaffeevollautomaten</Link></li>
+                      <li><Link href="/shop?category=saugroboter" className="hover:text-red-400 transition">Saugroboter &amp; Boden</Link></li>
                     </>
                   )}
                 </ul>
@@ -250,23 +245,28 @@ export default function Footer({
 
         </div>
 
-        {/* Bottom Bar: Copyright & Verified Portuguese Payment Badges */}
+        {/* Bottom Bar: Copyright & Verified German Payment Badges */}
         <div className="border-t border-stone-800/80 pt-6 mt-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="text-xs sm:text-sm text-stone-400 text-center md:text-left">
             {footerCopyright}
           </div>
 
-          {/* Official Portuguese & International Payment Methods */}
+          {/* Official German & European Payment Methods */}
           <div className="flex flex-wrap items-center justify-center gap-2">
-            {/* MB WAY */}
-            <div className="bg-white px-2.5 py-1 rounded-md text-stone-900 font-extrabold text-[11px] flex items-center gap-1 shadow-sm border border-stone-300">
-              <span className="text-[#005CA9] font-black">MB</span>
-              <span className="text-[#DE1A5B] font-black">WAY</span>
+            {/* PayPal */}
+            <div className="bg-white px-2.5 py-1 rounded-md text-[#003087] font-black text-[11px] flex items-center gap-0.5 shadow-sm border border-stone-300">
+              <span className="text-[#0079C1] italic">Pay</span>
+              <span className="text-[#00457C] italic">Pal</span>
             </div>
 
-            {/* Multibanco */}
-            <div className="bg-white px-2.5 py-1 rounded-md text-[#005CA9] font-black text-[11px] shadow-sm border border-stone-300 tracking-wider">
-              MULTIBANCO
+            {/* Klarna */}
+            <div className="bg-[#FFB3C7] px-2.5 py-1 rounded-md text-stone-900 font-black text-[11px] shadow-sm tracking-tight">
+              Klarna.
+            </div>
+
+            {/* Sofort */}
+            <div className="bg-white px-2.5 py-1 rounded-md text-stone-800 font-bold text-[10px] shadow-sm border border-stone-300">
+              SOFORT
             </div>
 
             {/* Visa */}

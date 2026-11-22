@@ -54,13 +54,14 @@ type HeaderProps = {
 };
 
 export default function Header({
-  announcement = 'Welcome to My Store',
+  announcement = '📍 Showroom: Wildbader Straße 51, 75394 Oberreichenbach • 🚚 Kostenloser Speditionsversand ab 50 € • 📞 kontakt@frankhausgeraete.de',
   logoImage = '',
   headerLogoHeight = '80',
   mobileLogoHeight = '64',
   menuLinks = [],
   topBarLinks = [
-    { label: 'Rastrear Encomenda', icon: 'truck', url: '/order-tracking' }
+    { label: 'Bestellung verfolgen', icon: 'truck', url: '/order-tracking' },
+    { label: 'Kundenservice', icon: 'phone', url: '/contact' }
   ],
   loginText,
   myAccountText,
@@ -69,8 +70,8 @@ export default function Header({
   topBarTextColor = '#4b5563',
   categories = [],
   searchBorderColor = '#d1d5db',
-  searchPlaceholder = 'Search products...',
-  searchBtnText = 'Search',
+  searchPlaceholder = 'Suchen Sie nach Marken (Bosch, Miele...), Modellen oder Artikeln...',
+  searchBtnText = 'Suchen',
   searchBtnBgColor = '#c2410c',
   searchBtnTextColor = '#111827',
   showNew = true,
@@ -79,10 +80,10 @@ export default function Header({
   mobileAboutTitle = '',
   mobileAboutDesc = '',
   mobileMenuLinks = [],
-  mobileContactAddress = '',
+  mobileContactAddress = 'Wildbader Straße 51, 75394 Oberreichenbach',
   mobileContactPhone = '',
-  mobileContactEmail = '',
-  mobileContactWebsite = '',
+  mobileContactEmail = 'kontakt@frankhausgeraete.de',
+  mobileContactWebsite = 'https://frankhausgeraete.de',
   mobileHeaderBorderColor = '#d1d5db',
   allCategoriesBgColor = '#111827',
   allCategoriesTextColor = '#ffffff',
@@ -276,30 +277,23 @@ export default function Header({
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center">
             <Link href="/" className="flex items-center">
-              {logoImage && logoImage !== '/logo.png' && logoImage !== '/logo.jpg' ? (
+              {logoImage && logoImage !== '/logo.png' && logoImage !== '/logo.jpg' && !logoImage.includes('logo-flame') ? (
                 <Image
                   src={logoImage}
-                  alt="Lenha & Carvão Silva Dias"
+                  alt="FRANK HAUSGERÄTE"
                   width={260}
                   height={75}
                   className="object-contain custom-logo-height w-auto max-w-[220px] md:max-w-[280px]"
                   priority
                 />
               ) : (
-                <div className="flex items-center gap-3 group">
-                  <div className="relative h-11 w-auto shrink-0 flex items-center justify-center group-hover:scale-105 transition-transform">
-                    <Image
-                      src="/logo-flame.png"
-                      alt="Lenha & Carvão Silva Dias"
-                      width={51}
-                      height={82}
-                      className="h-10 w-auto object-contain"
-                      priority
-                    />
+                <div className="flex items-center gap-2.5 group py-0.5">
+                  <div className="bg-[#DC2626] text-white font-black text-2xl italic px-3 py-0.5 rounded-lg tracking-tight shadow-sm flex items-center justify-center">
+                    Frank
                   </div>
-                  <div>
-                    <span className="font-extrabold text-lg sm:text-xl tracking-tight text-stone-900 block leading-tight">LENHA &amp; CARVÃO</span>
-                    <span className="text-[11px] font-bold tracking-wider text-red-600 uppercase block">SILVA DIAS</span>
+                  <div className="flex flex-col">
+                    <span className="font-black text-lg sm:text-xl tracking-tight text-gray-950 leading-tight">HAUSGERÄTE</span>
+                    <span className="text-[10px] font-bold tracking-widest text-red-600 uppercase">Fachhandel &amp; Service</span>
                   </div>
                 </div>
               )}
@@ -494,7 +488,7 @@ export default function Header({
                 <svg className="w-5 h-5 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
-                <span>CATEGORIAS</span>
+                <span>ALLE KATEGORIEN</span>
                 <svg className={`w-3.5 h-3.5 ml-1 transition-transform duration-200 ${isBottomCategoryOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
                 </svg>
@@ -507,7 +501,7 @@ export default function Header({
                     categories.map((cat) => (
                       <Link
                         key={cat.id}
-                        href={`/categoria-de-produto/${cat.slug || cat.id}`}
+                        href={`/shop?category=${cat.slug || cat.id}`}
                         className={`flex items-center justify-between px-5 py-2.5 hover:bg-red-50 hover:text-red-600 transition ${!cat.parentId ? 'font-bold text-stone-900 text-xs bg-stone-50/60' : 'text-stone-600 pl-8 text-xs'}`}
                         onClick={() => setIsBottomCategoryOpen(false)}
                       >
@@ -517,20 +511,18 @@ export default function Header({
                     ))
                   ) : (
                     [
-                      { name: 'Aquecimento', slug: 'aquecimento', icon: '🔥' },
-                      { name: 'Fogões a Lenha', slug: 'fogoes-a-lenha', icon: '🍳' },
-                      { name: 'Lareiras a Lenha', slug: 'lareira-a-lenha', icon: '🪵' },
-                      { name: 'Ar Condicionado', slug: 'ar-condicionado', icon: '❄️' },
-                      { name: 'Climatização', slug: 'climatizacao', icon: '💨' },
-                      { name: 'Desumidificadores', slug: 'desumidificador', icon: '💧' },
-                      { name: 'Pellets & Lenha', slug: 'combustiveis', icon: '🌲' },
-                      { name: 'Fornos a Lenha', slug: 'fornos-a-lenha', icon: '🍕' },
-                      { name: 'Recuperadores de Calor', slug: 'recuperadores-de-calor', icon: '🏠' },
-                      { name: 'Salamandras a Pellets', slug: 'salamandras-a-pellets', icon: '⚡' },
+                      { name: 'Kühlen & Gefrieren', slug: 'kuehlen-gefrieren', icon: '❄️' },
+                      { name: 'Waschen & Trocknen', slug: 'waschen-trocknen', icon: '🧺' },
+                      { name: 'Kochen & Backen', slug: 'kochen-backen', icon: '🍳' },
+                      { name: 'Geschirrspüler', slug: 'geschirrspueler', icon: '🍽️' },
+                      { name: 'Kaffeevollautomaten', slug: 'kaffeevollautomaten', icon: '☕' },
+                      { name: 'Saugroboter & Boden', slug: 'saugroboter', icon: '🧹' },
+                      { name: 'Klima & Entfeuchter', slug: 'klima-heizen', icon: '💨' },
+                      { name: 'Küchenkleingeräte', slug: 'kuechenkleingeraete', icon: '🔌' },
                     ].map((cat, idx) => (
                       <Link
                         key={idx}
-                        href={`/categoria-de-produto/${cat.slug}`}
+                        href={`/shop?category=${cat.slug}`}
                         className="flex items-center justify-between px-5 py-2.5 hover:bg-red-50 hover:text-red-600 text-stone-800 text-xs font-semibold transition"
                         onClick={() => setIsBottomCategoryOpen(false)}
                       >
@@ -561,24 +553,35 @@ export default function Header({
                 ))
               ) : (
                 <>
-                  <Link href="/" className="flex items-center px-4 py-3 hover:bg-black/15 rounded transition font-black text-white">
-                    <span>INÍCIO</span>
+                  <Link href="/shop" className="flex items-center gap-1.5 px-3.5 py-3 bg-red-800/80 hover:bg-red-900 rounded transition font-black text-white shadow-xs">
+                    <span>🔥</span>
+                    <span>ANGEBOTE</span>
                   </Link>
-                  <Link href="/shop" className="flex items-center px-4 py-3 hover:bg-black/15 rounded transition font-black text-white">
-                    <span>SHOP</span>
+                  <Link href="/shop?category=kuehlen-gefrieren" className="flex items-center px-3 py-3 hover:bg-black/15 rounded transition font-bold text-white text-xs">
+                    <span>KÜHLEN &amp; GEFRIEREN</span>
                   </Link>
-                  <Link href="/devolucoes" className="flex items-center px-4 py-3 hover:bg-black/15 rounded transition font-black text-white">
-                    <span>DEVOLUÇÃO E REEMBOLSO</span>
+                  <Link href="/shop?category=waschen-trocknen" className="flex items-center px-3 py-3 hover:bg-black/15 rounded transition font-bold text-white text-xs">
+                    <span>WASCHEN &amp; TROCKNEN</span>
                   </Link>
-                  <Link href="/envios-e-entregas" className="flex items-center px-4 py-3 hover:bg-black/15 rounded transition font-black text-white">
-                    <span>EXPEDIÇÃO</span>
+                  <Link href="/shop?category=kochen-backen" className="flex items-center px-3 py-3 hover:bg-black/15 rounded transition font-bold text-white text-xs">
+                    <span>KOCHEN &amp; BACKEN</span>
                   </Link>
-                  <Link href="/contact" className="flex items-center px-4 py-3 hover:bg-black/15 rounded transition font-black text-white">
-                    <span>CONTACTAR NOS</span>
+                  <Link href="/shop?category=kaffeevollautomaten" className="flex items-center px-3 py-3 hover:bg-black/15 rounded transition font-bold text-white text-xs">
+                    <span>KAFFEEVOLLAUTOMATEN</span>
+                  </Link>
+                  <Link href="/contact" className="flex items-center px-3 py-3 hover:bg-black/15 rounded transition font-bold text-white text-xs">
+                    <span>KONTAKT</span>
                   </Link>
                 </>
               )}
             </nav>
+
+            {/* Right Guarantee Badge */}
+            <div className="hidden xl:flex items-center gap-2 text-white/90 text-xs font-bold pl-4 border-l border-white/20 shrink-0">
+              <span>🛡️ 2 Jahre Garantie</span>
+              <span className="text-white/40">•</span>
+              <span>🚚 Kostenloser Versand ab 50 €</span>
+            </div>
           </div>
         </div>
 

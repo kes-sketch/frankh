@@ -12,71 +12,61 @@ export default async function HeatingGuideBlogs() {
       take: 3
     });
   } catch (e) {
-    console.error('Error fetching articles for HeatingGuideBlogs', e);
+    console.error('Error fetching articles for Hausgeraete Guide', e);
   }
 
   const fallbackArticles = [
     {
       id: 'a1',
-      title: 'Como escolher entre uma Salamandra a Pellets ou a Lenha?',
-      slug: 'como-escolher-salamandra-pellets-ou-lenha',
-      category: 'Guia de Compra',
-      excerpt: 'Descubra as diferenças de rendimento térmico, custo do combustível e autonomia diária para fazer a melhor escolha para a sua habitação.',
-      image: null,
-      icon: '🪵'
+      title: 'Kaufberatung: Die richtige Waschmaschine für Ihren Haushalt finden',
+      slug: 'kaufberatung-waschmaschine-finden',
+      category: 'Kaufberatung',
+      excerpt: 'Worauf kommt es wirklich an? Neue Energieeffizienzklassen A bis G, Schleuderdrehzahl und smarte Dosiersysteme im Detail erklärt.',
+      image: 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?auto=format&fit=crop&q=80&w=600',
+      icon: '🧺'
     },
     {
       id: 'a2',
-      title: 'Dicas para aumentar a durabilidade do seu Recuperador de Calor',
-      slug: 'dicas-aumentar-durabilidade-recuperador-calor',
-      category: 'Manutenção',
-      excerpt: 'A limpeza correta dos tubos de exaustão e da câmara de combustão evita perdas de calor e garante máxima segurança no inverno.',
-      image: null,
-      icon: '🔥'
+      title: 'Kaffeevollautomat vs. Siebträger: Welcher Kaffeetyp sind Sie?',
+      slug: 'kaffeevollautomat-vs-siebtraeger-vergleich',
+      category: 'Ratgeber',
+      excerpt: 'Bequemer Knopfdruck oder handwerkliche Barista-Kunst? Wir vergleichen Aromen, Pflegeaufwand und Anschaffungskosten.',
+      image: 'https://images.unsplash.com/photo-1517668808822-9ebb02f2a0e6?auto=format&fit=crop&q=80&w=600',
+      icon: '☕'
     },
     {
       id: 'a3',
-      title: 'Por que os Pellets Certificados ENplus A1 geram mais economia?',
-      slug: 'vantagens-pellets-certificados-enplus-a1',
-      category: 'Poupança Energética',
-      excerpt: 'Menor humidade e baixa percentagem de cinzas reduzem o consumo de sacos em mais de 20% ao longo do inverno.',
-      image: null,
-      icon: '💰'
+      title: 'Strom sparen in der Küche: Bis zu 250 € jährlich einsparen',
+      slug: 'energie-sparen-kuehle-haushalt',
+      category: 'Energiesparen',
+      excerpt: 'Mit modernen NoFrost Kühl-Gefrierkombinationen und energieeffizienten Induktionskochfeldern die Stromrechnung spürbar senken.',
+      image: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&q=80&w=600',
+      icon: '💡'
     }
   ];
 
   const items = articles.length > 0 ? articles : fallbackArticles;
 
-  const getArticleIcon = (slug?: string, title?: string, fallbackIcon?: string) => {
-    if (fallbackIcon) return fallbackIcon;
-    const s = ((slug || '') + ' ' + (title || '')).toLowerCase();
-    if (s.includes('pellet') || s.includes('lenha') || s.includes('escolher')) return '🪵';
-    if (s.includes('recuperador') || s.includes('durabilidade')) return '🔥';
-    if (s.includes('economia') || s.includes('poupanca') || s.includes('certificado')) return '💰';
-    return '🪵';
-  };
-
   return (
-    <section id="blog-dicas" className="py-14 bg-white border-t border-stone-200">
-      <div className="max-w-7xl mx-auto px-4">
+    <section id="magazin" className="py-14 sm:py-16 bg-white border-t border-stone-200">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header Section */}
-        <div className="flex items-end justify-between gap-3 mb-6 sm:mb-8">
-          <div className="min-w-0">
-            <span className="text-red-600 font-bold text-[11px] sm:text-xs uppercase tracking-wider block">
-              Dicas & Artigos
+        <div className="flex items-end justify-between gap-4 mb-8">
+          <div>
+            <span className="text-red-600 font-extrabold text-xs uppercase tracking-wider block">
+              Wissen & Beratung
             </span>
-            <h2 className="text-[17px] sm:text-2xl lg:text-3xl font-extrabold text-stone-900 tracking-tight leading-tight whitespace-nowrap sm:whitespace-normal">
-              Guia de Aquecimento Eficiente
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-stone-900 tracking-tight mt-1">
+              Aktuelles aus unserem Magazin & Ratgeber
             </h2>
           </div>
           <Link 
             href="/blog" 
             className="text-xs sm:text-sm font-bold text-red-600 hover:text-red-700 flex items-center gap-1 shrink-0 transition-colors group pb-0.5"
           >
-            <span>Ver todos</span>
-            <span className="hidden sm:inline">artigos</span>
-            <span className="group-hover:translate-x-0.5 transition-transform">&rarr;</span>
+            <span>Alle Beiträge lesen</span>
+            <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
           </Link>
         </div>
 
@@ -88,41 +78,43 @@ export default async function HeatingGuideBlogs() {
               className="bg-stone-50 rounded-2xl border border-stone-200 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all group flex flex-col justify-between"
             >
               <div>
-                <div className="h-44 bg-gradient-to-br from-stone-100 to-stone-200 flex items-center justify-center text-5xl overflow-hidden relative">
+                <div className="h-48 bg-stone-100 flex items-center justify-center text-5xl overflow-hidden relative">
                   {art.image ? (
                     <Image 
                       src={art.image} 
                       alt={art.title} 
                       width={600} 
                       height={400} 
+                      referrerPolicy="no-referrer"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                     />
                   ) : (
-                    <span className="select-none">{getArticleIcon(art.slug, art.title, art.icon)}</span>
+                    <span className="group-hover:scale-110 transition-transform">{art.icon || '📖'}</span>
+                  )}
+                  {art.category && (
+                    <span className="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm">
+                      {art.category}
+                    </span>
                   )}
                 </div>
-                
+
                 <div className="p-5">
-                  <span className="text-[11px] font-bold text-red-600 uppercase tracking-wider block">
-                    {art.category || 'Dicas de Aquecimento'}
-                  </span>
-                  <Link href={`/blog/${art.slug}`}>
-                    <h3 className="font-bold text-stone-900 text-base mt-1 group-hover:text-red-600 transition-colors line-clamp-2">
-                      {art.title}
-                    </h3>
-                  </Link>
-                  <p className="text-xs text-stone-500 mt-2 line-clamp-3 leading-relaxed">
+                  <h3 className="font-extrabold text-stone-900 text-base group-hover:text-red-600 transition-colors line-clamp-2">
+                    {art.title}
+                  </h3>
+                  <p className="text-xs text-stone-600 mt-2 line-clamp-3 leading-relaxed">
                     {art.excerpt}
                   </p>
                 </div>
               </div>
 
-              <div className="px-5 pb-5 pt-0">
+              <div className="p-5 pt-0">
                 <Link 
                   href={`/blog/${art.slug}`} 
-                  className="inline-flex items-center text-xs font-bold text-stone-900 hover:text-red-600 transition-colors gap-1"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 group-hover:text-red-700 transition-colors"
                 >
-                  Ler Artigo Completo &rarr;
+                  <span>Artikel lesen</span>
+                  <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
                 </Link>
               </div>
             </article>
