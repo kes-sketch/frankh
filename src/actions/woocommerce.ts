@@ -238,6 +238,27 @@ export interface ProcessWcProductsResult {
   items: WcProductImportItemResult[];
 }
 
+function getWcHeaders(consumerKey: string, consumerSecret: string) {
+  return {
+    'Authorization': 'Basic ' + Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64'),
+    'Accept': 'application/json, text/plain, */*',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'Content-Type': 'application/json'
+  };
+}
+
+function checkWcResponse(response: Response, rawText?: string) {
+  const isSgCaptcha = response.headers.get("sg-captcha") === "challenge" || response.status === 202;
+  if (isSgCaptcha || (rawText && rawText.includes("sgcaptcha"))) {
+    throw new Error("SiteGround Anti-Bot (SG-Captcha) est actif sur votre serveur et bloque l'API WooCommerce (Code HTTP 202). Veuillez désactiver temporairement « AI Anti-Bot » dans SiteGround Site Tools > Sécurité pour autoriser l'importation.");
+  }
+
+  const contentType = response.headers.get("content-type");
+  if (!contentType || !contentType.includes("application/json")) {
+    throw new Error(`L'API WooCommerce a retourné une réponse inattendue (Content-Type: ${contentType}). Un pare-feu ou système de protection (ex: SiteGround Anti-Bot / Cloudflare) bloque les requêtes.`);
+  }
+}
+
 export async function testWooCommerceConnection(url: string, consumerKey: string, consumerSecret: string) {
   await requireAdmin();
   const baseUrl = url.replace(/\/$/, '');
@@ -245,15 +266,35 @@ export async function testWooCommerceConnection(url: string, consumerKey: string
 
   try {
     const response = await fetch(apiUrl, {
-      headers: {
-        'Authorization': 'Basic ' + Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64'),
-        'Content-Type': 'application/json'
-      },
+      headers: getWcHeaders(consumerKey, consumerSecret),
       cache: 'no-store'
     });
 
+    const isSgCaptcha = response.headers.get("sg-captcha") === "challenge" || response.status === 202;
+    if (isSgCaptcha) {
+      return {
+        success: false,
+        message: "SiteGround Anti-Bot (SG-Captcha) bloque l'API WooCommerce (HTTP 202). Veuillez désactiver temporairement « AI Anti-Bot » dans SiteGround Site Tools > Sécurité pour permettre la connexion."
+      };
+    }
+
     if (!response.ok) {
       return { success: false, message: `Connexion refusée : ${response.status} ${response.statusText}` };
+    }
+
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      const text = await response.text().catch(() => '');
+      if (text.includes("sgcaptcha")) {
+        return {
+          success: false,
+          message: "SiteGround Anti-Bot (SG-Captcha) bloque l'API WooCommerce. Veuillez désactiver temporairement « AI Anti-Bot » dans SiteGround Site Tools > Sécurité."
+        };
+      }
+      return {
+        success: false,
+        message: `Réponse inattendue (Content-Type: ${contentType}). Vérifiez que l'API REST WooCommerce est activée et non bloquée.`
+      };
     }
 
     return { success: true, message: 'Connexion réussie à l\'API WooCommerce !' };
@@ -277,12 +318,15 @@ export async function fetchWooCommerceCategoriesList(url: string, consumerKey: s
 
     while (hasMore && page <= 10) {
       const response = await fetch(`${apiUrl}?per_page=100&page=${page}&hide_empty=false`, {
-        headers: {
-          'Authorization': 'Basic ' + Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64'),
-          'Content-Type': 'application/json'
-        },
+        headers: getWcHeaders(consumerKey, consumerSecret),
         cache: 'no-store'
       });
+
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text().catch(() => '');
+        checkWcResponse(response, text);
+      }
 
       if (!response.ok) {
         throw new Error(`Erreur API WooCommerce: ${response.status} ${response.statusText}`);
@@ -335,12 +379,15 @@ export async function fetchWooCommerceProductsList(
 
   try {
     const response = await fetch(apiUrl, {
-      headers: {
-        'Authorization': 'Basic ' + Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64'),
-        'Content-Type': 'application/json'
-      },
+      headers: getWcHeaders(consumerKey, consumerSecret),
       cache: 'no-store'
     });
+
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      const text = await response.text().catch(() => '');
+      checkWcResponse(response, text);
+    }
 
     if (!response.ok) {
       throw new Error(`Erreur API WooCommerce: ${response.status} ${response.statusText}`);
@@ -405,23 +452,19 @@ export async function importWooCommerceCategories(
 
     while (hasMore && page <= 20) {
       const response = await fetch(`${apiUrl}?per_page=100&page=${page}`, {
-        headers: {
-          'Authorization': 'Basic ' + Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64'),
-          'Content-Type': 'application/json'
-        },
+        headers: getWcHeaders(consumerKey, consumerSecret),
         cache: 'no-store'
       });
-
-      if (!response.ok) {
-        throw new Error(`Erreur API WooCommerce (Catégories): ${response.status} ${response.statusText}`);
-      }
 
       const contentType = response.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
         const text = await response.text().catch(() => 'Impossible de lire le corps de la réponse');
         console.error(`WooCommerce API HTML response: ${text.substring(0, 500)}...`);
-        const t = await getTranslations('AdminCategories');
-        throw new Error(t('woo_import_cat_html_error') + ` (Content-Type: ${contentType})`);
+        checkWcResponse(response, text);
+      }
+
+      if (!response.ok) {
+        throw new Error(`Erreur API WooCommerce (Catégories): ${response.status} ${response.statusText}`);
       }
 
       const cats = await response.json();
@@ -524,12 +567,15 @@ export async function countWooCommerceProducts(
 
   try {
     const response = await fetch(apiUrl, {
-      headers: {
-        'Authorization': 'Basic ' + Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64'),
-        'Content-Type': 'application/json'
-      },
+      headers: getWcHeaders(consumerKey, consumerSecret),
       cache: 'no-store'
     });
+
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      const text = await response.text().catch(() => '');
+      checkWcResponse(response, text);
+    }
 
     if (!response.ok) {
       throw new Error(`Erreur API WooCommerce: ${response.status} ${response.statusText}`);
@@ -720,10 +766,7 @@ async function processAndSaveWcProducts(
       if (wcProduct.type === 'variable') {
         try {
           const varResponse = await fetch(`${apiUrl}/${wcProduct.id}/variations`, {
-            headers: {
-              'Authorization': 'Basic ' + Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64'),
-              'Content-Type': 'application/json'
-            },
+            headers: getWcHeaders(consumerKey, consumerSecret),
             cache: 'no-store'
           });
           if (varResponse.ok) {
@@ -812,10 +855,7 @@ async function processAndSaveWcProducts(
       // 9. Import reviews
       try {
         const reviewsResponse = await fetch(`${apiUrl}/reviews?product=${wcProduct.id}`, {
-          headers: {
-            'Authorization': 'Basic ' + Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64'),
-            'Content-Type': 'application/json'
-          },
+          headers: getWcHeaders(consumerKey, consumerSecret),
           cache: 'no-store'
         });
 
@@ -898,23 +938,19 @@ export async function importWooCommerceProductsBatch(
     }
 
     const response = await fetch(queryUrl, {
-      headers: {
-        'Authorization': 'Basic ' + Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64'),
-        'Content-Type': 'application/json'
-      },
+      headers: getWcHeaders(consumerKey, consumerSecret),
       cache: 'no-store'
     });
-
-    if (!response.ok) {
-      throw new Error(`Erreur API WooCommerce: ${response.status} ${response.statusText}`);
-    }
 
     const contentType = response.headers.get("content-type");
     if (!contentType || !contentType.includes("application/json")) {
       const text = await response.text().catch(() => 'Impossible de lire le corps de la réponse');
       console.error(`WooCommerce API HTML response (products): ${text.substring(0, 200)}...`);
-      const t = await getTranslations('AdminProducts');
-      throw new Error(t('woo_import_prod_html_error') + ` (Content-Type: ${contentType})`);
+      checkWcResponse(response, text);
+    }
+
+    if (!response.ok) {
+      throw new Error(`Erreur API WooCommerce: ${response.status} ${response.statusText}`);
     }
 
     let products;
@@ -986,12 +1022,15 @@ export async function importWooCommerceSelectedProducts(
       const queryUrl = `${apiUrl}?include=${slice.join(',')}&per_page=${chunkSize}`;
 
       const response = await fetch(queryUrl, {
-        headers: {
-          'Authorization': 'Basic ' + Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64'),
-          'Content-Type': 'application/json'
-        },
+        headers: getWcHeaders(consumerKey, consumerSecret),
         cache: 'no-store'
       });
+
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text().catch(() => '');
+        checkWcResponse(response, text);
+      }
 
       if (!response.ok) {
         throw new Error(`Erreur API WooCommerce: ${response.status} ${response.statusText}`);
@@ -1049,12 +1088,15 @@ export async function importWooCommerceOrders(
 
     while (hasMore && page <= 50) {
       const response = await fetch(`${apiUrl}?per_page=50&page=${page}`, {
-        headers: {
-          'Authorization': 'Basic ' + Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64'),
-          'Content-Type': 'application/json'
-        },
+        headers: getWcHeaders(consumerKey, consumerSecret),
         cache: 'no-store'
       });
+
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text().catch(() => '');
+        checkWcResponse(response, text);
+      }
 
       if (!response.ok) {
         throw new Error(`Erreur API WooCommerce Orders: ${response.status} ${response.statusText}`);
@@ -1220,12 +1262,15 @@ export async function importWordPressPages(
 
     while (hasMore && page <= 10) {
       const response = await fetch(`${apiUrl}?per_page=100&page=${page}`, {
-        headers: {
-          'Authorization': 'Basic ' + Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64'),
-          'Content-Type': 'application/json'
-        },
+        headers: getWcHeaders(consumerKey, consumerSecret),
         cache: 'no-store'
       });
+
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text().catch(() => '');
+        checkWcResponse(response, text);
+      }
 
       if (!response.ok) {
         throw new Error(`Erreur API WordPress Pages: ${response.status} ${response.statusText}`);
@@ -1294,12 +1339,15 @@ export async function importWordPressArticles(
 
     while (hasMore && page <= 10) {
       const response = await fetch(`${apiUrl}&per_page=100&page=${page}`, {
-        headers: {
-          'Authorization': 'Basic ' + Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64'),
-          'Content-Type': 'application/json'
-        },
+        headers: getWcHeaders(consumerKey, consumerSecret),
         cache: 'no-store'
       });
+
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text().catch(() => '');
+        checkWcResponse(response, text);
+      }
 
       if (!response.ok) {
         throw new Error(`Erreur API WordPress Posts: ${response.status} ${response.statusText}`);
@@ -1374,12 +1422,15 @@ export async function importWooCommerceShipping(
   try {
     const zonesUrl = `${baseUrl}/wp-json/wc/v3/shipping/zones`;
     const response = await fetch(zonesUrl, {
-      headers: {
-        'Authorization': authHeader,
-        'Content-Type': 'application/json'
-      },
+      headers: getWcHeaders(consumerKey, consumerSecret),
       cache: 'no-store'
     });
+
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      const text = await response.text().catch(() => '');
+      checkWcResponse(response, text);
+    }
 
     if (!response.ok) {
       throw new Error(`Erreur API WooCommerce Shipping Zones: ${response.status} ${response.statusText}`);
@@ -1529,12 +1580,15 @@ export async function importWooCommerceReviews(
 
     while (hasMore && page <= 50) {
       const response = await fetch(`${apiUrl}?per_page=100&page=${page}`, {
-        headers: {
-          'Authorization': 'Basic ' + Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64'),
-          'Content-Type': 'application/json'
-        },
+        headers: getWcHeaders(consumerKey, consumerSecret),
         cache: 'no-store'
       });
+
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text().catch(() => '');
+        checkWcResponse(response, text);
+      }
 
       if (!response.ok) {
         throw new Error(`Erreur API WooCommerce Reviews: ${response.status} ${response.statusText}`);
@@ -1635,9 +1689,15 @@ export async function syncWooCommerceRankMathSEO(
   try {
     // 1. Sync Categories SEO
     const catResponse = await fetch(`${baseUrl}/wp-json/wc/v3/products/categories?per_page=100&hide_empty=false`, {
-      headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
+      headers: getWcHeaders(consumerKey, consumerSecret),
       cache: 'no-store'
     });
+
+    const catContentType = catResponse.headers.get("content-type");
+    if (!catContentType || !catContentType.includes("application/json")) {
+      const text = await catResponse.text().catch(() => '');
+      checkWcResponse(catResponse, text);
+    }
 
     if (catResponse.ok) {
       const remoteCategories = await catResponse.json();
@@ -1679,9 +1739,15 @@ export async function syncWooCommerceRankMathSEO(
 
     while (hasMore && page <= 20) {
       const prodResponse = await fetch(`${baseUrl}/wp-json/wc/v3/products?per_page=100&page=${page}`, {
-        headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
+        headers: getWcHeaders(consumerKey, consumerSecret),
         cache: 'no-store'
       });
+
+      const prodContentType = prodResponse.headers.get("content-type");
+      if (!prodContentType || !prodContentType.includes("application/json")) {
+        const text = await prodResponse.text().catch(() => '');
+        checkWcResponse(prodResponse, text);
+      }
 
       if (!prodResponse.ok) {
         throw new Error(`Erreur API WooCommerce: ${prodResponse.status} ${prodResponse.statusText}`);
