@@ -1,0 +1,68 @@
+import prisma from '@/lib/prisma';
+import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
+import ProductCard from '@/components/shop/ProductCard';
+
+export const revalidate = 300;
+
+export default async function SaleProductsPage() {
+  const t = await getTranslations('SaleProducts');
+
+  const products = await prisma.product.findMany({
+    where: {
+      compareAtPrice: { not: null },
+      isDeleted: false
+    },
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      price: true,
+      compareAtPrice: true,
+      images: true,
+      discountLabel: true,
+      categories: { select: { name: true, slug: true } },
+      reviews: { select: { rating: true } }
+    },
+    orderBy: { updatedAt: 'desc' },
+    take: 48
+  });
+
+  return (
+    <div className="bg-gray-50 min-h-screen py-8 font-sans">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('title')}</h1>
+            <p className="text-gray-600">
+              {t('subtitle')}
+            </p>
+          </div>
+        </div>
+
+        {products.length === 0 ? (
+          <div className="bg-white p-12 text-center rounded-lg border border-gray-200">
+            <h2 className="text-xl font-medium text-gray-900 mb-2">{t('no_products')}</h2>
+            <Link href="/" className="inline-block bg-orange-600 hover:bg-orange-700 text-white font-medium px-6 py-2 rounded transition">
+              {t('back_to_home')}
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
+            {products.map((product) => (
+              <ProductCard 
+                key={product.id} 
+                product={{
+                  ...product,
+                  discountLabel: product.compareAtPrice && product.compareAtPrice > product.price 
+                    ? `${t('sale_badge')} -${Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100)}%` 
+                    : t('sale_badge')
+                } as any} 
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,535 @@
+'use server';
+
+import prisma from '@/lib/prisma';
+import { createClient } from '@/utils/supabase/server';
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
+
+const ALLOWED_PAYMENT_METHODS = ['STRIPE', 'PAYPAL', 'BANK_TRANSFER'] as const;
+const MAX_CART_LINES = 50;
+const MAX_QTY_PER_LINE = 999;
+
+export async function validateCoupon(code: string, customerEmail?: string) {
+  try {
+    const ip = await getClientIp();
+    const rl = await checkRateLimit(`coupon_${ip}`, 10, 60); // 10 attempts per minute
+    if (!rl.success) {
+      return { error: "Demasiadas tentativas de validação de cupão. Por favor, aguarde um momento." };
+    }
+
+    if (!code || typeof code !== 'string' || code.trim().length === 0 || code.length > 50) {
+      return { error: "Código de cupão inválido." };
+    }
+    const cleanCode = code.trim().toUpperCase();
+    const coupon = await prisma.coupon.findUnique({
+      where: { code: cleanCode }
+    });
+
+    if (!coupon) {
+      return { error: "Código de cupão inválido." };
+    }
+
+    if (!coupon.isActive) {
+      return { error: "Este código de cupão já não se encontra ativo." };
+    }
+
+    // Special verification for welcome voucher (single use per customer)
+    if (cleanCode === 'WELCOME10' && customerEmail && customerEmail.includes('@')) {
+      const normalizedEmail = customerEmail.trim().toLowerCase();
+      const priorOrder = await prisma.order.findFirst({
+        where: {
+          OR: [
+            { user: { email: normalizedEmail } },
+            { destinationAddress: { contains: normalizedEmail } }
+          ],
+          destinationAddress: { contains: '"couponCode":"WELCOME10"' }
+        }
+      });
+      if (priorOrder) {
+        return { error: "O código WELCOME10 já foi utilizado neste endereço de e-mail." };
+      }
+    }
+
+    return { 
+      success: true, 
+      coupon: {
+        code: coupon.code,
+        type: coupon.type,
+        value: coupon.value
+      } 
+    };
+  } catch (error) {
+    console.error("Coupon validation error:", error);
+    return { error: "Erro ao validar o código do cupão." };
+  }
+}
+
+
+export async function processCheckout(formData: FormData, cartItems: any[], finalTotal: number, paymentMethod: string) {
+  try {
+    const ip = await getClientIp();
+    const rl = await checkRateLimit(`checkout_${ip}`, 10, 60); // 10 checkouts per min
+    if (!rl.success) {
+      return { error: "Demasiados pedidos de encomenda. Por favor, aguarde um momento." };
+    }
+
+    const email = String(formData.get('email') || '').trim().toLowerCase();
+    const firstName = formData.get('firstName') as string;
+    const lastName = formData.get('lastName') as string;
+    const country = formData.get('country') as string;
+    const shippingMethodId = formData.get('shippingMethod') as string;
+    const shipToDifferentAddress = formData.get('shipToDifferentAddress') === 'on';
+    const shippingCountry = formData.get('shippingCountry') as string;
+    
+    const effectiveCountry = shipToDifferentAddress ? shippingCountry : country;
+
+    // ===== INPUT VALIDATION (never trust the client) =====
+    if (!email || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return { error: "Por favor, indique um endereço de e-mail válido." };
+    }
+
+    if (!(ALLOWED_PAYMENT_METHODS as readonly string[]).includes(paymentMethod)) {
+      return { error: "Método de pagamento inválido." };
+    }
+
+    if (!Array.isArray(cartItems) || cartItems.length === 0) {
+      return { error: "O seu carrinho está vazio." };
+    }
+    if (cartItems.length > MAX_CART_LINES) {
+      return { error: "Demasiados artigos no carrinho." };
+    }
+
+    // Validate shippingMethodId is a valid UUID to prevent Prisma P2023 errors
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+    for (const item of cartItems) {
+      const qty = Number(item?.quantity);
+      if (!item || typeof item.productId !== 'string' || !uuidRegex.test(item.productId)) {
+        return { error: "Artigo inválido no carrinho. Por favor, atualize o seu carrinho." };
+      }
+      // SECURITY: negative / fractional / huge quantities would alter the total
+      if (!Number.isInteger(qty) || qty < 1 || qty > MAX_QTY_PER_LINE) {
+        return { error: "Quantidade inválida no carrinho." };
+      }
+      item.quantity = qty;
+    }
+
+    if (!shippingMethodId || !uuidRegex.test(shippingMethodId)) {
+      return { error: "Método de envio inválido. Por favor, atualize a página." };
+    }
+
+    // Check that the selected payment method is enabled by the admin
+    const paymentFlags = await prisma.setting.findMany({
+      where: { key: { in: ['ENABLE_STRIPE', 'ENABLE_PAYPAL', 'ENABLE_BANK_TRANSFER'] } }
+    });
+    const flagMap = Object.fromEntries(paymentFlags.map(s => [s.key, s.value]));
+    const flagKey = paymentMethod === 'BANK_TRANSFER' ? 'ENABLE_BANK_TRANSFER' : `ENABLE_${paymentMethod}`;
+    if (flagMap[flagKey] === 'false') {
+      return { error: "Este método de pagamento não se encontra disponível." };
+    }
+
+    const validZone = await prisma.shippingZone.findFirst({
+      where: { name: effectiveCountry, isActive: true },
+      include: { methods: { where: { id: shippingMethodId, isActive: true } } }
+    });
+
+    if (!validZone) {
+      return { error: "Esta zona de entrega não é atualmente abrangida." };
+    }
+
+    if (!validZone.methods || validZone.methods.length === 0) {
+      return { error: "Método de envio inválido." };
+    }
+
+    const shippingRate = validZone.methods[0].rate;
+    
+    // ===== SERVER-SIDE PRICE VERIFICATION =====
+    // Never trust client-provided prices. Fetch real prices from database.
+    const productIds = [...new Set(cartItems.map((item: any) => item.productId as string))];
+    const dbProducts = await prisma.product.findMany({
+      where: { id: { in: productIds }, isDeleted: false },
+      select: { id: true, price: true, title: true, images: true, variations: true },
+    });
+    const productMap = new Map(dbProducts.map(p => [p.id, p]));
+
+    // Verify all products exist and recalculate total from DB prices
+    let serverCartTotal = 0;
+    const verifiedItems: any[] = [];
+    for (const item of cartItems) {
+      const dbProduct = productMap.get(item.productId);
+      if (!dbProduct) {
+        return { error: `Um dos artigos no seu carrinho já não se encontra disponível. Por favor, atualize o carrinho.` };
+      }
+
+      let itemPrice = dbProduct.price;
+      let itemImage = dbProduct.images?.[0] || '';
+
+      // Check if item has a variation with a specific price
+      if (item.variationId && Array.isArray(dbProduct.variations)) {
+        const foundVar = (dbProduct.variations as any[]).find(
+          (v: any) => v && String(v.id) === String(item.variationId)
+        );
+        if (foundVar) {
+          if (foundVar.price) {
+            const parsedVarPrice = parseFloat(String(foundVar.price));
+            if (!isNaN(parsedVarPrice) && parsedVarPrice > 0) {
+              itemPrice = parsedVarPrice;
+            }
+          }
+          if (foundVar.image && typeof foundVar.image === 'string') {
+            itemImage = foundVar.image;
+          }
+        }
+      }
+
+      serverCartTotal += itemPrice * item.quantity;
+      verifiedItems.push({
+        productId: dbProduct.id,
+        quantity: item.quantity,
+        price: itemPrice, // Use DB price or variation price, not client price
+        title: dbProduct.title, // Use DB title, not client title
+        image: itemImage,
+        variationId: typeof item.variationId === 'string' ? item.variationId.slice(0, 100) : null,
+        attributes: item.attributes && typeof item.attributes === 'object' ? item.attributes : null,
+      });
+    }
+
+    // Apply coupon discount server-side if provided
+    const couponCode = String(formData.get('couponCode') || '').trim().slice(0, 64);
+    let discountAmount = 0;
+    if (couponCode) {
+      const cleanUpperCode = couponCode.toUpperCase();
+      const coupon = await prisma.coupon.findUnique({
+        where: { code: cleanUpperCode },
+      });
+      if (coupon && coupon.isActive) {
+        // Enforce 1-time usage per customer for WELCOME10
+        if (cleanUpperCode === 'WELCOME10') {
+          const priorOrder = await prisma.order.findFirst({
+            where: {
+              OR: [
+                { user: { email } },
+                { destinationAddress: { contains: email } }
+              ],
+              destinationAddress: { contains: '"couponCode":"WELCOME10"' }
+            }
+          });
+          if (priorOrder) {
+            return { error: "O cupão de boas-vindas WELCOME10 é exclusivo para a primeira encomenda e já foi utilizado por este cliente." };
+          }
+        }
+
+        if (coupon.type === 'PERCENTAGE') {
+          discountAmount = serverCartTotal * (coupon.value / 100);
+        } else {
+          discountAmount = Math.min(coupon.value, serverCartTotal);
+        }
+      }
+    }
+
+    const serverTotal = Math.max(0, serverCartTotal - discountAmount) + shippingRate;
+    // Round to 2 decimal places to avoid floating point issues
+    const verifiedTotal = Math.round(serverTotal * 100) / 100;
+
+    
+    // Find or link user
+    const supabase = await createClient();
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+
+    let user = null;
+    if (authUser) {
+      user = await prisma.user.findUnique({ where: { id: authUser.id } });
+      if (!user) {
+        user = await prisma.user.create({
+          data: {
+            id: authUser.id,
+            email: authUser.email || email,
+            role: 'CUSTOMER',
+          }
+        });
+      }
+    } else {
+      user = await prisma.user.findUnique({ where: { email } });
+      if (!user) {
+        user = await prisma.user.create({
+          data: {
+            email,
+            role: 'CUSTOMER',
+          }
+        });
+      }
+    }
+
+    const orderMetadata = {
+      billing: {
+        firstName,
+        lastName,
+        company: ((formData.get('companyName') as string) || (formData.get('company') as string) || '').trim(),
+        nif: ((formData.get('nif') as string) || (formData.get('nipc') as string) || '').trim(),
+        email,
+        phone: formData.get('phone') as string,
+        address1: formData.get('address1') as string,
+        address2: formData.get('address2') as string,
+        city: formData.get('city') as string,
+        postalCode: formData.get('postalCode') as string,
+        country: country
+      },
+      shipping: shipToDifferentAddress ? {
+        firstName: formData.get('shippingFirstName') as string,
+        lastName: formData.get('shippingLastName') as string,
+        company: formData.get('shippingCompany') as string,
+        phone: formData.get('shippingPhone') as string,
+        address1: formData.get('shippingAddress1') as string,
+        address2: formData.get('shippingAddress2') as string,
+        city: formData.get('shippingCity') as string,
+        postalCode: formData.get('shippingPostalCode') as string,
+        country: shippingCountry
+      } : null,
+      shippingCost: shippingRate,
+      shippingMethodName: validZone.methods[0].type,
+      subTotal: serverCartTotal,
+      discount: discountAmount,
+      couponCode: couponCode || null,
+    };
+
+    // Fetch settings once for currency and payment config
+    const allSettings = await prisma.setting.findMany();
+    const settingsMap = allSettings.reduce((acc, s) => ({ ...acc, [s.key]: s.value }), {} as Record<string, string>);
+    const storeCurrencyCode = settingsMap.currency || 'EUR';
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://frankhausgeraete.de';
+
+    // Helper to determine the best active fallback payment method
+    const getFallbackPayment = () => {
+      if (settingsMap.ENABLE_BANK_TRANSFER !== 'false') return 'BANK_TRANSFER';
+      if (settingsMap.ENABLE_STRIPE !== 'false' && settingsMap.STRIPE_SECRET_KEY && settingsMap.STRIPE_SECRET_KEY.startsWith('sk_')) return 'STRIPE';
+      if (settingsMap.ENABLE_PAYPAL !== 'false' && settingsMap.PAYPAL_CLIENT_ID && settingsMap.PAYPAL_SECRET) return 'PAYPAL';
+      return null;
+    };
+
+    // ===== PRE-VALIDATE PAYMENT GATEWAY CONFIGURATION BEFORE CREATING ORDER =====
+    // If a gateway is missing credentials, do NOT create a ghost order in DB!
+    if (paymentMethod === 'STRIPE') {
+      const stripeSecretKey = settingsMap['STRIPE_SECRET_KEY'];
+      if (!stripeSecretKey || !stripeSecretKey.startsWith('sk_')) {
+        // Trigger live supervision alert (email + in-app)
+        const { sendAdminAlertEmail } = await import('@/lib/mailer');
+        const { createNotification } = await import('@/lib/notifications');
+        sendAdminAlertEmail({
+          title: "Tentativa de pagamento por Cartão (Stripe não configurado)",
+          message: `Um cliente (${email}) tentou pagar uma encomenda de ${verifiedTotal} € por Cartão de Crédito/Débito, mas o Stripe ainda não está configurado na administração.`,
+          details: { Cliente: email, Montante: `${verifiedTotal} €`, 'País': effectiveCountry }
+        }).catch(e => console.error('[Supervision Live] Email alert error:', e));
+
+        createNotification({
+          isAdmin: true,
+          type: 'SYSTEM',
+          message: JSON.stringify({
+            key: 'gateway_not_configured',
+            gateway: 'Stripe (Cartão)',
+            email,
+            amount: `${verifiedTotal} €`
+          }),
+          link: '/admin/settings/payments'
+        }).catch(e => console.error('[Supervision Live] Admin notif error:', e));
+
+        return {
+          error: "payment_unavailable",
+          unavailableMethod: 'STRIPE',
+          fallbackPaymentMethod: getFallbackPayment(),
+        };
+      }
+    } else if (paymentMethod === 'PAYPAL') {
+      const paypalClientId = settingsMap['PAYPAL_CLIENT_ID'];
+      const paypalSecret = settingsMap['PAYPAL_SECRET'];
+      if (!paypalClientId || !paypalSecret) {
+        // Trigger live supervision alert (email + in-app)
+        const { sendAdminAlertEmail } = await import('@/lib/mailer');
+        const { createNotification } = await import('@/lib/notifications');
+        sendAdminAlertEmail({
+          title: "Tentativa de pagamento PayPal (Não configurado)",
+          message: `Um cliente (${email}) tentou pagar uma encomenda de ${verifiedTotal} € via PayPal, mas o PayPal ainda não está configurado na administração.`,
+          details: { Cliente: email, Montante: `${verifiedTotal} €`, 'País': effectiveCountry }
+        }).catch(e => console.error('[Supervision Live] Email alert error:', e));
+
+        createNotification({
+          isAdmin: true,
+          type: 'SYSTEM',
+          message: JSON.stringify({
+            key: 'gateway_not_configured',
+            gateway: 'PayPal',
+            email,
+            amount: `${verifiedTotal} €`
+          }),
+          link: '/admin/settings/payments'
+        }).catch(e => console.error('[Supervision Live] Admin notif error:', e));
+
+        return {
+          error: "payment_unavailable",
+          unavailableMethod: 'PAYPAL',
+          fallbackPaymentMethod: getFallbackPayment(),
+        };
+      }
+    }
+
+    // Create the order with SERVER-VERIFIED total ONLY after confirming gateway validity
+    const order = await prisma.order.create({
+      data: {
+        userId: user.id,
+        total: verifiedTotal,
+        paymentMethod: paymentMethod as any,
+        status: 'PENDING',
+        orderItems: {
+          create: verifiedItems.map(item => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            price: item.price, // DB-verified price
+            variationId: item.variationId || null,
+            attributes: item.attributes || null
+          }))
+        },
+        destinationAddress: JSON.stringify(orderMetadata)
+      }
+    });
+
+    // ===== PAYMENT METHOD HANDLING =====
+    if (paymentMethod === 'STRIPE') {
+      const stripeSecretKey = settingsMap['STRIPE_SECRET_KEY'];
+      try {
+        const { default: Stripe } = await import('stripe');
+      const stripe = new Stripe(stripeSecretKey);
+      const currency = storeCurrencyCode.toLowerCase();
+
+      const lineItems: any[] = verifiedItems.map(item => ({
+        price_data: {
+          currency,
+          product_data: {
+            name: item.title,
+            images: item.image && /^https:\/\//.test(item.image) ? [item.image] : [],
+          },
+          unit_amount: Math.round(item.price * 100),
+        },
+        quantity: item.quantity,
+      }));
+
+      // Charge shipping (amount paid == order total)
+      if (shippingRate > 0) {
+        lineItems.push({
+          price_data: {
+            currency,
+            product_data: { name: `Versand (${validZone.methods[0].type})` },
+            unit_amount: Math.round(shippingRate * 100),
+          },
+          quantity: 1,
+        });
+      }
+
+      // Apply the server-verified coupon discount on Stripe as well
+      let discounts: any[] | undefined;
+      const discountCents = Math.round(discountAmount * 100);
+      if (discountCents > 0) {
+        const stripeCoupon = await stripe.coupons.create({
+          amount_off: discountCents,
+          currency,
+          duration: 'once',
+          max_redemptions: 1,
+          name: couponCode ? `Gutschein ${couponCode.toUpperCase()}` : 'Rabatt',
+        });
+        discounts = [{ coupon: stripeCoupon.id }];
+      }
+
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: lineItems,
+        ...(discounts ? { discounts } : {}),
+        mode: 'payment',
+        success_url: `${baseUrl}/checkout/success?orderId=${order.id}`,
+        cancel_url: `${baseUrl}/checkout?error=stripe_cancelled&method=STRIPE`,
+        client_reference_id: order.id,
+        customer_email: user.email,
+      });
+
+      await prisma.order.update({
+        where: { id: order.id },
+        data: { stripeSessionId: session.id }
+      });
+
+      return { success: true, orderId: order.id, redirectUrl: session.url };
+      } catch (stripeErr: any) {
+        console.error("Stripe payment error:", stripeErr);
+        return {
+          error: "payment_unavailable",
+          unavailableMethod: 'STRIPE',
+          fallbackPaymentMethod: getFallbackPayment(),
+        };
+      }
+    } 
+    else if (paymentMethod === 'PAYPAL') {
+      const paypalClientId = settingsMap['PAYPAL_CLIENT_ID'];
+      const paypalSecret = settingsMap['PAYPAL_SECRET'];
+      
+      const auth = Buffer.from(`${paypalClientId}:${paypalSecret}`).toString('base64');
+      const tokenRes = await fetch('https://api-m.paypal.com/v1/oauth2/token', {
+        method: 'POST',
+        body: 'grant_type=client_credentials',
+        headers: {
+          Authorization: `Basic ${auth}`,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      });
+      
+      const tokenData = await tokenRes.json();
+      if (!tokenData.access_token) {
+        return {
+          error: "payment_unavailable",
+          unavailableMethod: 'PAYPAL',
+          fallbackPaymentMethod: getFallbackPayment(),
+        };
+      }
+
+      const orderRes = await fetch('https://api-m.paypal.com/v2/checkout/orders', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${tokenData.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          intent: 'CAPTURE',
+          purchase_units: [{
+            reference_id: order.id,
+            amount: {
+              currency_code: storeCurrencyCode,
+              value: verifiedTotal.toFixed(2)
+            }
+          }],
+          application_context: {
+            return_url: `${baseUrl}/api/paypal/capture?orderId=${order.id}`,
+            cancel_url: `${baseUrl}/checkout?error=paypal_cancelled&method=PAYPAL`
+          }
+        })
+      });
+      
+      const orderData = await orderRes.json();
+      const approveLink = orderData.links?.find((l: any) => l.rel === 'approve');
+      
+      if (approveLink) {
+        return { success: true, orderId: order.id, redirectUrl: approveLink.href };
+      } else {
+        return {
+          error: "payment_unavailable",
+          unavailableMethod: 'PAYPAL',
+          fallbackPaymentMethod: getFallbackPayment(),
+        };
+      }
+    } 
+    else {
+      // BANK_TRANSFER — Finalize immediately (no online payment to confirm)
+      const { finalizeOrder } = await import('@/lib/orderFinalizer');
+      finalizeOrder(order.id).catch(e => console.error('Bank transfer finalization failed', e));
+      
+      return { success: true, orderId: order.id, redirectUrl: '/checkout/success?orderId=' + order.id };
+    }
+
+  } catch (error: any) {
+    console.error("Checkout error:", error);
+    return { error: "Ocorreu um erro ao processar a sua encomenda." };
+  }
+}

@@ -1,0 +1,158 @@
+const fs = require('fs');
+const path = require('path');
+
+const locales = ['en', 'fr', 'es'];
+
+const translations = {
+  en: {
+    AdminShipping: {
+      "title": "Shipping Settings",
+      "subtitle": "Configure the zones served (countries) and shipping costs.",
+      "method_free": "Free Delivery",
+      "method_standard": "Standard Delivery",
+      "method_express": "Express Delivery",
+      "method_collect": "Store Collection",
+      "error_country": "Please select a country.",
+      "error_create": "Error creating shipping zone.",
+      "confirm_delete_zone": "Delete this zone and all its methods?",
+      "error_type": "Type is required.",
+      "error_rate": "Rate is required for this method.",
+      "error": "Error",
+      "confirm_delete_method": "Delete this method?",
+      "delivery_zones": "Delivery Zones",
+      "add_destination": "+ Add a destination",
+      "new_destination": "New destination",
+      "destination_label": "Destination (Country/Zone)",
+      "select_country": "Select a country...",
+      "zone_active": "Active Zone",
+      "create_zone": "Create Zone",
+      "cancel": "Cancel",
+      "no_zones": "No shipping zone defined.",
+      "active": "Active",
+      "inactive": "Inactive",
+      "disable": "Disable",
+      "enable": "Enable",
+      "delete": "Delete",
+      "shipping_methods": "Shipping Methods",
+      "col_label": "Label",
+      "col_rate": "Rate",
+      "col_conditions": "Conditions",
+      "col_status": "Status",
+      "col_actions": "Actions",
+      "free": "Free",
+      "from": "From",
+      "edit": "Edit",
+      "no_methods": "No method defined for this zone.",
+      "edit_method": "Edit method",
+      "add_method": "Add method",
+      "rate_label": "Rate",
+      "min_amount_label": "Minimum amount (Optional)",
+      "save": "Save",
+      "add_method_for": "+ Add a method for {zone}"
+    }
+  },
+  fr: {
+    AdminShipping: {
+      "title": "Paramètres de Livraison",
+      "subtitle": "Configurez les zones desservies (pays) et les frais de livraison.",
+      "method_free": "Livraison Gratuite",
+      "method_standard": "Livraison standard",
+      "method_express": "Livraison expresse",
+      "method_collect": "Collecte au magasin",
+      "error_country": "Veuillez sélectionner un pays.",
+      "error_create": "Erreur lors de la création de la zone.",
+      "confirm_delete_zone": "Supprimer cette zone et toutes ses méthodes ?",
+      "error_type": "Le type est requis.",
+      "error_rate": "Le tarif est requis pour cette méthode.",
+      "error": "Erreur",
+      "confirm_delete_method": "Supprimer cette méthode ?",
+      "delivery_zones": "Zones de Livraison",
+      "add_destination": "+ Ajouter une destination",
+      "new_destination": "Nouvelle destination",
+      "destination_label": "Destination (Pays/Zone)",
+      "select_country": "Sélectionner un pays...",
+      "zone_active": "Zone Active",
+      "create_zone": "Créer la zone",
+      "cancel": "Annuler",
+      "no_zones": "Aucune zone de livraison définie.",
+      "active": "Active",
+      "inactive": "Inactive",
+      "disable": "Désactiver",
+      "enable": "Activer",
+      "delete": "Supprimer",
+      "shipping_methods": "Méthodes de livraison",
+      "col_label": "Libellé",
+      "col_rate": "Tarif",
+      "col_conditions": "Conditions",
+      "col_status": "Statut",
+      "col_actions": "Actions",
+      "free": "Gratuit",
+      "from": "À partir de",
+      "edit": "Modifier",
+      "no_methods": "Aucune méthode définie pour cette zone.",
+      "edit_method": "Modifier la méthode",
+      "add_method": "Ajouter une méthode",
+      "rate_label": "Tarif",
+      "min_amount_label": "Montant minimum (Optionnel)",
+      "save": "Enregistrer",
+      "add_method_for": "+ Ajouter une méthode pour {zone}"
+    }
+  },
+  es: {
+    AdminShipping: {
+      "title": "Configuración de Envío",
+      "subtitle": "Configura las zonas de entrega (países) y los costos de envío.",
+      "method_free": "Envío Gratis",
+      "method_standard": "Envío estándar",
+      "method_express": "Envío exprés",
+      "method_collect": "Recogida en tienda",
+      "error_country": "Por favor selecciona un país.",
+      "error_create": "Error al crear la zona de envío.",
+      "confirm_delete_zone": "¿Eliminar esta zona y todos sus métodos?",
+      "error_type": "El tipo es obligatorio.",
+      "error_rate": "La tarifa es obligatoria para este método.",
+      "error": "Error",
+      "confirm_delete_method": "¿Eliminar este método?",
+      "delivery_zones": "Zonas de Entrega",
+      "add_destination": "+ Añadir un destino",
+      "new_destination": "Nuevo destino",
+      "destination_label": "Destino (País/Zona)",
+      "select_country": "Selecciona un país...",
+      "zone_active": "Zona Activa",
+      "create_zone": "Crear zona",
+      "cancel": "Cancelar",
+      "no_zones": "No hay zonas de envío definidas.",
+      "active": "Activo",
+      "inactive": "Inactivo",
+      "disable": "Desactivar",
+      "enable": "Activar",
+      "delete": "Eliminar",
+      "shipping_methods": "Métodos de Envío",
+      "col_label": "Etiqueta",
+      "col_rate": "Tarifa",
+      "col_conditions": "Condiciones",
+      "col_status": "Estado",
+      "col_actions": "Acciones",
+      "free": "Gratis",
+      "from": "Desde",
+      "edit": "Editar",
+      "no_methods": "No hay métodos definidos para esta zona.",
+      "edit_method": "Editar método",
+      "add_method": "Añadir método",
+      "rate_label": "Tarifa",
+      "min_amount_label": "Monto mínimo (Opcional)",
+      "save": "Guardar",
+      "add_method_for": "+ Añadir un método para {zone}"
+    }
+  }
+};
+
+for (const locale of locales) {
+  const filePath = path.join(__dirname, 'messages', `${locale}.json`);
+  if (fs.existsSync(filePath)) {
+    const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    data.AdminShipping = translations[locale].AdminShipping;
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
+    console.log(`Updated ${locale}.json with AdminShipping translations`);
+  }
+}

@@ -1,0 +1,132 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  
+  /* Dynamic Theme Colors mapping */
+  --color-orange-50: color-mix(in srgb, var(--theme-primary, #c2410c), white 90%);
+  --color-orange-100: color-mix(in srgb, var(--theme-primary, #c2410c), white 80%);
+  --color-orange-200: color-mix(in srgb, var(--theme-primary, #c2410c), white 60%);
+  --color-orange-300: color-mix(in srgb, var(--theme-primary, #c2410c), white 40%);
+  --color-orange-400: color-mix(in srgb, var(--theme-primary, #c2410c), white 20%);
+  --color-orange-500: var(--theme-primary, #c2410c);
+  --color-orange-600: color-mix(in srgb, var(--theme-primary, #c2410c), black 10%);
+  --color-orange-700: color-mix(in srgb, var(--theme-primary, #c2410c), black 20%);
+  --color-orange-800: color-mix(in srgb, var(--theme-primary, #c2410c), black 30%);
+  --color-orange-900: color-mix(in srgb, var(--theme-primary, #c2410c), black 40%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button, 
+[role="button"],
+a {
+  cursor: pointer;
+}
+
+.text-responsive { 
+  font-size: var(--sz-m); 
+  line-height: var(--lh-m, normal);
+  letter-spacing: var(--ls-m, normal);
+} 
+@media (min-width: 768px) { 
+  .text-responsive { 
+    font-size: var(--sz-t); 
+    line-height: var(--lh-t, var(--lh-m, normal));
+    letter-spacing: var(--ls-t, var(--ls-m, normal));
+  } 
+} 
+@media (min-width: 1024px) { 
+  .text-responsive { 
+    font-size: var(--sz-d); 
+    line-height: var(--lh-d, var(--lh-t, var(--lh-m, normal)));
+    letter-spacing: var(--ls-d, var(--ls-t, var(--ls-m, normal)));
+  } 
+}
+
+/* Force normal word breaking to prevent letters splitting inside words */
+*, ::before, ::after {
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+  hyphens: none !important;
+}
+
+
+
+/* Hero & Slider Entrance Animations */
+@keyframes heroFadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes heroFadeInRight {
+  0% {
+    opacity: 0;
+    transform: translateX(30px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.animate-hero-tag {
+  animation: heroFadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-hero-title {
+  animation: heroFadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+}
+
+.animate-hero-subtitle {
+  animation: heroFadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.18s both;
+}
+
+.animate-hero-price {
+  animation: heroFadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.25s both;
+}
+
+.animate-hero-btn {
+  animation: heroFadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.32s both;
+}
+
+.animate-hero-image {
+  animation: heroFadeInRight 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+}
+
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
