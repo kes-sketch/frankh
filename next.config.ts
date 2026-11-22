@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ['pdfkit', 'fontkit', '@swc/helpers'],
   experimental: {
     serverActions: {
-      bodySizeLimit: '10mb',
+      bodySizeLimit: '50mb',
     },
   },
   turbopack: {},

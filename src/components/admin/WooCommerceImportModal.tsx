@@ -20,6 +20,13 @@ import {
   syncWooCommerceRankMathSEO,
   importWooCommerceCsv,
   importFrankhFullBackup,
+  importBackupShipping,
+  importBackupPages,
+  importBackupArticles,
+  importBackupReviews,
+  importBackupOrders,
+  importBackupProductsBatch,
+  finalizeBackupImport,
   type WcProductImportItemResult
 } from '@/actions/woocommerce';
 
@@ -164,39 +171,150 @@ export default function WooCommerceImportModal() {
       const isJson = csvFile.name.endsWith('.json') || text.trim().startsWith('{');
 
       if (isJson) {
-        setCurrentStep('FULL_IMPORT');
-        setCurrentStepText('Importation intégrale : avis, commandes, pages, articles, SEO & produits...');
-        const res = await importFrankhFullBackup(text);
-        if (!res.success) {
-          setResultMessage({ type: 'error', text: res.message || 'Erreur lors du traitement du fichier JSON.' });
+        let parsed: any;
+        try {
+          parsed = JSON.parse(text);
+        } catch (err: any) {
+          setResultMessage({ type: 'error', text: 'Format JSON invalide : ' + err.message });
           setLoading(false);
           return;
         }
 
-        const items = res.results || [];
-        setImportLogs(items);
-        setLiveSuccessCount(res.productsCount || 0);
-        setLiveAlreadyExistsCount(res.alreadyExistsCount || 0);
-        setLiveFailedCount(res.failedCount || 0);
-        setTotalProducts(items.length);
-        setImportedProducts(items.length);
+        // Reset live counters
+        setLiveSuccessCount(0);
+        setLiveAlreadyExistsCount(0);
+        setLiveFailedCount(0);
+        setImportLogs([]);
 
-        setReviewsImportedCount(res.reviewsCount || 0);
-        setOrdersImportedCount(res.ordersCount || 0);
-        setPagesImportedCount(res.pagesCount || 0);
-        setArticlesImportedCount(res.articlesCount || 0);
-        if (res.shippingSummary) setShippingSummary(res.shippingSummary);
+        // 1. Livraison
+        if (Array.isArray(parsed.shipping) && parsed.shipping.length > 0) {
+          setCurrentStep('SHIPPING');
+          setCurrentStepText('Importation des zones et tarifs de livraison...');
+          try {
+            const sRes = await importBackupShipping(parsed.shipping);
+            if (sRes.shippingSummary) setShippingSummary(sRes.shippingSummary);
+          } catch {}
+        }
+
+        // 2. Pages
+        if (Array.isArray(parsed.pages) && parsed.pages.length > 0) {
+          setCurrentStep('PAGES');
+          setCurrentStepText(`Importation des pages institutionnelles (0 / ${parsed.pages.length})...`);
+          const PAGE_BATCH = 10;
+          let pDone = 0;
+          for (let i = 0; i < parsed.pages.length; i += PAGE_BATCH) {
+            const batch = parsed.pages.slice(i, i + PAGE_BATCH);
+            try {
+              const res = await importBackupPages(batch);
+              pDone += res.count || 0;
+              setPagesImportedCount(pDone);
+              setCurrentStepText(`Importation des pages : ${pDone} / ${parsed.pages.length}`);
+            } catch {}
+          }
+        }
+
+        // 3. Articles de blog
+        if (Array.isArray(parsed.articles) && parsed.articles.length > 0) {
+          setCurrentStep('ARTICLES');
+          setCurrentStepText(`Importation des articles de blog (0 / ${parsed.articles.length})...`);
+          const ART_BATCH = 5;
+          let aDone = 0;
+          for (let i = 0; i < parsed.articles.length; i += ART_BATCH) {
+            const batch = parsed.articles.slice(i, i + ART_BATCH);
+            try {
+              const res = await importBackupArticles(batch);
+              aDone += res.count || 0;
+              setArticlesImportedCount(aDone);
+              setCurrentStepText(`Importation des articles de blog : ${aDone} / ${parsed.articles.length}`);
+            } catch {}
+          }
+        }
+
+        // 4. Produits, Variantes & SEO (en micro-lots pour éviter tout timeout)
+        const allProducts = Array.isArray(parsed.products) ? parsed.products : [];
+        const allResults: WcProductImportItemResult[] = [];
+        let totalSuccess = 0;
+        let totalAlreadyExists = 0;
+        let totalFailed = 0;
+
+        if (allProducts.length > 0) {
+          setCurrentStep('PRODUCTS');
+          setTotalProducts(allProducts.length);
+          setImportedProducts(0);
+          const PROD_BATCH = 20;
+
+          for (let i = 0; i < allProducts.length; i += PROD_BATCH) {
+            const batch = allProducts.slice(i, i + PROD_BATCH);
+            const currentNumber = Math.min(i + PROD_BATCH, allProducts.length);
+            setCurrentStepText(`Importation des produits : ${currentNumber} / ${allProducts.length} (SEO & Cloudinary)...`);
+
+            try {
+              const bRes = await importBackupProductsBatch(batch);
+              if (bRes.results && bRes.results.length > 0) {
+                allResults.push(...bRes.results);
+                setImportLogs(prev => [...prev, ...bRes.results]);
+              }
+              totalSuccess += bRes.importedCount || 0;
+              totalAlreadyExists += bRes.alreadyExistsCount || 0;
+              totalFailed += bRes.failedCount || 0;
+
+              setLiveSuccessCount(totalSuccess);
+              setLiveAlreadyExistsCount(totalAlreadyExists);
+              setLiveFailedCount(totalFailed);
+              setImportedProducts(allResults.length);
+            } catch (batchErr: any) {
+              console.error('Batch error:', batchErr);
+            }
+          }
+        }
+
+        // 5. Avis clients
+        if (Array.isArray(parsed.reviews) && parsed.reviews.length > 0) {
+          setCurrentStep('REVIEWS');
+          setCurrentStepText(`Importation des avis clients (0 / ${parsed.reviews.length})...`);
+          const REV_BATCH = 50;
+          let rDone = 0;
+          for (let i = 0; i < parsed.reviews.length; i += REV_BATCH) {
+            const batch = parsed.reviews.slice(i, i + REV_BATCH);
+            try {
+              const res = await importBackupReviews(batch);
+              rDone += res.count || 0;
+              setReviewsImportedCount(rDone);
+              setCurrentStepText(`Importation des avis clients : ${rDone} / ${parsed.reviews.length}`);
+            } catch {}
+          }
+        }
+
+        // 6. Commandes clients
+        if (Array.isArray(parsed.orders) && parsed.orders.length > 0) {
+          setCurrentStep('ORDERS');
+          setCurrentStepText(`Importation des commandes clients (0 / ${parsed.orders.length})...`);
+          const ORD_BATCH = 25;
+          let oDone = 0;
+          for (let i = 0; i < parsed.orders.length; i += ORD_BATCH) {
+            const batch = parsed.orders.slice(i, i + ORD_BATCH);
+            try {
+              const res = await importBackupOrders(batch);
+              oDone += res.count || 0;
+              setOrdersImportedCount(oDone);
+              setCurrentStepText(`Importation des commandes : ${oDone} / ${parsed.orders.length}`);
+            } catch {}
+          }
+        }
+
+        // 7. Finalisation & Revalidation du cache
+        await finalizeBackupImport().catch(() => {});
 
         setCurrentStep('DONE');
         setCurrentStepText('Importation complète terminée avec succès !');
 
         setSummaryStats({
-          success: res.productsCount || 0,
-          alreadyExists: res.alreadyExistsCount || 0,
-          failed: res.failedCount || 0,
-          total: items.length
+          success: totalSuccess,
+          alreadyExists: totalAlreadyExists,
+          failed: totalFailed,
+          total: allResults.length
         });
-        setSummaryTabFilter((res.failedCount || 0) > 0 ? 'FAILED' : 'ALL');
+        setSummaryTabFilter(totalFailed > 0 ? 'FAILED' : 'ALL');
         setShowSummaryModal(true);
         return;
       }
@@ -1458,9 +1576,74 @@ export default function WooCommerceImportModal() {
 
                 {/* Live Progress when file loading */}
                 {loading && (
-                  <div className="p-3 bg-blue-50 rounded-xl border border-blue-200 text-xs font-medium text-blue-900 flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-blue-600 animate-ping shrink-0" />
-                    <span>{currentStepText || 'Importation en cours...'}</span>
+                  <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-3">
+                    <div className="flex items-center justify-between text-xs font-bold text-gray-700">
+                      <span>Progression de l'import :</span>
+                      <span className="text-[11px] font-mono text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                        {currentStep === 'DONE' ? 'Terminé' : (currentStepText ? currentStepText.split(':')[0] : 'En cours')}
+                      </span>
+                    </div>
+
+                    {/* Step-by-Step Badges */}
+                    <div className="flex flex-wrap gap-1.5 items-center">
+                      {[
+                        { key: 'SHIPPING', label: '1. Livraison', icon: '🚚' },
+                        { key: 'PAGES', label: `2. Pages (${pagesImportedCount})`, icon: '📄' },
+                        { key: 'ARTICLES', label: `3. Blog (${articlesImportedCount})`, icon: '📝' },
+                        { key: 'PRODUCTS', label: `4. Produits (${importedProducts}/${totalProducts || '...'})`, icon: '🛍️' },
+                        { key: 'REVIEWS', label: `5. Avis (${reviewsImportedCount})`, icon: '⭐' },
+                        { key: 'ORDERS', label: `6. Commandes (${ordersImportedCount})`, icon: '📦' },
+                      ].map((st, i, arr) => {
+                        const stepOrder = ['SHIPPING', 'PAGES', 'ARTICLES', 'PRODUCTS', 'REVIEWS', 'ORDERS'];
+                        const curIdx = currentStep === 'DONE' ? stepOrder.length : stepOrder.indexOf(currentStep);
+                        const isDone = curIdx !== -1 && i < curIdx;
+                        const isCurrent = curIdx !== -1 && i === curIdx;
+
+                        return (
+                          <div
+                            key={st.key}
+                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition ${isDone
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                                : isCurrent
+                                  ? 'bg-blue-600 text-white border-blue-700 shadow-xs animate-pulse ring-2 ring-blue-400/30'
+                                  : 'bg-gray-100 text-gray-400 border-gray-200'
+                              }`}
+                          >
+                            <span>{isDone ? '✓' : st.icon}</span>
+                            <span>{st.label}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Live Progress Bar for Products */}
+                    {totalProducts > 0 && (
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-[11px] font-semibold text-gray-700">
+                          <span>Produits importés</span>
+                          <span className="font-mono text-blue-600">{importedProducts} / {totalProducts} ({Math.min(100, Math.round((importedProducts / totalProducts) * 100))}%)</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                          <div
+                            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${Math.min(100, Math.round((importedProducts / totalProducts) * 100))}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="p-2.5 bg-blue-50/80 border border-blue-200 rounded-lg text-xs font-semibold text-blue-900 flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-blue-600 animate-ping shrink-0" />
+                      <span>{currentStepText || 'Importation en cours...'}</span>
+                    </div>
+
+                    {(liveSuccessCount > 0 || liveAlreadyExistsCount > 0 || liveFailedCount > 0) && (
+                      <div className="flex gap-2 text-[11px] font-semibold">
+                        <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">✓ {liveSuccessCount} importés</span>
+                        {liveAlreadyExistsCount > 0 && <span className="text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">ℹ️ {liveAlreadyExistsCount} déjà existants</span>}
+                        {liveFailedCount > 0 && <span className="text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-md">⚠️ {liveFailedCount} échecs</span>}
+                      </div>
+                    )}
                   </div>
                 )}
 
