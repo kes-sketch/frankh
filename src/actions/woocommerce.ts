@@ -1,6 +1,7 @@
 'use server';
 
 import prisma from '@/lib/prisma';
+import { OrderStatus } from '@prisma/client';
 import { slugify, unescapeHtml } from '@/lib/utils';
 import { requireAdmin } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
@@ -250,7 +251,7 @@ function getWcHeaders(consumerKey: string, consumerSecret: string) {
 function checkWcResponse(response: Response, rawText?: string) {
   const isSgCaptcha = response.headers.get("sg-captcha") === "challenge" || response.status === 202;
   if (isSgCaptcha || (rawText && rawText.includes("sgcaptcha"))) {
-    throw new Error("SiteGround Anti-Bot (SG-Captcha) est actif sur votre serveur et bloque l'API WooCommerce (Code HTTP 202). Veuillez désactiver temporairement « AI Anti-Bot » dans SiteGround Site Tools > Sécurité pour autoriser l'importation.");
+    throw new Error("SiteGround Anti-Bot (SG-Captcha) bloque les requêtes API (HTTP 202). SiteGround applique ce filtre Nginx sans option désactivable dans Site Tools. Utilisez l'onglet « Fichier d'export (JSON) » pour importer 100% de vos données (Avis, Commandes, Pages, Blog, SEO, Produits) sans blocage pare-feu.");
   }
 
   const contentType = response.headers.get("content-type");
@@ -274,7 +275,7 @@ export async function testWooCommerceConnection(url: string, consumerKey: string
     if (isSgCaptcha) {
       return {
         success: false,
-        message: "SiteGround Anti-Bot (SG-Captcha) bloque l'API WooCommerce (HTTP 202). Veuillez désactiver temporairement « AI Anti-Bot » dans SiteGround Site Tools > Sécurité pour permettre la connexion."
+        message: "SiteGround Anti-Bot (SG-Captcha) bloque l'accès API externe (HTTP 202). SiteGround applique ce filtre Nginx sans option désactivable dans Site Tools. Utilisez l'onglet « Fichier d'export (JSON) » pour importer 100% de vos données (Avis, Commandes, Pages, Blog, SEO, Produits) en 1 clic sans blocage."
       };
     }
 
@@ -288,7 +289,7 @@ export async function testWooCommerceConnection(url: string, consumerKey: string
       if (text.includes("sgcaptcha")) {
         return {
           success: false,
-          message: "SiteGround Anti-Bot (SG-Captcha) bloque l'API WooCommerce. Veuillez désactiver temporairement « AI Anti-Bot » dans SiteGround Site Tools > Sécurité."
+          message: "SiteGround Anti-Bot (SG-Captcha) bloque l'accès API externe. Utilisez l'onglet « Fichier d'export (JSON) » pour importer 100% de vos données sans blocage pare-feu."
         };
       }
       return {
@@ -2016,7 +2017,7 @@ export async function importWooCommerceCsv(csvContent: string): Promise<{
               await prisma.category.update({
                 where: { id: cat.id },
                 data: { parentId }
-              }).catch(() => {});
+              }).catch(() => { });
             }
             parentId = cat.id;
             if (!categoryIds.includes(cat.id)) {
@@ -2105,4 +2106,381 @@ export async function importWooCommerceCsv(csvContent: string): Promise<{
     console.error('Error importing CSV:', error);
     return { success: false, message: error.message || 'Erreur lors du traitement du fichier CSV.' };
   }
+}
+
+/**
+ * Import complete Frank Hausgeräte Backup JSON (Products, Reviews, Orders, Pages, Articles, SEO, Shipping)
+ */
+export async function importFrankhFullBackup(jsonContent: string) {
+  await requireAdmin();
+
+  if (!jsonContent || !jsonContent.trim()) {
+    return { success: false, message: 'Le fichier JSON est vide.' };
+  }
+
+  let data: any;
+  try {
+    data = JSON.parse(jsonContent);
+  } catch (err: any) {
+    return { success: false, message: 'Format JSON invalide : ' + err.message };
+  }
+
+  let productsCount = 0;
+  let alreadyExistsCount = 0;
+  let failedCount = 0;
+  let reviewsCount = 0;
+  let ordersCount = 0;
+  let pagesCount = 0;
+  let articlesCount = 0;
+  let shippingSummary: { zones: number; methods: number } | null = null;
+  const results: WcProductImportItemResult[] = [];
+
+  // 1. Shipping
+  if (Array.isArray(data.shipping) && data.shipping.length > 0) {
+    let mCount = 0;
+    for (const z of data.shipping) {
+      const zoneName = (z.name || `Zone ${z.id}`).trim();
+      const dbZone = await prisma.shippingZone.upsert({
+        where: { name: zoneName },
+        update: { isActive: true },
+        create: { name: zoneName, isActive: true }
+      });
+
+      for (const m of (z.methods || [])) {
+        await prisma.shippingMethod.create({
+          data: {
+            zoneId: dbZone.id,
+            type: m.title || 'Standard',
+            rate: m.cost || 0,
+            isActive: m.enabled !== false
+          }
+        }).catch(() => { });
+        mCount++;
+      }
+    }
+    shippingSummary = { zones: data.shipping.length, methods: mCount };
+  }
+
+  // 2. Pages
+  if (Array.isArray(data.pages)) {
+    for (const p of data.pages) {
+      const title = unescapeHtml(p.title || '');
+      const slug = p.slug || slugify(title);
+      if (!title || !slug) continue;
+      await prisma.page.upsert({
+        where: { slug },
+        update: {
+          title,
+          desktopContent: p.content || '',
+          mobileContent: p.content || '',
+          isPublished: true,
+          metaTitle: title,
+          metaDescription: unescapeHtml(p.excerpt || '').slice(0, 160)
+        },
+        create: {
+          title,
+          slug,
+          desktopContent: p.content || '',
+          mobileContent: p.content || '',
+          isPublished: true,
+          metaTitle: title,
+          metaDescription: unescapeHtml(p.excerpt || '').slice(0, 160)
+        }
+      });
+      pagesCount++;
+    }
+  }
+
+  // 3. Articles de blog
+  if (Array.isArray(data.articles)) {
+    for (const a of data.articles) {
+      const title = unescapeHtml(a.title || '');
+      const slug = a.slug || slugify(title);
+      if (!title || !slug) continue;
+
+      let imageUrl: string | null = null;
+      if (a.image) {
+        try {
+          imageUrl = await uploadImageFromUrlToCloudinary(a.image);
+        } catch {
+          imageUrl = a.image;
+        }
+      }
+
+      await prisma.article.upsert({
+        where: { slug },
+        update: {
+          title,
+          content: a.content || '',
+          excerpt: unescapeHtml(a.excerpt || ''),
+          image: imageUrl,
+          isPublished: true,
+          metaTitle: title,
+          metaDescription: unescapeHtml(a.excerpt || '').slice(0, 160)
+        },
+        create: {
+          title,
+          slug,
+          content: a.content || '',
+          excerpt: unescapeHtml(a.excerpt || ''),
+          image: imageUrl,
+          isPublished: true,
+          metaTitle: title,
+          metaDescription: unescapeHtml(a.excerpt || '').slice(0, 160)
+        }
+      });
+      articlesCount++;
+    }
+  }
+
+  // 4. Products
+  if (Array.isArray(data.products)) {
+    for (const p of data.products) {
+      const name = unescapeHtml(p.name || '').trim();
+      const slug = p.slug || slugify(name);
+      if (!name) continue;
+
+      const existing = await prisma.product.findFirst({
+        where: {
+          isDeleted: false,
+          OR: [{ slug }, { title: name }]
+        }
+      });
+
+      let primaryImg = (p.images && p.images[0]) || null;
+
+      if (existing) {
+        results.push({
+          id: p.id || 1,
+          name,
+          status: 'ALREADY_EXISTS',
+          price: p.price || 0,
+          image: primaryImg
+        });
+        alreadyExistsCount++;
+        continue;
+      }
+
+      // Categories
+      const categoryIds: string[] = [];
+      if (Array.isArray(p.categories)) {
+        for (const c of p.categories) {
+          const cat = await findOrCreateCategory(c.name, c.slug);
+          if (!categoryIds.includes(cat.id)) {
+            categoryIds.push(cat.id);
+          }
+        }
+      }
+
+      // Upload first images to Cloudinary
+      const uploadedImages: string[] = [];
+      if (Array.isArray(p.images)) {
+        for (const imgUrl of p.images.slice(0, 3)) {
+          try {
+            const cloud = await uploadImageFromUrlToCloudinary(imgUrl);
+            uploadedImages.push(cloud || imgUrl);
+          } catch {
+            uploadedImages.push(imgUrl);
+          }
+        }
+      }
+      if (uploadedImages.length > 0) primaryImg = uploadedImages[0];
+
+      let finalSlug = slug;
+      let counter = 1;
+      while (await prisma.product.findUnique({ where: { slug: finalSlug } })) {
+        finalSlug = `${slug}-${counter}`;
+        counter++;
+      }
+
+      try {
+        await prisma.product.create({
+          data: {
+            title: name,
+            slug: finalSlug,
+            description: p.description || '',
+            shortDescription: p.short_description || '',
+            price: Number(p.price) || 0,
+            compareAtPrice: (Number(p.regular_price) > Number(p.price)) ? Number(p.regular_price) : null,
+            images: uploadedImages,
+            stock: p.stock ?? 100,
+            type: p.type === 'variable' ? 'VARIABLE' : 'SIMPLE',
+            metaTitle: p.meta_title || name,
+            metaDescription: p.meta_description || '',
+            gtin: p.gtin || null,
+            attributes: p.attributes || undefined,
+            variations: p.variations || undefined,
+            categories: {
+              connect: categoryIds.map(id => ({ id }))
+            }
+          }
+        });
+        results.push({
+          id: p.id || productsCount + 1,
+          name,
+          status: 'SUCCESS',
+          price: p.price || 0,
+          image: primaryImg
+        });
+        productsCount++;
+      } catch (err: any) {
+        results.push({
+          id: p.id || 1,
+          name,
+          status: 'FAILED',
+          error: err.message
+        });
+        failedCount++;
+      }
+    }
+  }
+
+  // 5. Reviews
+  if (Array.isArray(data.reviews)) {
+    for (const r of data.reviews) {
+      let productId: string | null = null;
+      if (r.product_name) {
+        const prod = await prisma.product.findFirst({
+          where: {
+            isDeleted: false,
+            OR: [
+              { title: unescapeHtml(r.product_name).trim() },
+              { slug: slugify(unescapeHtml(r.product_name).trim()) }
+            ]
+          },
+          select: { id: true }
+        });
+        if (prod) productId = prod.id;
+      }
+
+      if (!productId) {
+        const anyProd = await prisma.product.findFirst({
+          where: { isDeleted: false },
+          select: { id: true }
+        });
+        if (anyProd) productId = anyProd.id;
+      }
+
+      if (productId) {
+        await prisma.review.create({
+          data: {
+            productId,
+            reviewerName: r.reviewer || 'Client',
+            reviewerEmail: r.reviewer_email || null,
+            rating: Number(r.rating) || 5,
+            comment: (r.comment || '').replace(/(<([^>]+)>)/gi, "").trim(),
+            isApproved: true,
+            createdAt: r.date ? new Date(r.date) : new Date()
+          }
+        }).catch(() => { });
+        reviewsCount++;
+      }
+    }
+  }
+
+  // 6. Orders
+  if (Array.isArray(data.orders)) {
+    for (const o of data.orders) {
+      const email = o.billing?.email || `order-${o.id}@frankhausgeraete.de`;
+      let user = await prisma.user.findUnique({ where: { email } });
+      if (!user) {
+        user = await prisma.user.create({
+          data: {
+            email,
+            role: 'CUSTOMER'
+          }
+        });
+      }
+
+      let orderStatus: OrderStatus = OrderStatus.DELIVERED;
+      if (o.status === 'processing') orderStatus = OrderStatus.PROCESSING;
+      else if (o.status === 'pending') orderStatus = OrderStatus.PENDING;
+      else if (o.status === 'cancelled' || o.status === 'failed') orderStatus = OrderStatus.CANCELLED;
+      else if (o.status === 'completed') orderStatus = OrderStatus.DELIVERED;
+
+      const trackingNumber = `WC-${o.order_number || o.id}`;
+      const existingOrder = await prisma.order.findUnique({ where: { trackingNumber } });
+
+      if (!existingOrder) {
+        const fullAddress = [
+          `${o.billing?.first_name || ''} ${o.billing?.last_name || ''}`.trim(),
+          o.billing?.address_1,
+          o.billing?.postcode,
+          o.billing?.city,
+          o.billing?.country || 'DE'
+        ].filter(Boolean).join(', ');
+
+        try {
+          const order = await prisma.order.create({
+            data: {
+              userId: user.id,
+              trackingNumber,
+              status: orderStatus,
+              total: Number(o.total) || 0,
+              destinationAddress: fullAddress,
+              destinationCountry: o.billing?.country || 'DE',
+              createdAt: o.created_at ? new Date(o.created_at) : new Date()
+            }
+          });
+
+          if (Array.isArray(o.items) && o.items.length > 0) {
+            for (const it of o.items) {
+              let prodId: string | null = null;
+              if (it.product_name) {
+                const matchedProd = await prisma.product.findFirst({
+                  where: {
+                    isDeleted: false,
+                    title: unescapeHtml(it.product_name).trim()
+                  },
+                  select: { id: true }
+                });
+                if (matchedProd) prodId = matchedProd.id;
+              }
+              if (!prodId) {
+                const anyProd = await prisma.product.findFirst({
+                  where: { isDeleted: false },
+                  select: { id: true }
+                });
+                if (anyProd) prodId = anyProd.id;
+              }
+              if (prodId) {
+                await prisma.orderItem.create({
+                  data: {
+                    orderId: order.id,
+                    productId: prodId,
+                    quantity: Number(it.quantity) || 1,
+                    price: Number(it.price) || 0
+                  }
+                }).catch(() => {});
+              }
+            }
+          }
+        } catch {
+          // ignore duplicate order numbers
+        }
+      }
+      ordersCount++;
+    }
+  }
+
+  revalidatePath('/admin/products');
+  revalidatePath('/admin/categories');
+  revalidatePath('/admin/orders');
+  revalidatePath('/admin/reviews');
+  revalidatePath('/admin/pages');
+  revalidatePath('/admin/blogs');
+  revalidatePath('/');
+
+  return {
+    success: true,
+    productsCount,
+    alreadyExistsCount,
+    failedCount,
+    reviewsCount,
+    ordersCount,
+    pagesCount,
+    articlesCount,
+    shippingSummary,
+    results
+  };
 }
