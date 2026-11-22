@@ -18,6 +18,7 @@ import {
   importWooCommerceShipping,
   importWooCommerceReviews,
   syncWooCommerceRankMathSEO,
+  importWooCommerceCsv,
   type WcProductImportItemResult
 } from '@/actions/woocommerce';
 
@@ -97,6 +98,73 @@ export default function WooCommerceImportModal() {
   const [summarySearch, setSummarySearch] = useState('');
   const [copiedErrors, setCopiedErrors] = useState(false);
 
+  // Source Method: API REST vs Direct CSV Upload
+  const [sourceTab, setSourceTab] = useState<'API' | 'CSV'>('API');
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [csvFileName, setCsvFileName] = useState('');
+  const [csvProductsCount, setCsvProductsCount] = useState<number | null>(null);
+
+  const handleCsvFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCsvFile(file);
+    setCsvFileName(file.name);
+    setResultMessage(null);
+
+    try {
+      const text = await file.text();
+      const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+      setCsvProductsCount(Math.max(0, lines.length - 1));
+    } catch {
+      setCsvProductsCount(null);
+    }
+  };
+
+  const handleStartCsvImport = async () => {
+    if (!csvFile) return;
+    setLoading(true);
+    setResultMessage(null);
+    setCurrentStep('CSV_PARSING');
+    setCurrentStepText('Lecture et analyse du fichier CSV WooCommerce...');
+
+    try {
+      const text = await csvFile.text();
+      setCurrentStep('PRODUCTS');
+      setCurrentStepText('Importation des produits, variantes et médias Cloudinary...');
+
+      const res = await importWooCommerceCsv(text);
+      if (!res.success) {
+        setResultMessage({ type: 'error', text: res.message || 'Erreur lors du traitement du fichier CSV.' });
+        setLoading(false);
+        return;
+      }
+
+      const items = res.results || [];
+      setImportLogs(items);
+      setLiveSuccessCount(res.successCount || 0);
+      setLiveAlreadyExistsCount(res.alreadyExistsCount || 0);
+      setLiveFailedCount(res.failedCount || 0);
+      setTotalProducts(res.total || items.length);
+      setImportedProducts(items.length);
+
+      setCurrentStep('DONE');
+      setCurrentStepText('Importation CSV terminée avec succès !');
+
+      setSummaryStats({
+        success: res.successCount || 0,
+        alreadyExists: res.alreadyExistsCount || 0,
+        failed: res.failedCount || 0,
+        total: items.length
+      });
+      setSummaryTabFilter((res.failedCount || 0) > 0 ? 'FAILED' : 'ALL');
+      setShowSummaryModal(true);
+    } catch (err: any) {
+      setResultMessage({ type: 'error', text: err.message || 'Erreur import CSV' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Auto-scroll live logs during import
   useEffect(() => {
     if (loading && liveLogsEndRef.current) {
@@ -124,6 +192,9 @@ export default function WooCommerceImportModal() {
     setReviewsImportedCount(null);
     setCurrentStep('IDLE');
     setCurrentStepText('');
+    setCsvFile(null);
+    setCsvFileName('');
+    setCsvProductsCount(null);
   };
 
   // Step 1: Connect and load categories / products metadata
@@ -549,7 +620,31 @@ export default function WooCommerceImportModal() {
               </button>
             </div>
 
-            <form onSubmit={handleStartImport} className="flex-1 overflow-y-auto pr-1 space-y-4">
+            {/* Source Tab Switcher */}
+            <div className="flex bg-gray-100 p-1 rounded-xl mb-4 text-xs font-semibold shrink-0">
+              <button
+                type="button"
+                onClick={() => setSourceTab('API')}
+                className={`flex-1 py-2 px-3 rounded-lg transition flex items-center justify-center gap-1.5 ${sourceTab === 'API' ? 'bg-white text-gray-900 shadow-xs font-bold' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                <span>🌐</span>
+                <span>Connexion API REST</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSourceTab('CSV')}
+                className={`flex-1 py-2 px-3 rounded-lg transition flex items-center justify-center gap-1.5 ${sourceTab === 'CSV' ? 'bg-white text-blue-700 shadow-xs font-bold ring-1 ring-blue-200' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                <span>📁</span>
+                <span>Fichier CSV WooCommerce</span>
+                <span className="bg-emerald-100 text-emerald-800 text-[10px] px-1.5 py-0.2 rounded-full font-bold ml-1">
+                  Sans blocage
+                </span>
+              </button>
+            </div>
+
+            {sourceTab === 'API' ? (
+              <form onSubmit={handleStartImport} className="flex-1 overflow-y-auto pr-1 space-y-4">
               
               {/* Credentials Section */}
               <div className="bg-gray-50 p-4 rounded-xl border border-gray-200/80 space-y-3">
@@ -1101,8 +1196,21 @@ export default function WooCommerceImportModal() {
 
               {/* Result Message */}
               {resultMessage && (
-                <div className={`p-3 rounded-xl text-xs font-medium ${resultMessage.type === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
-                  {resultMessage.text}
+                <div className={`p-3.5 rounded-xl text-xs font-medium space-y-2.5 ${resultMessage.type === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
+                  <div>{resultMessage.text}</div>
+                  {resultMessage.text.includes('SiteGround Anti-Bot') && (
+                    <div className="pt-2 border-t border-red-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <span className="text-[11px] text-red-700">Vous préférez importer vos produits sans attendre le déblocage SiteGround ?</span>
+                      <button
+                        type="button"
+                        onClick={() => { setSourceTab('CSV'); setResultMessage(null); }}
+                        className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg text-xs shrink-0 transition shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <span>📁</span>
+                        <span>Passer à l'import CSV (Sans blocage) ➔</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1141,6 +1249,107 @@ export default function WooCommerceImportModal() {
               </div>
 
             </form>
+            ) : (
+              /* CSV Import View */
+              <div className="flex-1 overflow-y-auto pr-1 space-y-4">
+                <div className="bg-emerald-50/80 border border-emerald-200 rounded-xl p-4 text-xs space-y-2.5">
+                  <div className="flex items-center gap-2 font-bold text-emerald-900">
+                    <span className="text-base">✨</span>
+                    <span>Solution directe sans blocage pare-feu ni Captcha</span>
+                  </div>
+                  <p className="text-emerald-800 leading-relaxed text-[11px]">
+                    Si la sécurité de votre hébergement (SiteGround) bloque l'accès à l'API REST avec <strong>SG-Captcha</strong>, vous pouvez exporter vos produits directement depuis WooCommerce en 10 secondes :
+                  </p>
+                  <ol className="list-decimal list-inside space-y-1.5 text-emerald-900 text-[11px] font-medium bg-white/80 p-3 rounded-lg border border-emerald-100">
+                    <li>Connectez-vous à votre espace <strong>WordPress Admin</strong> (`/wp-admin`)</li>
+                    <li>Rendez-vous dans <strong>Produits &gt; Tous les produits</strong></li>
+                    <li>Cliquez sur le bouton <strong>« Exporter »</strong> situé en haut à gauche</li>
+                    <li>Cochez <em>« Exporter toutes les métadonnées personnalisées »</em> puis cliquez sur <strong>« Générer le CSV »</strong></li>
+                    <li>Déposez le fichier <code>.csv</code> téléchargé ci-dessous et lancez l'importation !</li>
+                  </ol>
+                </div>
+
+                {/* Dropzone */}
+                <div className="border-2 border-dashed border-gray-300 hover:border-blue-500 rounded-2xl p-6 text-center transition bg-gray-50/50">
+                  <input
+                    type="file"
+                    id="woo-csv-file"
+                    accept=".csv,text/csv"
+                    onChange={handleCsvFileChange}
+                    className="hidden"
+                    disabled={loading}
+                  />
+                  <label htmlFor="woo-csv-file" className="cursor-pointer block space-y-2">
+                    <div className="w-12 h-12 mx-auto rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-2xl">
+                      📄
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-gray-800">
+                        {csvFileName ? `Fichier sélectionné : ${csvFileName}` : 'Cliquez ici ou glissez votre fichier CSV WooCommerce'}
+                      </p>
+                      <p className="text-[11px] text-gray-500 mt-0.5">
+                        {csvProductsCount !== null 
+                          ? `Environ ${csvProductsCount} produit(s) détecté(s) dans le fichier` 
+                          : 'Format CSV officiel WooCommerce'}
+                      </p>
+                    </div>
+                    <span className="inline-block px-3.5 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-semibold text-gray-700 shadow-xs hover:bg-gray-50">
+                      Parcourir les fichiers
+                    </span>
+                  </label>
+                </div>
+
+                {/* Info about Cloudinary & SEO */}
+                <div className="p-3 bg-blue-50/70 rounded-xl border border-blue-100 flex items-center gap-2 text-[11px] text-blue-800">
+                  <span className="text-sm">⚡</span>
+                  <span>
+                    <strong>Inclus lors de l'import CSV :</strong> Création de l'arbre des catégories, métadonnées <strong>RankMath & Yoast SEO</strong> (titres, méta-descriptions, GTIN/EAN) et optimisation des photos sur <strong>Cloudinary</strong>.
+                  </span>
+                </div>
+
+                {/* Live Progress when CSV loading */}
+                {loading && (
+                  <div className="p-3 bg-blue-50 rounded-xl border border-blue-200 text-xs font-medium text-blue-900 flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-blue-600 animate-ping shrink-0" />
+                    <span>{currentStepText || 'Importation CSV en cours...'}</span>
+                  </div>
+                )}
+
+                {/* Result Message */}
+                {resultMessage && (
+                  <div className={`p-3 rounded-xl text-xs font-medium ${resultMessage.type === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
+                    {resultMessage.text}
+                  </div>
+                )}
+
+                {/* Submit button for CSV */}
+                <div className="pt-2 border-t border-gray-100 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsOpen(false)}
+                    disabled={loading}
+                    className="w-1/3 py-2.5 border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold rounded-xl text-xs transition"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleStartCsvImport}
+                    disabled={loading || !csvFile}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition disabled:opacity-50 flex justify-center items-center gap-2 shadow-sm cursor-pointer"
+                  >
+                    {loading ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <span>Traitement en cours...</span>
+                      </>
+                    ) : (
+                      <span>{csvProductsCount ? `Importer les ${csvProductsCount} produits du CSV` : 'Lancer l\'importation du CSV'}</span>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

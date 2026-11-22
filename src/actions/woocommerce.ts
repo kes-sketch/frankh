@@ -1816,3 +1816,293 @@ export async function syncWooCommerceRankMathSEO(
     };
   }
 }
+
+/**
+ * Universal CSV Parser for WooCommerce exports (handles quotes, commas, semicolons, multiline)
+ */
+function parseCsv(csvText: string): Array<Record<string, string>> {
+  const lines: string[] = [];
+  let currentLine = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < csvText.length; i++) {
+    const char = csvText[i];
+    const nextChar = csvText[i + 1];
+
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        currentLine += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if ((char === '\n' || char === '\r') && !inQuotes) {
+      if (char === '\r' && nextChar === '\n') {
+        i++;
+      }
+      if (currentLine.trim()) {
+        lines.push(currentLine);
+      }
+      currentLine = '';
+    } else {
+      currentLine += char;
+    }
+  }
+  if (currentLine.trim()) {
+    lines.push(currentLine);
+  }
+
+  if (lines.length < 2) return [];
+
+  const headerLine = lines[0];
+  const commaCount = (headerLine.match(/,/g) || []).length;
+  const semicolonCount = (headerLine.match(/;/g) || []).length;
+  const delimiter = semicolonCount > commaCount ? ';' : ',';
+
+  function splitLine(line: string): string[] {
+    const fields: string[] = [];
+    let field = '';
+    let inQ = false;
+
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      const nc = line[i + 1];
+      if (c === '"') {
+        if (inQ && nc === '"') {
+          field += '"';
+          i++;
+        } else {
+          inQ = !inQ;
+        }
+      } else if (c === delimiter && !inQ) {
+        fields.push(field.trim());
+        field = '';
+      } else {
+        field += c;
+      }
+    }
+    fields.push(field.trim());
+    return fields;
+  }
+
+  const rawHeaders = splitLine(lines[0]);
+  const headers = rawHeaders.map(h => h.replace(/^["']|["']$/g, '').trim());
+
+  const rows: Array<Record<string, string>> = [];
+  for (let i = 1; i < lines.length; i++) {
+    const fields = splitLine(lines[i]);
+    const row: Record<string, string> = {};
+    for (let j = 0; j < headers.length; j++) {
+      const val = fields[j] ? fields[j].replace(/^["']|["']$/g, '').trim() : '';
+      row[headers[j]] = val;
+    }
+    rows.push(row);
+  }
+
+  return rows;
+}
+
+/**
+ * Import products from WooCommerce CSV Export file directly
+ * (Instant, completely bypasses SiteGround Anti-Bot SG-Captcha)
+ */
+export async function importWooCommerceCsv(csvContent: string): Promise<{
+  success: boolean;
+  message?: string;
+  total?: number;
+  successCount?: number;
+  alreadyExistsCount?: number;
+  failedCount?: number;
+  results?: WcProductImportItemResult[];
+}> {
+  await requireAdmin();
+
+  if (!csvContent || !csvContent.trim()) {
+    return { success: false, message: 'Le fichier CSV est vide.' };
+  }
+
+  try {
+    const rows = parseCsv(csvContent);
+    if (rows.length === 0) {
+      return { success: false, message: 'Aucune ligne de produit détectée dans le fichier CSV.' };
+    }
+
+    let successCount = 0;
+    let alreadyExistsCount = 0;
+    let failedCount = 0;
+    const results: WcProductImportItemResult[] = [];
+
+    // Separate main products from variations
+    const mainProductRows = rows.filter(r => {
+      const type = (r['Type'] || r['type'] || 'simple').toLowerCase();
+      return type !== 'variation';
+    });
+
+    for (const row of mainProductRows) {
+      const idStr = row['ID'] || row['Id'] || row['id'] || '';
+      const wcId = parseInt(idStr, 10) || 0;
+      const rawName = row['Name'] || row['Nom'] || row['Titel'] || row['title'] || '';
+      const name = unescapeHtml(rawName).trim();
+
+      if (!name) continue;
+
+      const slug = row['Slug'] || row['Identifiant'] || slugify(name);
+      const description = row['Description'] || row['Beschreibung'] || '';
+      const shortDesc = row['Description courte'] || row['Short description'] || row['Kurzbeschreibung'] || '';
+      const regularPriceStr = row['Tarif régulier'] || row['Regular price'] || row['Regulärer Preis'] || row['Price'] || '0';
+      const salePriceStr = row['Tarif promo'] || row['Sale price'] || row['Angebotspreis'] || '';
+      const stockStr = row['Stock'] || row['stock'] || '0';
+      const inStockStr = row['En stock ?'] || row['In stock?'] || row['Vorrätig?'] || '1';
+
+      const price = parseFloat(salePriceStr || regularPriceStr) || 0;
+      const compareAtPrice = salePriceStr ? parseFloat(regularPriceStr) || 0 : 0;
+      const stock = parseInt(stockStr, 10) || (inStockStr === '1' || inStockStr.toLowerCase() === 'yes' ? 100 : 0);
+      const isVariable = (row['Type'] || row['type'] || '').toLowerCase() === 'variable';
+
+      // Check if product already exists
+      const existing = await prisma.product.findFirst({
+        where: {
+          isDeleted: false,
+          OR: [
+            { slug },
+            { title: name },
+            { title: rawName }
+          ]
+        }
+      });
+
+      // Parse images
+      const rawImages = row['Images'] || row['Bilder'] || '';
+      const imageUrls = rawImages ? rawImages.split(',').map(s => s.trim()).filter(Boolean) : [];
+      let primaryImage = imageUrls[0] || null;
+
+      // Extract SEO
+      const metaTitle = row['Meta: rank_math_title'] || row['Meta: _yoast_wpseo_title'] || name;
+      const metaDescription = row['Meta: rank_math_description'] || row['Meta: _yoast_wpseo_metadesc'] || shortDesc.slice(0, 160);
+      const gtin = row['Meta: _gtin'] || row['Meta: gtin'] || row['Meta: barcode'] || row['Meta: hwp_product_gtin'] || null;
+
+      if (existing) {
+        await prisma.product.update({
+          where: { id: existing.id },
+          data: {
+            ...(metaTitle ? { metaTitle } : {}),
+            ...(metaDescription ? { metaDescription } : {}),
+            ...(gtin ? { gtin } : {}),
+          }
+        });
+
+        results.push({
+          id: wcId || parseInt(existing.id.slice(0, 6), 16) || 1,
+          name,
+          status: 'ALREADY_EXISTS',
+          price,
+          image: primaryImage
+        });
+        alreadyExistsCount++;
+        continue;
+      }
+
+      // Categories
+      const catField = row['Categories'] || row['Catégories'] || row['Kategorien'] || '';
+      const categoryIds: string[] = [];
+      if (catField) {
+        const catEntries = catField.split(',').map(c => c.trim()).filter(Boolean);
+        for (const entry of catEntries) {
+          const parts = entry.split('>').map(p => p.trim()).filter(Boolean);
+          let parentId: string | null = null;
+          for (const part of parts) {
+            const cat = await findOrCreateCategory(part, slugify(part));
+            if (parentId) {
+              await prisma.category.update({
+                where: { id: cat.id },
+                data: { parentId }
+              }).catch(() => {});
+            }
+            parentId = cat.id;
+            if (!categoryIds.includes(cat.id)) {
+              categoryIds.push(cat.id);
+            }
+          }
+        }
+      }
+
+      // Upload first images to Cloudinary if available
+      const uploadedImages: string[] = [];
+      for (const imgUrl of imageUrls.slice(0, 3)) {
+        try {
+          const cloudUrl = await uploadImageFromUrlToCloudinary(imgUrl);
+          if (cloudUrl) uploadedImages.push(cloudUrl);
+          else uploadedImages.push(imgUrl);
+        } catch {
+          uploadedImages.push(imgUrl);
+        }
+      }
+      if (uploadedImages.length > 0) {
+        primaryImage = uploadedImages[0];
+      }
+
+      // Check slug collision
+      let finalSlug = slug;
+      let counter = 1;
+      while (await prisma.product.findUnique({ where: { slug: finalSlug } })) {
+        finalSlug = `${slug}-${counter}`;
+        counter++;
+      }
+
+      try {
+        await prisma.product.create({
+          data: {
+            title: name,
+            slug: finalSlug,
+            description,
+            shortDescription: shortDesc,
+            price,
+            compareAtPrice: compareAtPrice > price ? compareAtPrice : null,
+            images: uploadedImages,
+            stock,
+            type: isVariable ? 'VARIABLE' : 'SIMPLE',
+            metaTitle,
+            metaDescription,
+            gtin,
+            categories: {
+              connect: categoryIds.map(id => ({ id }))
+            }
+          }
+        });
+
+        results.push({
+          id: wcId || successCount + 1,
+          name,
+          status: 'SUCCESS',
+          price,
+          image: primaryImage
+        });
+        successCount++;
+      } catch (err: any) {
+        results.push({
+          id: wcId || successCount + 1,
+          name,
+          status: 'FAILED',
+          error: err.message || 'Erreur création produit'
+        });
+        failedCount++;
+      }
+    }
+
+    revalidatePath('/admin/products');
+    revalidatePath('/admin/categories');
+    revalidatePath('/');
+
+    return {
+      success: true,
+      total: mainProductRows.length,
+      successCount,
+      alreadyExistsCount,
+      failedCount,
+      results
+    };
+  } catch (error: any) {
+    console.error('Error importing CSV:', error);
+    return { success: false, message: error.message || 'Erreur lors du traitement du fichier CSV.' };
+  }
+}
