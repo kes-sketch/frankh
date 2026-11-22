@@ -193,7 +193,7 @@ export default function WooCommerceImportModal() {
           try {
             const sRes = await importBackupShipping(parsed.shipping);
             if (sRes.shippingSummary) setShippingSummary(sRes.shippingSummary);
-          } catch {}
+          } catch { }
         }
 
         // 2. Pages
@@ -209,7 +209,7 @@ export default function WooCommerceImportModal() {
               pDone += res.count || 0;
               setPagesImportedCount(pDone);
               setCurrentStepText(`Importation des pages : ${pDone} / ${parsed.pages.length}`);
-            } catch {}
+            } catch { }
           }
         }
 
@@ -226,7 +226,7 @@ export default function WooCommerceImportModal() {
               aDone += res.count || 0;
               setArticlesImportedCount(aDone);
               setCurrentStepText(`Importation des articles de blog : ${aDone} / ${parsed.articles.length}`);
-            } catch {}
+            } catch { }
           }
         }
 
@@ -281,7 +281,7 @@ export default function WooCommerceImportModal() {
               rDone += res.count || 0;
               setReviewsImportedCount(rDone);
               setCurrentStepText(`Importation des avis clients : ${rDone} / ${parsed.reviews.length}`);
-            } catch {}
+            } catch { }
           }
         }
 
@@ -298,12 +298,12 @@ export default function WooCommerceImportModal() {
               oDone += res.count || 0;
               setOrdersImportedCount(oDone);
               setCurrentStepText(`Importation des commandes : ${oDone} / ${parsed.orders.length}`);
-            } catch {}
+            } catch { }
           }
         }
 
         // 7. Finalisation & Revalidation du cache
-        await finalizeBackupImport().catch(() => {});
+        await finalizeBackupImport().catch(() => { });
 
         setCurrentStep('DONE');
         setCurrentStepText('Importation complète terminée avec succès !');
@@ -1235,10 +1235,10 @@ export default function WooCommerceImportModal() {
                             <div
                               key={st.key}
                               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition ${isDone
-                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                                  : isCurrent
-                                    ? 'bg-blue-600 text-white border-blue-700 shadow-xs animate-pulse ring-2 ring-blue-400/30'
-                                    : 'bg-gray-100 text-gray-400 border-gray-200'
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                                : isCurrent
+                                  ? 'bg-blue-600 text-white border-blue-700 shadow-xs animate-pulse ring-2 ring-blue-400/30'
+                                  : 'bg-gray-100 text-gray-400 border-gray-200'
                                 }`}
                             >
                               <span>{isDone ? '✓' : st.icon}</span>
@@ -1603,10 +1603,10 @@ export default function WooCommerceImportModal() {
                           <div
                             key={st.key}
                             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition ${isDone
-                                ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                                : isCurrent
-                                  ? 'bg-blue-600 text-white border-blue-700 shadow-xs animate-pulse ring-2 ring-blue-400/30'
-                                  : 'bg-gray-100 text-gray-400 border-gray-200'
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                              : isCurrent
+                                ? 'bg-blue-600 text-white border-blue-700 shadow-xs animate-pulse ring-2 ring-blue-400/30'
+                                : 'bg-gray-100 text-gray-400 border-gray-200'
                               }`}
                           >
                             <span>{isDone ? '✓' : st.icon}</span>
