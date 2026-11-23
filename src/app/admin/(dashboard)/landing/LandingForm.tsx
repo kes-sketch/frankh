@@ -11,7 +11,24 @@ import LatestBlogsEditor from '@/components/admin/settings/LatestBlogsEditor';
 import FullWidthBannerEditor from '@/components/admin/settings/FullWidthBannerEditor';
 import Cookies from 'js-cookie';
 
-export type SectionType = 'Hero' | 'BestDeals' | 'BestSeller' | 'LatestBlogs' | 'Newsletter' | 'PromoBanners' | 'ProductGrid' | 'FullWidthBanner' | 'FeaturedProductTabs' | 'ShippingSimulator' | 'HeatingGuideBlogs';
+export type SectionType = 
+  | 'Hero' 
+  | 'TrustBar'
+  | 'CategoryExplorer'
+  | 'Grossgeraete'
+  | 'BrandCarousel'
+  | 'Kleingeraete'
+  | 'Gaming'
+  | 'ProductGrid' 
+  | 'BestDeals' 
+  | 'BestSeller' 
+  | 'LatestBlogs' 
+  | 'HeatingGuideBlogs' 
+  | 'Newsletter' 
+  | 'PromoBanners' 
+  | 'FullWidthBanner'
+  | 'FeaturedProductTabs' 
+  | 'ShippingSimulator';
 
 export interface SectionConfig {
   id: string;
@@ -22,11 +39,15 @@ export interface SectionConfig {
 }
 
 const DEFAULT_SECTIONS: SectionConfig[] = [
-  { id: 'sec_1', type: 'Hero', name: 'Main Header (Hero)', enabled: true, settings: {} },
-  { id: 'sec_featured', type: 'FeaturedProductTabs', name: 'Produtos em Destaque', enabled: true, settings: { title: "Produtos em Destaque" } },
-  { id: 'sec_shipping', type: 'ShippingSimulator', name: 'Simulador de Envio de Paletes', enabled: true, settings: {} },
-  { id: 'sec_blogs', type: 'HeatingGuideBlogs', name: 'Dicas & Artigos - Guia de Aquecimento', enabled: true, settings: { title: "Dicas & Artigos" } },
-  { id: 'sec_newsletter', type: 'Newsletter', name: 'Newsletter Subscription', enabled: true, settings: {} }
+  { id: 'sec_hero', type: 'Hero', name: 'Hero-Banner (Header)', enabled: true, settings: {} },
+  { id: 'sec_trustbar', type: 'TrustBar', name: 'Vorteile & Vertrauensleiste', enabled: true, settings: {} },
+  { id: 'sec_categories', type: 'CategoryExplorer', name: 'Kategorie-Schnellzugriff', enabled: true, settings: {} },
+  { id: 'sec_gross', type: 'Grossgeraete', name: 'Große Haushaltsgeräte & Einbauküche', enabled: true, settings: {} },
+  { id: 'sec_brands', type: 'BrandCarousel', name: 'Top Marken & Partner', enabled: true, settings: {} },
+  { id: 'sec_klein', type: 'Kleingeraete', name: 'Kleine Haushaltsgeräte & Kaffee', enabled: true, settings: {} },
+  { id: 'sec_gaming', type: 'Gaming', name: 'Gaming, Konsolen & Zubehör', enabled: true, settings: {} },
+  { id: 'sec_blogs', type: 'HeatingGuideBlogs', name: 'Ratgeber & Magazin', enabled: true, settings: { title: "Ratgeber & Magazin" } },
+  { id: 'sec_newsletter', type: 'Newsletter', name: 'Newsletter-Anmeldung', enabled: true, settings: {} }
 ];
 
 export default function LandingForm({ initialSettings, categories }: { initialSettings: Record<string, string>, categories: any[] }) {
@@ -35,7 +56,33 @@ export default function LandingForm({ initialSettings, categories }: { initialSe
   const [sections, setSections] = useState<SectionConfig[]>(() => {
     try {
       if (initialSettings.HOMEPAGE_LAYOUT) {
-        return JSON.parse(initialSettings.HOMEPAGE_LAYOUT);
+        const parsed = JSON.parse(initialSettings.HOMEPAGE_LAYOUT);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const isLegacy = parsed.some(s => s.type === 'Hero') && !parsed.some(s => s.type === 'TrustBar');
+          if (isLegacy) {
+            const unpacked: SectionConfig[] = [];
+            for (const s of parsed) {
+              if (s.type === 'Hero') {
+                unpacked.push({ ...s, name: 'Hero-Banner (Header)' });
+                unpacked.push({ id: 'sec_trustbar', type: 'TrustBar', name: 'Vorteile & Vertrauensleiste', enabled: true, settings: {} });
+                unpacked.push({ id: 'sec_categories', type: 'CategoryExplorer', name: 'Kategorie-Schnellzugriff', enabled: true, settings: {} });
+              } else if (s.type === 'FeaturedProductTabs') {
+                unpacked.push({ id: 'sec_gross', type: 'Grossgeraete', name: 'Große Haushaltsgeräte & Einbauküche', enabled: true, settings: {} });
+                unpacked.push({ id: 'sec_brands', type: 'BrandCarousel', name: 'Top Marken & Partner', enabled: true, settings: {} });
+                unpacked.push({ id: 'sec_klein', type: 'Kleingeraete', name: 'Kleine Haushaltsgeräte & Kaffee', enabled: true, settings: {} });
+                unpacked.push({ id: 'sec_gaming', type: 'Gaming', name: 'Gaming, Konsolen & Zubehör', enabled: true, settings: {} });
+              } else if (s.type === 'ShippingSimulator') {
+                if (!unpacked.some(x => x.type === 'BrandCarousel')) {
+                  unpacked.push({ id: 'sec_brands', type: 'BrandCarousel', name: 'Top Marken & Partner', enabled: true, settings: {} });
+                }
+              } else {
+                unpacked.push(s);
+              }
+            }
+            return unpacked;
+          }
+          return parsed;
+        }
       }
       return DEFAULT_SECTIONS;
     } catch {
@@ -175,30 +222,72 @@ export default function LandingForm({ initialSettings, categories }: { initialSe
 
 
   const addSection = (type: SectionType) => {
+    const names: Record<string, string> = {
+      Hero: 'Hero-Banner (Header)',
+      TrustBar: 'Vorteile & Vertrauensleiste',
+      CategoryExplorer: 'Kategorie-Schnellzugriff',
+      Grossgeraete: 'Große Haushaltsgeräte & Einbauküche',
+      BrandCarousel: 'Top Marken & Partner',
+      Kleingeraete: 'Kleine Haushaltsgeräte & Kaffee',
+      Gaming: 'Gaming, Konsolen & Zubehör',
+      ProductGrid: 'Produkt-Gitter (Raster)',
+      BestDeals: 'Top Angebote (Promos)',
+      BestSeller: 'Bestseller-Auswahl',
+      LatestBlogs: 'Ratgeber & Blogartikel',
+      HeatingGuideBlogs: 'Ratgeber & Magazin',
+      Newsletter: 'Newsletter-Anmeldung',
+      PromoBanners: 'Aktions-Banner (Promos)',
+      FullWidthBanner: 'Großer Vollbreiter Banner'
+    };
+
     const newSec: SectionConfig = {
       id: 'sec_' + Date.now(),
       type,
-      name: `New section (${type})`,
+      name: names[type] || `Neue Sektion (${type})`,
       enabled: true,
       settings: {}
     };
     if (type === 'BestDeals') {
-      newSec.settings = { title: "New Deals", countdown: '2026-12-31T23:59:59', filterType: 'ON_SALE', categoryId: '' };
+      newSec.settings = { title: "Top Angebote", countdown: '2026-12-31T23:59:59', filterType: 'ON_SALE', categoryId: '' };
     } else if (type === 'BestSeller') {
-      newSec.settings = { title: "New Selection", filterType: 'POPULAR', categoryId: '' };
+      newSec.settings = { title: "Bestseller", filterType: 'POPULAR', categoryId: '' };
     } else if (type === 'ProductGrid') {
       newSec.settings = { 
-        title: "Ride-on Mowers", 
+        title: "Ausgewählte Produkte", 
         filterType: 'LATEST', 
         categoryId: '',
         variant: '1',
         cardBorderColor: '#ea580c',
         btnBgColor: '#ea580c',
         btnTextColor: '#ffffff',
-        maxProducts: '12',
+        maxProducts: '10',
         colsDesktop: '5',
         colsTablet: '3',
         colsMobile: '1'
+      };
+    } else if (type === 'Grossgeraete') {
+      newSec.settings = {
+        title: "Große Haushaltsgeräte & Einbauküche",
+        subtitle: "Entdecken Sie erstklassige Waschmaschinen, energiesparende Geschirrspüler, moderne Induktionskochfelder und geräumige Kühl-Gefrierkombinationen.",
+        badge: "HAUSHALTSGROSSGERÄTE",
+        viewAllText: "Alle Großgeräte ansehen",
+        viewAllHref: "/produkt-kategorie/grosse-haushaltsgeraete"
+      };
+    } else if (type === 'Kleingeraete') {
+      newSec.settings = {
+        title: "Kaffeevollautomaten & Smarte Haushaltshelfer",
+        subtitle: "Perfekter Kaffeegenuss von De'Longhi & Jura, intelligente Saugroboter für mühelose Bodenpflege und leistungsstarke Küchenmaschinen.",
+        badge: "HAUSHALTSKLEINGERÄTE",
+        viewAllText: "Alle Kleingeräte ansehen",
+        viewAllHref: "/produkt-kategorie/kleine-haushaltsgeraete"
+      };
+    } else if (type === 'Gaming') {
+      newSec.settings = {
+        title: "Gaming, Konsolen & Zubehör",
+        subtitle: "Erleben Sie Next-Gen-Gaming mit PlayStation 5 Bundles, Nintendo Switch und erstklassigen Gaming-Headsets zu unschlagbaren Preisen.",
+        badge: "GAMING & UNTERHALTUNG",
+        viewAllText: "Alle Gaming-Angebote ansehen",
+        viewAllHref: "/produkt-kategorie/gaming-vr"
       };
     }
     setSections([...sections, newSec]);
@@ -208,7 +297,112 @@ export default function LandingForm({ initialSettings, categories }: { initialSe
     if (section.type === 'Newsletter') {
       return (
         <div className="p-4 bg-gray-50 border rounded text-sm text-gray-500">
-          The settings for this section are managed elsewhere. You can however move or disable it.
+          Die Einstellungen für diesen Newsletter-Bereich werden automatisch verwaltet. Sie können diesen Bereich verschieben oder deaktivieren.
+        </div>
+      );
+    }
+
+    if (section.type === 'Grossgeraete' || section.type === 'Kleingeraete' || section.type === 'Gaming') {
+      return (
+        <div className="p-4 bg-gray-50 border rounded-xl text-xs text-gray-700 space-y-4">
+          <div className="flex items-center gap-2 font-bold text-sm text-gray-900 border-b pb-2">
+            <span>✨</span>
+            <span>{section.name || section.type}</span>
+          </div>
+
+          <div>
+            <label className="block font-semibold mb-1 text-gray-700">Titel der Sektion</label>
+            <input 
+              type="text" 
+              value={section.settings?.title || ''} 
+              onChange={e => updateSectionSettings(section.id, 'title', e.target.value)}
+              placeholder="z.B. Große Haushaltsgeräte & Einbauküche"
+              className="w-full px-3 py-1.5 border border-gray-300 rounded text-xs bg-white focus:ring-1 focus:ring-orange-500"
+            />
+          </div>
+
+          <div>
+            <label className="block font-semibold mb-1 text-gray-700">Untertitel / Beschreibung</label>
+            <textarea 
+              rows={2}
+              value={section.settings?.subtitle || ''} 
+              onChange={e => updateSectionSettings(section.id, 'subtitle', e.target.value)}
+              placeholder="Beschreibung..."
+              className="w-full px-3 py-1.5 border border-gray-300 rounded text-xs bg-white focus:ring-1 focus:ring-orange-500"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-semibold mb-1 text-gray-700">Badge / Tag</label>
+              <input 
+                type="text" 
+                value={section.settings?.badge || ''} 
+                onChange={e => updateSectionSettings(section.id, 'badge', e.target.value)}
+                placeholder="z.B. HAUSHALTSGROSSGERÄTE"
+                className="w-full px-3 py-1.5 border border-gray-300 rounded text-xs bg-white focus:ring-1 focus:ring-orange-500"
+              />
+            </div>
+            <div>
+              <label className="block font-semibold mb-1 text-gray-700">Button-Text</label>
+              <input 
+                type="text" 
+                value={section.settings?.viewAllText || ''} 
+                onChange={e => updateSectionSettings(section.id, 'viewAllText', e.target.value)}
+                placeholder="z.B. Alle ansehen"
+                className="w-full px-3 py-1.5 border border-gray-300 rounded text-xs bg-white focus:ring-1 focus:ring-orange-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-semibold mb-1 text-gray-700">Link für &quot;Alle ansehen&quot;</label>
+            <input 
+              type="text" 
+              value={section.settings?.viewAllHref || ''} 
+              onChange={e => updateSectionSettings(section.id, 'viewAllHref', e.target.value)}
+              placeholder="/produkt-kategorie/..."
+              className="w-full px-3 py-1.5 border border-gray-300 rounded text-xs bg-white focus:ring-1 focus:ring-orange-500 font-mono"
+            />
+          </div>
+
+          <div className="p-3 bg-white border border-gray-200 rounded text-[11px] text-gray-500">
+            💡 Die Produkte und Unterkategorie-Filterreiter werden automatisch dynamisch aus dem Shop geladen und als Karussell dargestellt.
+          </div>
+
+          <button 
+            type="button" 
+            onClick={() => setEditingId(null)}
+            className="w-full py-2 bg-stone-800 hover:bg-stone-900 text-white font-medium rounded-lg transition-colors text-xs"
+          >
+            Zurück zur Übersicht
+          </button>
+        </div>
+      );
+    }
+
+    if (section.type === 'TrustBar' || section.type === 'CategoryExplorer' || section.type === 'BrandCarousel') {
+      return (
+        <div className="p-4 bg-gray-50 border rounded-xl text-xs text-gray-700 space-y-3">
+          <div className="flex items-center gap-2 font-bold text-sm text-gray-900 border-b pb-2">
+            <span>🛡️</span>
+            <span>{section.name || section.type}</span>
+          </div>
+          <p className="leading-relaxed text-gray-600">
+            {section.type === 'TrustBar' && 'Zeigt die Vertrauensleiste mit Vorteilen an (Kostenloser Versand ab 150 €, 2 Jahre Garantie, Sichere Zahlung, Schneller Speditionsversand).'}
+            {section.type === 'CategoryExplorer' && 'Zeigt den Schnellzugriff auf die Hauptkategorien (Waschen, Kühlen, Kochen, Kaffee, Gaming...) mit Icons an.'}
+            {section.type === 'BrandCarousel' && 'Zeigt das interaktive Logo-Karussell der Partnermarken (Bosch, Miele, Siemens, Liebherr, De\'Longhi, Jura, Sony...).'}
+          </p>
+          <div className="p-2.5 bg-white border border-gray-200 rounded text-[11px] text-gray-500">
+            Sie können diese Sektion in der Liste links frei nach oben oder unten verschieben, aktivieren oder deaktivieren.
+          </div>
+          <button 
+            type="button" 
+            onClick={() => setEditingId(null)}
+            className="w-full py-2 bg-stone-800 hover:bg-stone-900 text-white font-medium rounded-lg transition-colors text-xs"
+          >
+            Zurück zur Übersicht
+          </button>
         </div>
       );
     }
@@ -381,32 +575,52 @@ export default function LandingForm({ initialSettings, categories }: { initialSe
                 <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t("add_widget")}</h4>
                 <div className="grid grid-cols-3 gap-1.5">
                   <button onClick={() => addSection('Hero')} className="border rounded bg-gray-50 hover:bg-gray-100 p-1.5 text-center text-[10px] flex flex-col items-center gap-1 transition text-gray-600 hover:text-gray-900 hover:border-gray-300">
-                    <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                     Hero
                   </button>
+                  <button onClick={() => addSection('TrustBar')} className="border rounded bg-gray-50 hover:bg-gray-100 p-1.5 text-center text-[10px] flex flex-col items-center gap-1 transition text-gray-600 hover:text-gray-900 hover:border-gray-300">
+                    <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                    Vorteile
+                  </button>
+                  <button onClick={() => addSection('CategoryExplorer')} className="border rounded bg-gray-50 hover:bg-gray-100 p-1.5 text-center text-[10px] flex flex-col items-center gap-1 transition text-gray-600 hover:text-gray-900 hover:border-gray-300">
+                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                    Kategorien
+                  </button>
+                  <button onClick={() => addSection('Grossgeraete')} className="border rounded bg-blue-50/50 hover:bg-blue-100/70 p-1.5 text-center text-[10px] flex flex-col items-center gap-1 transition text-blue-900 hover:border-blue-300">
+                    <span className="text-sm">🧺</span>
+                    Großgeräte
+                  </button>
+                  <button onClick={() => addSection('BrandCarousel')} className="border rounded bg-gray-50 hover:bg-gray-100 p-1.5 text-center text-[10px] flex flex-col items-center gap-1 transition text-gray-600 hover:text-gray-900 hover:border-gray-300">
+                    <span className="text-sm">🏷️</span>
+                    Marken
+                  </button>
+                  <button onClick={() => addSection('Kleingeraete')} className="border rounded bg-amber-50/50 hover:bg-amber-100/70 p-1.5 text-center text-[10px] flex flex-col items-center gap-1 transition text-amber-900 hover:border-amber-300">
+                    <span className="text-sm">☕</span>
+                    Kleingeräte
+                  </button>
+                  <button onClick={() => addSection('Gaming')} className="border rounded bg-purple-50/50 hover:bg-purple-100/70 p-1.5 text-center text-[10px] flex flex-col items-center gap-1 transition text-purple-900 hover:border-purple-300">
+                    <span className="text-sm">🎮</span>
+                    Gaming
+                  </button>
+                  <button onClick={() => addSection('ProductGrid')} className="border rounded bg-gray-50 hover:bg-gray-100 p-1.5 text-center text-[10px] flex flex-col items-center gap-1 transition text-gray-600 hover:text-gray-900 hover:border-gray-300">
+                    <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                    Raster
+                  </button>
                   <button onClick={() => addSection('PromoBanners')} className="border rounded bg-gray-50 hover:bg-gray-100 p-1.5 text-center text-[10px] flex flex-col items-center gap-1 transition text-gray-600 hover:text-gray-900 hover:border-gray-300">
-                    <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg>
+                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg>
                     Banners
                   </button>
-                  <button onClick={() => addSection('BestDeals')} className="border rounded bg-gray-50 hover:bg-gray-100 p-1.5 text-center text-[10px] flex flex-col items-center gap-1 transition text-gray-600 hover:text-gray-900 hover:border-gray-300">
-                    <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    Promos
+                  <button onClick={() => addSection('FullWidthBanner')} className="border rounded bg-gray-50 hover:bg-gray-100 p-1.5 text-center text-[10px] flex flex-col items-center gap-1 transition text-gray-600 hover:text-gray-900 hover:border-gray-300">
+                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2zM3 9h18M3 15h18" /></svg>
+                    Großbanner
                   </button>
-                  <button onClick={() => addSection('BestSeller')} className="border rounded bg-gray-50 hover:bg-gray-100 p-1.5 text-center text-[10px] flex flex-col items-center gap-1 transition text-gray-600 hover:text-gray-900 hover:border-gray-300">
-                    <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
-                    Grille
-                  </button>
-                  <button onClick={() => addSection('LatestBlogs')} className="border rounded bg-gray-50 hover:bg-gray-100 p-1.5 text-center text-[10px] flex flex-col items-center gap-1 transition text-gray-600 hover:text-gray-900 hover:border-gray-300">
-                    <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9.5a2.5 2.5 0 00-2.5-2.5H15M9 11l3 3m0 0l3-3m-3 3V8" /></svg>
+                  <button onClick={() => addSection('HeatingGuideBlogs')} className="border rounded bg-gray-50 hover:bg-gray-100 p-1.5 text-center text-[10px] flex flex-col items-center gap-1 transition text-gray-600 hover:text-gray-900 hover:border-gray-300">
+                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9.5a2.5 2.5 0 00-2.5-2.5H15M9 11l3 3m0 0l3-3m-3 3V8" /></svg>
                     Blog
                   </button>
                   <button onClick={() => addSection('Newsletter')} className="border rounded bg-gray-50 hover:bg-gray-100 p-1.5 text-center text-[10px] flex flex-col items-center gap-1 transition text-gray-600 hover:text-gray-900 hover:border-gray-300">
-                    <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                     Newsletter
-                  </button>
-                  <button onClick={() => addSection('FullWidthBanner')} className="border rounded bg-gray-50 hover:bg-gray-100 p-1.5 text-center text-[10px] flex flex-col items-center gap-1 transition text-gray-600 hover:text-gray-900 hover:border-gray-300">
-                    <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2zM3 9h18M3 15h18" /></svg>
-                    Large Banner
                   </button>
                 </div>
               </div>

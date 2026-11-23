@@ -5,6 +5,12 @@ import FullWidthBanner from '@/components/home/FullWidthBanner';
 import TrustBar from '@/components/home/TrustBar';
 import BrandCarousel from '@/components/home/BrandCarousel';
 import CategoryExplorer from '@/components/home/CategoryExplorer';
+import GrossgeraeteSection from '@/components/home/GrossgeraeteSection';
+import KleingeraeteSection from '@/components/home/KleingeraeteSection';
+import GamingSection from '@/components/home/GamingSection';
+import ProductGrid from '@/components/home/ProductGrid';
+import BestDeals from '@/components/home/BestDeals';
+import BestSeller from '@/components/home/BestSeller';
 import FeaturedProductTabs from '@/components/home/FeaturedProductTabs';
 import HeatingGuideBlogs from '@/components/home/HeatingGuideBlogs';
 import prisma from '@/lib/prisma';
@@ -63,13 +69,48 @@ export default async function Home() {
   let layout: SectionConfig[] = [];
   try {
     if (settings.HOMEPAGE_LAYOUT) {
-      layout = JSON.parse(settings.HOMEPAGE_LAYOUT);
-    } else {
+      const parsed = JSON.parse(settings.HOMEPAGE_LAYOUT);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // If legacy clumped layout, unpack into individual distinct sections
+        const isLegacyClumped = parsed.some(s => s.type === 'Hero') && !parsed.some(s => s.type === 'TrustBar');
+        if (isLegacyClumped) {
+          const unpacked: SectionConfig[] = [];
+          for (const s of parsed) {
+            if (s.type === 'Hero') {
+              unpacked.push({ ...s, name: 'Hero-Banner (Header)' });
+              unpacked.push({ id: 'sec_trustbar', type: 'TrustBar', name: 'Vorteile & Vertrauensleiste', enabled: true, settings: {} });
+              unpacked.push({ id: 'sec_categories', type: 'CategoryExplorer', name: 'Kategorie-Schnellzugriff', enabled: true, settings: {} });
+            } else if (s.type === 'FeaturedProductTabs') {
+              unpacked.push({ id: 'sec_gross', type: 'Grossgeraete', name: 'Große Haushaltsgeräte & Einbauküche', enabled: true, settings: {} });
+              unpacked.push({ id: 'sec_brands', type: 'BrandCarousel', name: 'Top Marken & Hersteller', enabled: true, settings: {} });
+              unpacked.push({ id: 'sec_klein', type: 'Kleingeraete', name: 'Kleine Haushaltsgeräte & Kaffee', enabled: true, settings: {} });
+              unpacked.push({ id: 'sec_gaming', type: 'Gaming', name: 'Gaming, Konsolen & Zubehör', enabled: true, settings: {} });
+            } else if (s.type === 'ShippingSimulator') {
+              if (!unpacked.some(x => x.type === 'BrandCarousel')) {
+                unpacked.push({ id: 'sec_brands', type: 'BrandCarousel', name: 'Top Marken & Hersteller', enabled: true, settings: {} });
+              }
+            } else {
+              unpacked.push(s);
+            }
+          }
+          layout = unpacked;
+        } else {
+          layout = parsed;
+        }
+      }
+    }
+
+    if (layout.length === 0) {
       layout = [
-        { id: 'sec_1', type: 'Hero', name: 'Hero', enabled: true, settings: {} },
-        { id: 'sec_featured', type: 'FeaturedProductTabs', name: 'Aktuelle Angebote', enabled: true, settings: {} },
+        { id: 'sec_hero', type: 'Hero', name: 'Hero-Banner (Header)', enabled: true, settings: {} },
+        { id: 'sec_trustbar', type: 'TrustBar', name: 'Vorteile & Vertrauensleiste', enabled: true, settings: {} },
+        { id: 'sec_categories', type: 'CategoryExplorer', name: 'Kategorie-Schnellzugriff', enabled: true, settings: {} },
+        { id: 'sec_gross', type: 'Grossgeraete', name: 'Große Haushaltsgeräte & Einbauküche', enabled: true, settings: {} },
+        { id: 'sec_brands', type: 'BrandCarousel', name: 'Top Marken & Partner', enabled: true, settings: {} },
+        { id: 'sec_klein', type: 'Kleingeraete', name: 'Kleine Haushaltsgeräte & Kaffeevollautomaten', enabled: true, settings: {} },
+        { id: 'sec_gaming', type: 'Gaming', name: 'Gaming, Konsolen & Zubehör', enabled: true, settings: {} },
         { id: 'sec_blogs', type: 'HeatingGuideBlogs', name: 'Ratgeber & Magazin', enabled: true, settings: {} },
-        { id: 'sec_newsletter', type: 'Newsletter', name: 'Newsletter', enabled: true, settings: {} }
+        { id: 'sec_newsletter', type: 'Newsletter', name: 'Newsletter-Anmeldung', enabled: true, settings: {} }
       ];
     }
   } catch (e) {
@@ -106,19 +147,51 @@ export default async function Home() {
     switch (section.type) {
       case 'Hero':
         return (
-          <div key={section.id}>
-            <ThermalHero config={section.settings} showcaseProducts={heroShowcaseProducts} />
-            <TrustBar />
-            <CategoryExplorer />
-          </div>
+          <ThermalHero
+            key={section.id}
+            config={section.settings}
+            showcaseProducts={heroShowcaseProducts}
+          />
         );
-      case 'FeaturedProductTabs':
-      case 'BestDeals':
+      case 'TrustBar':
+        return <TrustBar key={section.id} />;
+      case 'CategoryExplorer':
+        return <CategoryExplorer key={section.id} />;
+      case 'Grossgeraete':
+        return (
+          <GrossgeraeteSection
+            key={section.id}
+            initialProducts={formattedProducts}
+            config={section.settings}
+          />
+        );
+      case 'BrandCarousel':
+        return <BrandCarousel key={section.id} />;
+      case 'Kleingeraete':
+        return (
+          <KleingeraeteSection
+            key={section.id}
+            initialProducts={formattedProducts}
+            config={section.settings}
+          />
+        );
+      case 'Gaming':
+        return (
+          <GamingSection
+            key={section.id}
+            initialProducts={formattedProducts}
+            config={section.settings}
+          />
+        );
       case 'ProductGrid':
+        return <ProductGrid key={section.id} config={section.settings} />;
+      case 'BestDeals':
+        return <BestDeals key={section.id} config={section.settings} />;
+      case 'BestSeller':
+        return <BestSeller key={section.id} config={section.settings} />;
+      case 'FeaturedProductTabs':
         return <FeaturedProductTabs key={section.id} initialProducts={formattedProducts} />;
       case 'ShippingSimulator':
-      case 'BestSeller':
-        // Replace legacy biomass shipping simulator with BrandCarousel
         return <BrandCarousel key={section.id} />;
       case 'HeatingGuideBlogs':
       case 'LatestBlogs':
