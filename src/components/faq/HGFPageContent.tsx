@@ -105,7 +105,7 @@ const RIGHT_ITEMS: AccordionItem[] = [
       <div className="space-y-2">
         <ul className="list-disc pl-5 space-y-1">
           <li>
-            <strong className="font-semibold text-gray-900">Kostenlose Lieferung in Deutschland</strong> für Bestellungen ab <strong className="font-semibold text-gray-900">159€</strong>.
+            <strong className="font-semibold text-gray-900">Kostenlose Lieferung in Deutschland</strong> für Bestellungen ab <strong className="font-semibold text-gray-900">150€</strong>.
           </li>
           <li>
             <strong className="font-semibold text-gray-900">Standardlieferung</strong> in Deutschland: <strong className="font-semibold text-gray-900">14,92€</strong>.

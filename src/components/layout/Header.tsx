@@ -54,7 +54,7 @@ type HeaderProps = {
 };
 
 export default function Header({
-  announcement = '📍 Showroom: Wildbader Straße 51, 75394 Oberreichenbach • 🚚 Kostenloser Speditionsversand ab 50 € • 📞 kontakt@frankhausgeraete.de',
+  announcement = '📍 Showroom: Wildbader Straße 51, 75394 Oberreichenbach • 🚚 Kostenloser Speditionsversand ab 150 € • 📞 kontakt@frankhausgeraete.de',
   logoImage = '',
   headerLogoHeight = '80',
   mobileLogoHeight = '64',

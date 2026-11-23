@@ -3,7 +3,7 @@ import React from 'react';
 export default function TrustBar() {
   const trustItems = [
     {
-      title: 'Kostenloser Versand ab 50 €',
+      title: 'Kostenloser Versand ab 150 €',
       desc: 'Schnelle & sichere Speditionslieferung',
       icon: (
         <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -93,12 +93,12 @@ export default function ThermalHero({ config, showcaseProducts, isPreview, secti
   const description = config?.description ?? 'Entdecken Sie energieeffiziente Marken-Hausgeräte von Miele, Bosch, Siemens & Liebherr. Schnelle Speditionslieferung, 30 Tage Rückgaberecht und 2 Jahre Herstellergarantie.';
   const cta1Text = config?.cta1Text ?? 'Jetzt Angebote entdecken';
   const cta1Link = config?.cta1Link ?? '/shop';
-  const cta2Text = config?.cta2Text ?? 'Showroom Oberreichenbach';
+  const cta2Text = (config?.cta2Text && config.cta2Text !== 'Showroom Oberreichenbach') ? config.cta2Text : '';
   const cta2Link = config?.cta2Link ?? '/contact';
 
   // Trust Badges
   const badge1Title = config?.badge1Title ?? 'Kostenloser Versand';
-  const badge1Subtitle = config?.badge1Subtitle ?? 'Ab 50 € deutschlandweit';
+  const badge1Subtitle = config?.badge1Subtitle ?? 'Ab 150 € deutschlandweit';
   const badge2Title = config?.badge2Title ?? '2 Jahre Garantie';
   const badge2Subtitle = config?.badge2Subtitle ?? 'Volle Herstellergarantie';
   const badge3Title = config?.badge3Title ?? 'Sichere Zahlung';

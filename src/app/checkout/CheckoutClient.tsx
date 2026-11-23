@@ -21,6 +21,7 @@ interface CheckoutClientProps {
       id: string;
       type: string;
       rate: number;
+      minOrderAmount?: number | null;
     }>;
   }>;
 }
@@ -30,10 +31,27 @@ export default function CheckoutClient({ settings, zones }: CheckoutClientProps)
   const searchParams = useSearchParams();
   const { items: cart, getTotalPrice, clearCart, coupon, setCoupon, customShipping } = useCartStore();
   const [isMounted, setIsMounted] = useState(false);
+  const { formatPrice } = useCurrency();
+  const t = useTranslations('Checkout');
+  const tCountries = useTranslations('Countries');
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  const cartTotal = getTotalPrice();
+  
+  // Calculate Discount
+  let discountAmount = 0;
+  if (coupon) {
+    if (coupon.type === 'PERCENTAGE') {
+      discountAmount = cartTotal * (coupon.value / 100);
+    } else {
+      discountAmount = coupon.value;
+    }
+  }
+
+  const currentSubtotal = Math.max(0, cartTotal - discountAmount);
   
   const [selectedCountry, setSelectedCountry] = useState(
     customShipping?.zoneName ? customShipping.zoneName : (zones.length > 0 ? zones[0].name : '')
@@ -45,7 +63,14 @@ export default function CheckoutClient({ settings, zones }: CheckoutClientProps)
 
   const effectiveShippingCountry = shipToDifferentAddress ? shippingCountry : selectedCountry;
   const activeZone = zones.find(z => z.name === effectiveShippingCountry);
-  const activeMethods = activeZone?.methods || [];
+
+  // Filter methods based on minOrderAmount (e.g. Kostenlose Lieferung only if subtotal >= minOrderAmount)
+  const activeMethods = (activeZone?.methods || []).filter(m => {
+    if (m.minOrderAmount && m.minOrderAmount > 0) {
+      return currentSubtotal >= m.minOrderAmount;
+    }
+    return true;
+  });
 
   const [shippingMethodId, setShippingMethodId] = useState(
     customShipping?.methodId || (activeMethods.length > 0 ? activeMethods[0].id : '')
@@ -61,13 +86,25 @@ export default function CheckoutClient({ settings, zones }: CheckoutClientProps)
     }
 
     const newActiveZone = zones.find(z => z.name === effectiveShippingCountry);
-    const newMethods = newActiveZone?.methods || [];
+    const subtotal = Math.max(0, cartTotal - discountAmount);
+    const newMethods = (newActiveZone?.methods || []).filter(m => {
+      if (m.minOrderAmount && m.minOrderAmount > 0) {
+        return subtotal >= m.minOrderAmount;
+      }
+      return true;
+    });
+
     if (newMethods.length > 0) {
-      setShippingMethodId(newMethods[0].id);
+      const isCurrentStillEligible = newMethods.some(m => m.id === shippingMethodId);
+      if (!isCurrentStillEligible) {
+        // If free shipping is available, pick it by default, else the first eligible method
+        const freeShippingMethod = newMethods.find(m => m.rate === 0 || m.type.toLowerCase().includes('kostenlos') || m.type.toLowerCase().includes('gratuite'));
+        setShippingMethodId(freeShippingMethod ? freeShippingMethod.id : newMethods[0].id);
+      }
     } else {
       setShippingMethodId('');
     }
-  }, [effectiveShippingCountry, zones, customShipping]);
+  }, [effectiveShippingCountry, zones, customShipping, cartTotal, discountAmount, shippingMethodId]);
   
   const enableBankTransfer = settings.ENABLE_BANK_TRANSFER !== 'false';
   const enableStripe = settings.ENABLE_STRIPE !== 'false';
@@ -81,21 +118,6 @@ export default function CheckoutClient({ settings, zones }: CheckoutClientProps)
   const [couponCode, setCouponCode] = useState('');
   // appliedCoupon state removed, using coupon from cartStore
   const [couponError, setCouponError] = useState('');
-  const { formatPrice } = useCurrency();
-  const t = useTranslations('Checkout');
-  const tCountries = useTranslations('Countries');
-
-  const cartTotal = getTotalPrice();
-  
-  // Calculate Discount
-  let discountAmount = 0;
-  if (coupon) {
-    if (coupon.type === 'PERCENTAGE') {
-      discountAmount = cartTotal * (coupon.value / 100);
-    } else {
-      discountAmount = coupon.value;
-    }
-  }
 
   const selectedMethod = activeMethods.find(m => m.id === shippingMethodId);
   const shippingCost = selectedMethod ? selectedMethod.rate : (customShipping ? customShipping.rate : 0);
@@ -645,6 +667,18 @@ export default function CheckoutClient({ settings, zones }: CheckoutClientProps)
                     </label>
                   ))
                 )}
+                {(() => {
+                  const freeMethod = (activeZone?.methods || []).find(m => m.minOrderAmount && m.minOrderAmount > 0 && currentSubtotal < m.minOrderAmount);
+                  if (freeMethod && freeMethod.minOrderAmount) {
+                    const diff = freeMethod.minOrderAmount - currentSubtotal;
+                    return (
+                      <div className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-2.5 py-1.5 mt-2 text-right">
+                        🚚 Noch <span className="font-bold text-red-600">{formatPrice(diff)}</span> bis zum <span className="font-semibold text-emerald-700">kostenlosen Versand</span>!
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
             </div>
 

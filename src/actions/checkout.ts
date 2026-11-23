@@ -140,7 +140,8 @@ export async function processCheckout(formData: FormData, cartItems: any[], fina
       return { error: "Método de envio inválido." };
     }
 
-    const shippingRate = validZone.methods[0].rate;
+    const selectedShippingMethod = validZone.methods[0];
+    const shippingRate = selectedShippingMethod.rate;
     
     // ===== SERVER-SIDE PRICE VERIFICATION =====
     // Never trust client-provided prices. Fetch real prices from database.
@@ -226,7 +227,14 @@ export async function processCheckout(formData: FormData, cartItems: any[], fina
       }
     }
 
-    const serverTotal = Math.max(0, serverCartTotal - discountAmount) + shippingRate;
+    const effectiveSubtotal = Math.max(0, serverCartTotal - discountAmount);
+    if (selectedShippingMethod.minOrderAmount && effectiveSubtotal < selectedShippingMethod.minOrderAmount) {
+      return { 
+        error: `Die Versandmethode "${selectedShippingMethod.type}" erfordert einen Mindestbestellwert von ${selectedShippingMethod.minOrderAmount.toFixed(2)} €.` 
+      };
+    }
+
+    const serverTotal = effectiveSubtotal + shippingRate;
     // Round to 2 decimal places to avoid floating point issues
     const verifiedTotal = Math.round(serverTotal * 100) / 100;
 
