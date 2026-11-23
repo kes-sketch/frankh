@@ -65,7 +65,7 @@ export async function generateInvoicePDF(order: any): Promise<Buffer> {
     const logoSetting = sMap['HEADER_LOGO_IMAGE'] || sMap['STYLE2_LOGO'];
     if (logoSetting && /^https?:\/\//i.test(logoSetting)) {
       try {
-        const res = await fetch(logoSetting);
+        const res = await fetch(logoSetting, { signal: AbortSignal.timeout(2000) });
         if (res.ok) {
           const ab = await res.arrayBuffer();
           logoBuffer = Buffer.from(ab);

@@ -405,21 +405,33 @@ export async function sendClientOrderConfirmation(order: any, userEmail: string,
       </div>
     `;
 
-    const { generateInvoicePDF } = await import('./pdfGenerator');
     let pdfAttachment: any = null;
     try {
-      const pdfBuffer = await generateInvoicePDF(order);
-      pdfAttachment = {
-        filename: `Rechnung-${orderId}.pdf`,
-        content: pdfBuffer,
-        contentType: 'application/pdf'
-      };
+      const { generateInvoicePDF } = await import('./pdfGenerator');
+      const pdfPromise = generateInvoicePDF(order);
+      const timeoutPromise = new Promise<null>((_, reject) =>
+        setTimeout(() => reject(new Error('PDF generation timed out')), 3500)
+      );
+      const pdfBuffer = await Promise.race([pdfPromise, timeoutPromise]);
+      if (pdfBuffer) {
+        pdfAttachment = {
+          filename: `Rechnung-${orderId}.pdf`,
+          content: pdfBuffer,
+          contentType: 'application/pdf'
+        };
+      }
     } catch (pdfErr) {
-      console.error('Fehler beim Erstellen des Rechnungs-PDF:', pdfErr);
+      console.warn('[sendClientOrderConfirmation] Invoice PDF generation skipped or timed out:', pdfErr);
     }
 
-    return sendEmail({
-      to: userEmail,
+    const recipientEmail = (userEmail || b.email || s.email || order.user?.email || '').trim();
+    if (!recipientEmail) {
+      console.error('[sendClientOrderConfirmation] No recipient email available for order', orderId);
+      return { success: false as const, error: 'No recipient email' };
+    }
+
+    return await sendEmail({
+      to: recipientEmail,
       subject: `Bestellbestätigung #${orderId} - ${storeName}`,
       html,
       attachments: pdfAttachment ? [pdfAttachment] : []

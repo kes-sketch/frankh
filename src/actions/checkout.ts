@@ -531,7 +531,7 @@ export async function processCheckout(formData: FormData, cartItems: any[], fina
     else {
       // BANK_TRANSFER — Finalize immediately (no online payment to confirm)
       const { finalizeOrder } = await import('@/lib/orderFinalizer');
-      finalizeOrder(order.id).catch(e => console.error('Bank transfer finalization failed', e));
+      await finalizeOrder(order.id).catch(e => console.error('Bank transfer finalization failed', e));
       
       return { success: true, orderId: order.id, redirectUrl: '/checkout/success?orderId=' + order.id };
     }

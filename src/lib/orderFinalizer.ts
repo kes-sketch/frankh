@@ -29,21 +29,28 @@ export async function finalizeOrder(orderId: string) {
       return;
     }
 
-    const userEmail = order.user.email;
-
-    // Parse order metadata for customer name
+    // Parse order metadata for customer name and real customer checkout email
     let customerName = 'Client';
+    let customerEmail = order.user?.email || '';
+
     if (order.destinationAddress) {
       try {
-        const metadata = JSON.parse(order.destinationAddress);
-        const billing = metadata?.billing;
+        const metadata = typeof order.destinationAddress === 'string'
+          ? JSON.parse(order.destinationAddress)
+          : order.destinationAddress;
+        const billing = metadata?.billing || metadata?.shipping;
         if (billing?.firstName) {
           customerName = `${billing.firstName} ${billing.lastName || ''}`.trim();
+        }
+        if (billing?.email && String(billing.email).trim().length > 0) {
+          customerEmail = String(billing.email).trim();
         }
       } catch (e) {
         // Metadata parse failed, use default name
       }
     }
+
+    const userEmail = customerEmail || order.user?.email || '';
 
     // 1. Recover abandoned cart
     try {
@@ -69,20 +76,21 @@ export async function finalizeOrder(orderId: string) {
     const { getAdminNotificationEmail } = await import('@/lib/mailer');
     const adminEmail = await getAdminNotificationEmail();
 
-    // 3. Send emails (non-blocking)
+    // 3. Send emails (awaited with Promise.allSettled to ensure completion in serverless environments)
     try {
       const { sendClientOrderConfirmation, sendAdminOrderNotification } = await import(
         '@/lib/mailer'
       );
 
-      sendClientOrderConfirmation(order, userEmail, customerName).catch((e) =>
-        console.error('[finalizeOrder] Client email failed', e)
-      );
-
-      sendAdminOrderNotification(order, adminEmail, {
-        name: customerName,
-        email: userEmail,
-      }).catch((e) => console.error('[finalizeOrder] Admin email failed', e));
+      await Promise.allSettled([
+        sendClientOrderConfirmation(order, userEmail, customerName).catch((e) =>
+          console.error('[finalizeOrder] Client email failed', e)
+        ),
+        sendAdminOrderNotification(order, adminEmail, {
+          name: customerName,
+          email: userEmail,
+        }).catch((e) => console.error('[finalizeOrder] Admin email failed', e)),
+      ]);
     } catch (e) {
       console.error('[finalizeOrder] Email sending setup failed', e);
     }
