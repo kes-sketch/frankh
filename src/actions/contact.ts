@@ -36,8 +36,11 @@ export async function submitContactMessage(formData: FormData) {
       return { error: 'Ein oder mehrere Felder überschreiten die maximal zulässige Zeichenanzahl.' };
     }
 
+    const contactSettings = await getContactSettings().catch(() => null);
+    const configuredRecipient = contactSettings?.formRecipient?.trim();
+
     const { sendEmail, getAdminNotificationEmail } = await import('@/lib/mailer');
-    const receiverEmail = await getAdminNotificationEmail();
+    const receiverEmail = configuredRecipient || await getAdminNotificationEmail();
 
     // Send email to the configured admin/receiver (HTML échappé)
     try {

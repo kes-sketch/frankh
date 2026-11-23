@@ -1028,6 +1028,8 @@
     "smtp_username": "Benutzername (Login-E-Mail)",
     "smtp_password": "Passwort (App-Passwort)",
     "smtp_sender_email": "Absender-E-Mail (Von: ...)",
+    "admin_notification_email": "E-Mail-Adresse für Benachrichtigungen & Kontakt",
+    "admin_notification_email_help": "Adresse, an die Kontaktformularnachrichten und Systembenachrichtigungen gesendet werden.",
     "payment_enable_desc": "Aktivieren Sie „Diesen Modus aktivieren“, um die Zahlungsmethode an der Kasse sichtbar zu machen.",
     "stripe_config": "Streifenkonfiguration (Kreditkarten)",
     "enable_this_mode": "Aktivieren Sie diesen Modus",

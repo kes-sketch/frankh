@@ -1030,6 +1030,8 @@
     "smtp_username": "Nom d'utilisateur (Email)",
     "smtp_password": "Mot de passe (Mot de passe d'application)",
     "smtp_sender_email": "Email de l'expéditeur (De : ...)",
+    "admin_notification_email": "Adresse E-mail pour les notifications & contact",
+    "admin_notification_email_help": "Adresse à laquelle les messages du formulaire de contact et notifications sont envoyés.",
     "payment_enable_desc": "Cochez \"Activer ce mode\" pour rendre ce mode de paiement visible lors de la commande.",
     "stripe_config": "Configuration Stripe (Cartes bancaires)",
     "enable_this_mode": "Activer ce mode",

@@ -1028,6 +1028,8 @@
     "smtp_username": "Nombre de Utilizador (E-mail)",
     "smtp_password": "Palavra-passe (Palavra-passe de aplicación)",
     "smtp_sender_email": "E-mail del remitente (De: ...)",
+    "admin_notification_email": "E-mail para notificações e contacto",
+    "admin_notification_email_help": "Endereço para onde as mensagens do formulário de contacto e notificações serão enviadas.",
     "payment_enable_desc": "Marca \"Habilitar este modo\" para que el método de Pagamento sea visible al finalizar la compra.",
     "stripe_config": "Configurações de Stripe (Tarjetas de crédito)",
     "enable_this_mode": "Habilitar este modo",

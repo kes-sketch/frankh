@@ -1028,6 +1028,8 @@
     "smtp_username": "Username (Login Email)",
     "smtp_password": "Password (App Password)",
     "smtp_sender_email": "Sender Email (From: ...)",
+    "admin_notification_email": "Notification & contact recipient email",
+    "admin_notification_email_help": "Email address where contact form submissions and notifications will be sent.",
     "payment_enable_desc": "Check \"Enable this mode\" to make the payment method visible at checkout.",
     "stripe_config": "Stripe Configuration (Credit Cards)",
     "enable_this_mode": "Enable this mode",

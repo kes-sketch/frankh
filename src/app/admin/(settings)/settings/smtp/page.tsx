@@ -2,7 +2,7 @@ import { getSettings } from '@/actions/settings';
 import SmtpForm from '@/components/admin/settings/SmtpForm';
 
 export const metadata = {
-  title: 'Email server (SMTP) Settings | Lenha & Carvao Silva Dias Admin',
+  title: 'E-Mail-Server (SMTP) Einstellungen | Administration',
 };
 
 export default async function SmtpSettingsPage() {

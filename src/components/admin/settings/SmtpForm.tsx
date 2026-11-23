@@ -14,6 +14,7 @@ export default function SmtpForm({ initialSettings }: { initialSettings: Record<
   const [smtpUser, setSmtpUser] = useState(initialSettings.SMTP_USER || '');
   const [smtpPass, setSmtpPass] = useState(initialSettings.SMTP_PASS || '');
   const [smtpFrom, setSmtpFrom] = useState(initialSettings.SMTP_FROM || '');
+  const [adminEmail, setAdminEmail] = useState(initialSettings.ADMIN_EMAIL || initialSettings.CONTACT_FORM_RECIPIENT || 'kontakt@frankhausgeraete.de');
 
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -35,7 +36,9 @@ export default function SmtpForm({ initialSettings }: { initialSettings: Record<
       SMTP_PORT: smtpPort,
       SMTP_USER: smtpUser,
       SMTP_PASS: smtpPass,
-      SMTP_FROM: smtpFrom
+      SMTP_FROM: smtpFrom,
+      ADMIN_EMAIL: adminEmail,
+      CONTACT_FORM_RECIPIENT: adminEmail
     });
 
     const res = await testSmtpConnection(testEmail);
@@ -56,7 +59,9 @@ export default function SmtpForm({ initialSettings }: { initialSettings: Record<
       SMTP_PORT: smtpPort,
       SMTP_USER: smtpUser,
       SMTP_PASS: smtpPass,
-      SMTP_FROM: smtpFrom
+      SMTP_FROM: smtpFrom,
+      ADMIN_EMAIL: adminEmail,
+      CONTACT_FORM_RECIPIENT: adminEmail
     });
 
     setMessage(tSettings('update_success'));
@@ -92,6 +97,11 @@ export default function SmtpForm({ initialSettings }: { initialSettings: Record<
         <div className="md:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-2">{tSettings('smtp_sender_email')}</label>
           <input type="text" value={smtpFrom} onChange={(e) => setSmtpFrom(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500" />
+        </div>
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium text-gray-700 mb-2">{tSettings('admin_notification_email') || 'E-Mail-Adresse für Benachrichtigungen & Kontakt'}</label>
+          <input type="email" value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} placeholder="kontakt@frankhausgeraete.de" className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500" />
+          <p className="text-xs text-gray-500 mt-1">{tSettings('admin_notification_email_help') || 'Adresse, an die Kontaktformularnachrichten und Systembenachrichtigungen gesendet werden.'}</p>
         </div>
       </div>
 

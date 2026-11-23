@@ -1226,23 +1226,43 @@ export async function sendNewsletterWelcomeEmail(userEmail: string) {
 }
 
 // Helper to retrieve the active administrator notification email
+// 8. Determine Admin Notification Recipient Email
 export async function getAdminNotificationEmail(): Promise<string> {
   try {
+    const settingsDb = await prisma.setting.findMany({
+      where: {
+        key: {
+          in: [
+            'CONTACT_FORM_RECIPIENT',
+            'CONTACT_RECEIVER_EMAIL',
+            'ADMIN_EMAIL',
+            'FOOTER_SUPPORT_EMAIL',
+            'CONTACT_EMAIL_DISPLAY',
+            'SMTP_FROM',
+            'SMTP_USER'
+          ]
+        }
+      }
+    });
+    const sMap = settingsDb.reduce((acc, s) => ({ ...acc, [s.key]: s.value }), {} as Record<string, string>);
+    const configuredReceiver =
+      sMap['CONTACT_FORM_RECIPIENT']?.trim() ||
+      sMap['CONTACT_RECEIVER_EMAIL']?.trim() ||
+      sMap['ADMIN_EMAIL']?.trim() ||
+      sMap['FOOTER_SUPPORT_EMAIL']?.trim() ||
+      sMap['CONTACT_EMAIL_DISPLAY']?.trim();
+
+    if (configuredReceiver && configuredReceiver.length > 0) {
+      return configuredReceiver;
+    }
+
     const adminUser = await prisma.user.findFirst({
       where: { role: 'ADMIN' },
       select: { email: true }
     });
-    const settingsDb = await prisma.setting.findMany({
-      where: { key: { in: ['CONTACT_RECEIVER_EMAIL', 'CONTACT_FORM_RECIPIENT', 'ADMIN_EMAIL'] } }
-    });
-    const sMap = settingsDb.reduce((acc, s) => ({ ...acc, [s.key]: s.value }), {} as Record<string, string>);
-    const configuredReceiver = sMap['CONTACT_RECEIVER_EMAIL'] || sMap['CONTACT_FORM_RECIPIENT'] || sMap['ADMIN_EMAIL'];
-    if (configuredReceiver && !configuredReceiver.includes('@frankhausgeraete.de')) {
-      return configuredReceiver;
-    }
-    return adminUser?.email || configuredReceiver || 'kemd622@gmail.com';
+    return adminUser?.email || 'kontakt@frankhausgeraete.de';
   } catch {
-    return 'kemd622@gmail.com';
+    return 'kontakt@frankhausgeraete.de';
   }
 }
 
