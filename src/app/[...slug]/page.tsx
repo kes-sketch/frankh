@@ -33,10 +33,10 @@ export async function generateMetadata({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const storeName = process.env.NEXT_PUBLIC_STORE_NAME || "Lenha & Carvão Silva Dias";
+  const storeName = process.env.NEXT_PUBLIC_STORE_NAME || "FRANK HAUSGERÄTE";
 
   if (!slug || slug.length === 0) {
-    return { title: `Página não encontrada - ${storeName}` };
+    return { title: `Seite nicht gefunden - ${storeName}` };
   }
 
   // 1. Single-segment: Check Contact and CMS Pages first
@@ -130,11 +130,11 @@ export default async function CatchAllPage({
 
             {/* Breadcrumbs */}
             <nav className="flex items-center gap-2 text-xs text-stone-500 mb-6 font-medium overflow-x-auto whitespace-nowrap">
-              <Link href="/" className="hover:text-red-600 transition-colors">Início</Link>
+              <Link href="/" className="hover:text-red-600 transition-colors">Startseite</Link>
               <span>/</span>
               {isLegalSlug && (
                 <>
-                  <span className="text-stone-600">Políticas Legais</span>
+                  <span className="text-stone-600">Rechtliche Hinweise</span>
                   <span>/</span>
                 </>
               )}
@@ -147,13 +147,13 @@ export default async function CatchAllPage({
               <div className="relative z-10 max-w-4xl">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-600/20 border border-red-500/30 text-red-400 font-bold text-xs uppercase tracking-wider mb-4">
                   <span>{isLegalSlug ? '⚖️' : '📄'}</span>
-                  <span>{isLegalSlug ? 'Termos Oficiais & Transparência Silva Dias' : 'Informações Oficiais'}</span>
+                  <span>{isLegalSlug ? 'Offizielle Richtlinien & Transparenz' : 'Offizielle Informationen'}</span>
                 </div>
                 <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mb-3">
                   {page.title}
                 </h1>
                 <p className="text-stone-300 text-xs sm:text-sm leading-relaxed">
-                  Lenha & Carvão Silva Dias • Braga, Portugal • Encomendas seguras com rastreamento e entrega direta.
+                  Frank Hausgeräte e. K. • Oberreichenbach, Deutschland • Sicherer Einkauf &amp; zuverlässige Lieferung.
                 </p>
               </div>
             </div>
@@ -205,55 +205,42 @@ export default async function CatchAllPage({
             <div className="bg-gradient-to-r from-stone-900 via-stone-900 to-stone-950 rounded-3xl p-6 sm:p-8 text-white border border-stone-800 shadow-xl flex flex-col lg:flex-row items-center justify-between gap-6">
               <div className="space-y-2 text-center lg:text-left flex-1">
                 <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-red-400">
-                  <span>💬</span> Apoio ao Cliente & Faturação
+                  <span>💬</span> Kundenservice &amp; Beratung
                 </span>
                 <h3 className="text-xl sm:text-2xl font-bold text-white">
-                  Dúvidas sobre Devoluções, Garantias ou Faturas?
+                  Fragen zu Rückgabe, Garantie oder Rechnungen?
                 </h3>
                 <p className="text-stone-300 text-xs sm:text-sm max-w-2xl leading-relaxed">
-                  A nossa equipa em Braga está disponível para prestar esclarecimentos imediatos sobre qualquer procedimento ou encomenda.
+                  Unser Kundenservice steht Ihnen für alle Fragen zu Ihrer Bestellung, Lieferungen oder Garantieangelegenheiten gerne zur Verfügung.
                 </p>
               </div>
 
               <div className="flex flex-col sm:flex-row items-center gap-3.5 w-full sm:w-auto shrink-0">
                 <a
-                  href="mailto:cabeliminizenda@gmail.com"
+                  href="mailto:kontakt@frankhausgeraete.de"
                   className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm whitespace-nowrap shadow-lg shadow-red-600/30 transition-all flex items-center justify-center gap-2.5 shrink-0"
                 >
                   <svg className="w-4 h-4 shrink-0 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
-                  <span>Enviar E-mail</span>
+                  <span>E-Mail senden</span>
                 </a>
                 <Link
-                  href="/contactos"
+                  href="/kontakt"
                   className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-white font-semibold text-sm whitespace-nowrap border border-stone-700 transition-all flex items-center justify-center gap-2.5 shrink-0"
                 >
                   <svg className="w-4 h-4 shrink-0 text-stone-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                   </svg>
-                  <span>Página de Contactos</span>
+                  <span>Kontaktseite</span>
                 </Link>
               </div>
             </div>
 
-            {/* Livro de Reclamações Online Banner */}
+            {/* Copyright Banner */}
             <div className="mt-8 pt-6 border-t border-stone-200/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-500 text-center sm:text-left">
               <div>
-                <span>© {new Date().getFullYear()} Lenha & Carvão Silva Dias. Todos os direitos reservados.</span>
-              </div>
-              <div className="flex items-center gap-4">
-                <a
-                  href="https://www.livroreclamacoes.pt"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-stone-700 hover:text-red-600 font-semibold transition-colors"
-                >
-                  <span>Livro de Reclamações Online</span>
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                </a>
+                <span>© {new Date().getFullYear()} Frank Hausgeräte e. K. Alle Rechte vorbehalten.</span>
               </div>
             </div>
 

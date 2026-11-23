@@ -49,7 +49,7 @@ export async function GET(request: Request) {
     }
 
     // Replay protection: each token can only trigger emails once in 24 hours
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lenhaecarvaosilvadias.com';
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://frankhausgeraete.de';
     const replayCheck = await checkRateLimit(`nl_token_${signature.slice(0, 32)}`, 1, 86400);
     if (!replayCheck.success) {
       // Token already confirmed; redirect to thank-you without duplicate email dispatch
@@ -57,16 +57,16 @@ export async function GET(request: Request) {
     }
 
     const receiverEmail = await getAdminNotificationEmail();
-    const storeName = process.env.NEXT_PUBLIC_STORE_NAME || 'Lenha & Carvão Silva Dias';
+    const storeName = process.env.NEXT_PUBLIC_STORE_NAME || 'FRANK HAUSGERÄTE';
 
     // 1. Send notification to admin
     await sendEmail({
       to: receiverEmail,
-      subject: `Nova Subscrição na Newsletter — ${escapeHtml(email)} (Confirmada)`,
+      subject: `Neue Newsletter-Anmeldung — ${escapeHtml(email)} (Bestätigt)`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.5; padding: 20px;">
-          <h1 style="font-size: 22px; color: #1a1a1a; margin-top: 0; margin-bottom: 15px;">📬 Nova Subscrição na Newsletter</h1>
-          <p style="font-size: 13px; color: #666;">Um visitante acabou de subscrever e confirmar a sua adesão à newsletter de <strong>${escapeHtml(storeName)}</strong>.</p>
+          <h1 style="font-size: 22px; color: #1a1a1a; margin-top: 0; margin-bottom: 15px;">📬 Neue Newsletter-Anmeldung</h1>
+          <p style="font-size: 13px; color: #666;">Ein Besucher hat sich soeben für den Newsletter auf <strong>${escapeHtml(storeName)}</strong> angemeldet und die Anmeldung bestätigt.</p>
           
           <table style="width: 100%; border-collapse: collapse; margin-top: 20px; background-color: #f9fafb; padding: 15px; border-radius: 8px;">
             <tr>
@@ -76,8 +76,8 @@ export async function GET(request: Request) {
               </td>
             </tr>
             <tr style="border-top: 1px solid #e5e7eb;">
-              <td style="padding: 10px; font-size: 13px; font-weight: bold;">Data:</td>
-              <td style="padding: 10px; font-size: 13px;">${new Date().toLocaleString('pt-PT', { timeZone: 'Europe/Lisbon' })}</td>
+              <td style="padding: 10px; font-size: 13px; font-weight: bold;">Datum & Uhrzeit:</td>
+              <td style="padding: 10px; font-size: 13px;">${new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' })}</td>
             </tr>
           </table>
           

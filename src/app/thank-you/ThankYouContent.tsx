@@ -28,7 +28,7 @@ export default function ThankYouContent() {
         document.body.removeChild(textArea);
       }
       setCopied(true);
-      toast.success('Código WELCOME10 copiado com sucesso! 🏷️', {
+      toast.success('Gutscheincode WELCOME10 erfolgreich kopiert! 🏷️', {
         style: {
           background: '#1c1917',
           color: '#ffffff',
@@ -42,7 +42,7 @@ export default function ThankYouContent() {
       });
       setTimeout(() => setCopied(false), 2500);
     } catch {
-      toast.error('Não foi possível copiar o código.');
+      toast.error('Code konnte nicht kopiert werden.');
     }
   };
 
@@ -56,7 +56,7 @@ export default function ThankYouContent() {
             <svg className="w-4 h-4 text-emerald-600 shrink-0" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
             </svg>
-            <span>Subscrição verificada e ativada com sucesso!</span>
+            <span>Newsletter-Anmeldung erfolgreich bestätigt und aktiviert!</span>
           </div>
         )}
 
@@ -68,17 +68,17 @@ export default function ThankYouContent() {
 
           {/* Brand Eyebrow */}
           <p className="text-[11px] sm:text-xs font-bold tracking-widest text-[#8C6D53] uppercase mb-1">
-            BEM-VINDO(A) À NOSSA COMUNIDADE
+            WILLKOMMEN BEI FRANK HAUSGERÄTE
           </p>
 
           {/* Main H1 */}
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1D1A] tracking-tight mt-1">
-            Obrigado pela sua inscrição!
+            Vielen Dank für Ihre Anmeldung!
           </h1>
 
           {/* Subtitle */}
           <p className="text-xs sm:text-sm text-[#666059] mt-2 font-normal">
-            A sua inscrição foi realizada com sucesso.
+            Ihre Anmeldung wurde erfolgreich abgeschlossen.
           </p>
 
           {/* Thin Divider */}
@@ -86,38 +86,38 @@ export default function ThankYouContent() {
 
           {/* Comfort Heading */}
           <h2 className="text-base sm:text-xl font-bold text-[#1F1D1A]">
-            O conforto começa aqui.
+            Qualität und Komfort für Ihr Zuhause.
           </h2>
 
           {/* Comfort Description */}
           <p className="text-xs sm:text-sm text-[#666059] leading-relaxed mt-2 max-w-md mx-auto">
-            Prepare-se para receber novidades, conselhos, campanhas exclusivas e tudo o que precisa para tornar a sua casa ainda mais acolhedora.
+            Freuen Sie sich auf exklusive Angebote, wertvolle Expertentipps und die besten Haushaltsgeräte für ein modernes und energieeffizientes Zuhause.
           </p>
 
           {/* Special Gift Container (Box) */}
           <div className="bg-[#FAF7F2] border border-[#E7DFD4] rounded-xl sm:rounded-2xl p-5 sm:p-7 mt-6 sm:mt-7 text-center">
             
             <p className="text-[10px] sm:text-[11px] font-bold text-[#8B5E3C] tracking-widest uppercase">
-              UM PRESENTE ESPECIAL PARA SI
+              EIN BESONDERES GESCHENK FÜR SIE
             </p>
 
             <h3 className="text-lg sm:text-2xl font-black text-[#1F1D1A] mt-1">
-              Temos um mimo para si!
+              Ihr persönlicher Willkommensrabatt!
             </h3>
 
             <p className="text-xs sm:text-sm text-[#666059] mt-1.5 max-w-sm mx-auto">
-              Para agradecer a sua confiança, oferecemos-lhe um desconto exclusivo na sua próxima compra.
+              Als Dankeschön für Ihr Vertrauen erhalten Sie einen exklusiven Rabatt auf Ihre nächste Bestellung.
             </p>
 
             {/* Dashed Coupon Ticket Box */}
             <div className="border-2 border-dashed border-[#CBB89D] bg-white/80 rounded-lg sm:rounded-xl p-5 sm:p-6 my-5 max-w-sm mx-auto relative shadow-xs">
               
               <div className="text-lg sm:text-2xl font-black text-[#8B5E3C] tracking-wide uppercase">
-                10% DE DESCONTO
+                10% RABATT
               </div>
 
               <div className="text-[10px] font-bold text-[#8C847A] tracking-widest uppercase mt-1">
-                O SEU CÓDIGO DE BOAS-VINDAS
+                IHR WILLKOMMENSCODE
               </div>
 
               {/* Coupon Code + Click-to-copy */}
@@ -125,7 +125,7 @@ export default function ThankYouContent() {
                 <button
                   type="button"
                   onClick={handleCopy}
-                  title="Clique para copiar o código"
+                  title="Klicken, um den Code zu kopieren"
                   className="group inline-flex items-center gap-2.5 bg-stone-50 hover:bg-stone-100 border border-stone-300 hover:border-red-400 px-4 py-2 rounded-lg transition-all cursor-pointer"
                 >
                   <span className="font-mono font-black text-2xl sm:text-3xl tracking-widest text-[#1F1D1A] group-hover:text-red-600 transition-colors">
@@ -147,22 +147,22 @@ export default function ThankYouContent() {
 
               {copied ? (
                 <p className="text-xs font-semibold text-emerald-600 transition-all">
-                  ✓ Código copiado para a área de transferência!
+                  ✓ Code in die Zwischenablage kopiert!
                 </p>
               ) : (
                 <p className="text-[11px] sm:text-xs text-[#78716A]">
-                  Utilize este código no momento da sua encomenda.
+                  Lösen Sie diesen Code einfach beim Checkout Ihrer Bestellung ein.
                 </p>
               )}
             </div>
 
-            {/* CTA Button -> Harmonized with Silva Dias Brand Red */}
+            {/* CTA Button -> Frank Hausgeräte /produkt */}
             <div className="mt-5">
               <Link
-                href="/shop"
+                href="/produkt"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-bold py-3.5 px-8 rounded-lg shadow-sm hover:shadow transition-all text-xs sm:text-sm tracking-wider uppercase"
               >
-                <span>DESCUBRA OS NOSSOS PRODUTOS</span>
+                <span>PRODUKTE JETZT ENTDECKEN</span>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
@@ -207,22 +207,22 @@ export default function ThankYouContent() {
 
           {/* Signoff Header */}
           <h3 className="text-sm sm:text-base font-bold text-[#1F1D1A]">
-            Mais calor. Mais conforto. Mais momentos especiais.
+            Zuverlässige Technik. Erstklassiger Service. Mehr Lebensqualität.
           </h3>
 
           {/* Signoff Text */}
           <p className="text-xs sm:text-sm text-[#666059] mt-1.5 max-w-md mx-auto">
-            Obrigado por fazer parte da nossa comunidade. Estamos aqui para ajudar a aquecer a sua casa!
+            Vielen Dank, dass Sie Teil unserer Community sind. Bei allen Fragen rund um Ihre Geräte sind wir jederzeit gerne für Sie da!
           </p>
 
           {/* Italic Signoff */}
           <p className="italic font-serif text-[#A86438] text-base sm:text-lg mt-4 font-semibold">
-            Até breve!
+            Herzliche Grüße
           </p>
 
           {/* Company Team Signature */}
           <p className="text-xs font-semibold text-[#8C847A] mt-1">
-            A equipa Lenha &amp; Carvão Silva Dias
+            Ihr Team von Frank Hausgeräte
           </p>
 
         </div>

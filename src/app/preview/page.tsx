@@ -196,13 +196,13 @@ export default async function PreviewPage() {
       return {
         id: p.id,
         title: p.title,
-        subtitle: p.categoryName ? `${p.categoryName} • Alta Eficiência EcoDesign` : 'Qualidade Garantida Silva Dias',
+        subtitle: p.categoryName ? `${p.categoryName} • Energieeffizient & Modern` : 'Geprüfte Frank Hausgeräte Qualität',
         price: p.price,
         compareAtPrice: p.compareAtPrice,
         image: p.images[0],
-        badge: discountPct ? `POUPANÇA -${discountPct}%` : 'TOP VENDAS',
-        badgeTech: p.categoryName ? `🔥 ${p.categoryName}` : '🔥 Alto Rendimento',
-        badgeTech2: savings > 0 ? `Poupe ${savings.toFixed(2).replace('.', ',')} €` : 'Stock Garantido',
+        badge: discountPct ? `SPAREN -${discountPct}%` : 'TOP-SELLER',
+        badgeTech: p.categoryName ? `⚡ ${p.categoryName}` : '⚡ Hohe Energieeffizienz',
+        badgeTech2: savings > 0 ? `Sie sparen ${savings.toFixed(2).replace('.', ',')} €` : 'Sofort lieferbar',
         categoryName: p.categoryName || ''
       };
     });

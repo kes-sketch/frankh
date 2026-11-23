@@ -198,7 +198,7 @@ export default async function CheckoutSuccessPage({
               )}
               {metadata?.billing?.nif && (
                 <p className="text-xs font-mono bg-stone-100 text-stone-700 px-2 py-0.5 rounded inline-block mb-1">
-                  NIF / NIPC: {metadata.billing.nif}
+                  Steuer-Nr. / USt-IdNr.: {metadata.billing.nif}
                 </p>
               )}
               <p>{addressToShow.firstName.charAt(0)}*** {addressToShow.lastName.charAt(0)}***</p>

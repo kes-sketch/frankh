@@ -3,28 +3,24 @@ import prisma from '@/lib/prisma';
 import fs from 'fs';
 import path from 'path';
 
-// Format currency according to Portuguese locale (pt-PT)
+// Format currency according to German locale (de-DE)
 const formatPrice = (price: number) => {
-  return new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(price);
+  return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(price);
 };
 
-// Format date in European Portuguese (pt-PT)
+// Format date in German (de-DE)
 const formatDate = (date: Date) => {
-  return new Intl.DateTimeFormat('pt-PT', { dateStyle: 'long' }).format(date);
+  return new Intl.DateTimeFormat('de-DE', { dateStyle: 'long' }).format(date);
 };
 
 const formatPaymentMethod = (method: string) => {
   switch (method?.toUpperCase()) {
     case 'BANK_TRANSFER':
-      return 'Transferência Bancária';
+      return 'Banküberweisung (Vorkasse)';
     case 'STRIPE':
-      return 'Cartão de Crédito / Débito';
+      return 'Kreditkarte / Debitkarte';
     case 'PAYPAL':
       return 'PayPal';
-    case 'MBWAY':
-      return 'MB WAY';
-    case 'MULTIBANCO':
-      return 'Multibanco';
     default:
       return method || 'N/A';
   }
@@ -109,7 +105,7 @@ export async function generateInvoicePDF(order: any): Promise<Buffer> {
       doc.on('error', (err) => reject(err));
 
       // Customer details extraction
-      let customerName = 'Consumidor Final';
+      let customerName = 'Kunde';
       let customerEmail = order.user?.email || '';
       let customerPhone = '';
       let customerNif = '';
@@ -198,7 +194,7 @@ function generateHeader(
     .fillColor('#1e293b')
     .font('Helvetica-Bold')
     .fontSize(22)
-    .text('FATURA', 200, headerTop, { align: 'right' })
+    .text('RECHNUNG', 200, headerTop, { align: 'right' })
     .font('Helvetica-Bold')
     .fontSize(9)
     .fillColor('#334155')
@@ -207,7 +203,7 @@ function generateHeader(
     .fontSize(8.5)
     .fillColor('#64748b')
     .text(companyAddress, 200, headerTop + 38, { align: 'right' })
-    .text(`E-mail: ${companyEmail} | www.frankhausgeraete.de`, 200, headerTop + 50, { align: 'right' })
+    .text(`E-Mail: ${companyEmail} | www.frankhausgeraete.de`, 200, headerTop + 50, { align: 'right' })
     .moveDown();
 }
 
@@ -224,7 +220,7 @@ function generateCustomerInformation(
     .fillColor('#1e293b')
     .font('Helvetica-Bold')
     .fontSize(14)
-    .text('Dados da Encomenda & Faturação', 50, 130);
+    .text('Bestell- & Rechnungsdaten', 50, 130);
 
   generateHr(doc, 148);
 
@@ -235,38 +231,38 @@ function generateCustomerInformation(
     .fontSize(9)
     .font('Helvetica')
     .fillColor('#64748b')
-    .text('Fatura N.º:', 50, customerInformationTop)
+    .text('Rechnung Nr.:', 50, customerInformationTop)
     .font('Helvetica-Bold')
     .fillColor('#1e293b')
-    .text(`FH-${order.id.slice(-6).toUpperCase()}`, 150, customerInformationTop)
+    .text(`RE-${order.id.slice(-6).toUpperCase()}`, 150, customerInformationTop)
 
     .font('Helvetica')
     .fillColor('#64748b')
-    .text('Data de Emissão:', 50, customerInformationTop + 15)
+    .text('Rechnungsdatum:', 50, customerInformationTop + 15)
     .font('Helvetica')
     .fillColor('#1e293b')
     .text(formatDate(new Date(order.createdAt)), 150, customerInformationTop + 15)
 
     .font('Helvetica')
     .fillColor('#64748b')
-    .text('Método de Pagamento:', 50, customerInformationTop + 30)
+    .text('Zahlungsart:', 50, customerInformationTop + 30)
     .font('Helvetica-Bold')
     .fillColor('#ea580c')
     .text(formatPaymentMethod(order.paymentMethod), 150, customerInformationTop + 30)
 
     .font('Helvetica')
     .fillColor('#64748b')
-    .text('Estado da Encomenda:', 50, customerInformationTop + 45)
+    .text('Bestellstatus:', 50, customerInformationTop + 45)
     .font('Helvetica')
     .fillColor('#1e293b')
-    .text(order.status === 'PAID' ? 'Pago' : order.status === 'SHIPPED' ? 'Expedido' : order.status === 'PROCESSING' ? 'Em Processamento' : 'Pendente', 150, customerInformationTop + 45);
+    .text(order.status === 'PAID' ? 'Bezahlt' : order.status === 'SHIPPED' ? 'Versendet' : order.status === 'PROCESSING' ? 'In Bearbeitung' : 'Ausstehend', 150, customerInformationTop + 45);
 
   // Right Column: Client details
   doc
     .font('Helvetica-Bold')
     .fillColor('#64748b')
     .fontSize(9)
-    .text('Faturado a:', 320, customerInformationTop)
+    .text('Rechnungsempfänger:', 320, customerInformationTop)
     .font('Helvetica-Bold')
     .fillColor('#1e293b')
     .fontSize(10)
@@ -278,20 +274,20 @@ function generateCustomerInformation(
   let currentY = customerInformationTop + 27;
 
   if (customerNif) {
-    doc.text(`NIF: ${customerNif}`, 320, currentY);
+    doc.text(`USt-IdNr. / Steuer-Nr.: ${customerNif}`, 320, currentY);
     currentY += 13;
   } else {
-    doc.text('NIF: Consumidor Final', 320, currentY);
+    doc.text('Steuer-Nr.: Nicht angegeben', 320, currentY);
     currentY += 13;
   }
 
   if (customerEmail) {
-    doc.text(`E-mail: ${customerEmail}`, 320, currentY);
+    doc.text(`E-Mail: ${customerEmail}`, 320, currentY);
     currentY += 13;
   }
 
   if (customerPhone) {
-    doc.text(`Telefone: ${customerPhone}`, 320, currentY);
+    doc.text(`Telefon: ${customerPhone}`, 320, currentY);
     currentY += 13;
   }
 
@@ -314,10 +310,10 @@ function generateInvoiceTable(
   generateTableRow(
     doc,
     invoiceTableTop,
-    'Artigo / Descrição',
-    'Qtd.',
-    'Preço Unit.',
-    'Total'
+    'Artikel / Beschreibung',
+    'Menge',
+    'Einzelpreis',
+    'Gesamt'
   );
   generateHr(doc, invoiceTableTop + 18);
   doc.font('Helvetica').fontSize(9).fillColor('#334155');
@@ -327,7 +323,7 @@ function generateInvoiceTable(
   if (order.orderItems && order.orderItems.length > 0) {
     for (let i = 0; i < order.orderItems.length; i++) {
       const item = order.orderItems[i];
-      const title = item.product?.title || 'Artigo';
+      const title = item.product?.title || 'Artikel';
       const quantity = item.quantity;
       const price = item.price;
       const lineTotal = quantity * price;
@@ -349,32 +345,32 @@ function generateInvoiceTable(
   // Calculate totals & tax
   const subTotal = order.orderItems?.reduce((sum: number, it: any) => sum + (it.price * it.quantity), 0) || order.total;
   const shippingLabel = shippingCost === 0
-    ? `Gratuito${shippingMethodName ? ` (${shippingMethodName})` : ''}`
+    ? `Kostenlos${shippingMethodName ? ` (${shippingMethodName})` : ''}`
     : formatPrice(shippingCost);
 
-  // Approximate IVA portion for informational breakdown (23% legal standard)
-  const ivaRate = 0.23;
-  const baseLiquida = order.total / (1 + ivaRate);
-  const valorIva = order.total - baseLiquida;
+  // Approximate MwSt portion for informational breakdown (19% German standard)
+  const mwstRate = 0.19;
+  const baseNetto = order.total / (1 + mwstRate);
+  const mwstBetrag = order.total - baseNetto;
 
   let totalsY = position + 15;
 
   doc.font('Helvetica').fontSize(9).fillColor('#64748b');
-  doc.text('Subtotal:', 340, totalsY, { width: 100, align: 'right' });
+  doc.text('Zwischensumme:', 340, totalsY, { width: 100, align: 'right' });
   doc.font('Helvetica').fillColor('#1e293b').text(formatPrice(subTotal), 450, totalsY, { width: 100, align: 'right' });
 
   totalsY += 16;
-  doc.font('Helvetica').fillColor('#64748b').text('Portes de Envio:', 340, totalsY, { width: 100, align: 'right' });
+  doc.font('Helvetica').fillColor('#64748b').text('Versandkosten:', 340, totalsY, { width: 100, align: 'right' });
   doc.font('Helvetica').fillColor('#1e293b').text(shippingLabel, 450, totalsY, { width: 100, align: 'right' });
 
   totalsY += 16;
-  doc.font('Helvetica').fillColor('#64748b').text('IVA (Incluído ~23%):', 340, totalsY, { width: 100, align: 'right' });
-  doc.font('Helvetica').fillColor('#1e293b').text(formatPrice(valorIva), 450, totalsY, { width: 100, align: 'right' });
+  doc.font('Helvetica').fillColor('#64748b').text('Inkl. 19% MwSt.:', 340, totalsY, { width: 100, align: 'right' });
+  doc.font('Helvetica').fillColor('#1e293b').text(formatPrice(mwstBetrag), 450, totalsY, { width: 100, align: 'right' });
 
   totalsY += 20;
   generateHr(doc, totalsY - 4);
   doc.font('Helvetica-Bold').fontSize(11).fillColor('#ea580c');
-  doc.text('Total da Fatura:', 320, totalsY, { width: 120, align: 'right' });
+  doc.text('Rechnungsbetrag:', 320, totalsY, { width: 120, align: 'right' });
   doc.text(formatPrice(order.total), 450, totalsY, { width: 100, align: 'right' });
   doc.font('Helvetica');
 }
@@ -385,7 +381,7 @@ function generateFooter(doc: typeof PDFDocument, companyEmail: string) {
     .font('Helvetica-Bold')
     .fillColor('#1e293b')
     .text(
-      'Agradecemos a sua preferência e confiança!',
+      'Vielen Dank für Ihren Einkauf und Ihr Vertrauen!',
       50,
       695,
       { align: 'center', width: 500 }
@@ -394,13 +390,13 @@ function generateFooter(doc: typeof PDFDocument, companyEmail: string) {
     .fontSize(8)
     .fillColor('#64748b')
     .text(
-      `Para qualquer esclarecimento, apoio ao cliente ou questão técnica, contacte-nos através do e-mail ${companyEmail}.`,
+      `Für Fragen, Kundenservice oder Anliegen erreichen Sie uns per E-Mail unter ${companyEmail}.`,
       50,
       710,
       { align: 'center', width: 500 }
     )
     .text(
-      'Documento de conferência de encomenda emitido por computador em conformidade com as normas aplicáveis.',
+      'Dieses Dokument wurde maschinell erstellt und ist ohne Unterschrift gültig.',
       50,
       722,
       { align: 'center', width: 500 }

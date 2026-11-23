@@ -106,7 +106,7 @@ export default function MobileSidebar({
             {logoImage && logoImage !== '/logo.png' && logoImage !== '/logo.jpg' ? (
               <Image
                 src={logoImage}
-                alt="Silva Dias"
+                alt="Frank Hausgeräte"
                 width={190}
                 height={60}
                 className="object-contain"
@@ -114,11 +114,7 @@ export default function MobileSidebar({
               />
             ) : (
               <div className="flex items-center gap-2.5">
-                <Image src="/logo-flame.png" alt="Silva Dias" width={32} height={52} className="h-8 w-auto object-contain shrink-0" />
-                <div>
-                  <span className="font-extrabold text-base tracking-tight text-stone-900 block leading-tight">LENHA &amp; CARVÃO</span>
-                  <span className="text-[10px] font-bold tracking-wider text-red-600 uppercase block">SILVA DIAS</span>
-                </div>
+                <Image src="/logo.png" alt="Frank Hausgeräte" width={140} height={45} className="h-9 w-auto object-contain shrink-0" />
               </div>
             )}
           </Link>
@@ -126,7 +122,7 @@ export default function MobileSidebar({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Fechar menu"
+            aria-label="Menü schließen"
             className="w-9 h-9 flex items-center justify-center text-stone-500 hover:text-stone-900 bg-white hover:bg-stone-200 border border-stone-200 rounded-full transition-colors cursor-pointer"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

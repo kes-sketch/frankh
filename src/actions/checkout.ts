@@ -13,11 +13,11 @@ export async function validateCoupon(code: string, customerEmail?: string) {
     const ip = await getClientIp();
     const rl = await checkRateLimit(`coupon_${ip}`, 10, 60); // 10 attempts per minute
     if (!rl.success) {
-      return { error: "Demasiadas tentativas de validação de cupão. Por favor, aguarde um momento." };
+      return { error: "Zu viele Gutschein-Prüfungen. Bitte warten Sie einen Moment." };
     }
 
     if (!code || typeof code !== 'string' || code.trim().length === 0 || code.length > 50) {
-      return { error: "Código de cupão inválido." };
+      return { error: "Ungültiger Gutscheincode." };
     }
     const cleanCode = code.trim().toUpperCase();
     const coupon = await prisma.coupon.findUnique({
@@ -25,11 +25,11 @@ export async function validateCoupon(code: string, customerEmail?: string) {
     });
 
     if (!coupon) {
-      return { error: "Código de cupão inválido." };
+      return { error: "Ungültiger Gutscheincode." };
     }
 
     if (!coupon.isActive) {
-      return { error: "Este código de cupão já não se encontra ativo." };
+      return { error: "Dieser Gutscheincode ist nicht mehr aktiv." };
     }
 
     // Special verification for welcome voucher (single use per customer)
@@ -45,7 +45,7 @@ export async function validateCoupon(code: string, customerEmail?: string) {
         }
       });
       if (priorOrder) {
-        return { error: "O código WELCOME10 já foi utilizado neste endereço de e-mail." };
+        return { error: "Der Willkommensgutschein WELCOME10 wurde für diese E-Mail-Adresse bereits verwendet." };
       }
     }
 
@@ -59,7 +59,7 @@ export async function validateCoupon(code: string, customerEmail?: string) {
     };
   } catch (error) {
     console.error("Coupon validation error:", error);
-    return { error: "Erro ao validar o código do cupão." };
+    return { error: "Fehler bei der Überprüfung des Gutscheincodes." };
   }
 }
 
@@ -69,7 +69,7 @@ export async function processCheckout(formData: FormData, cartItems: any[], fina
     const ip = await getClientIp();
     const rl = await checkRateLimit(`checkout_${ip}`, 10, 60); // 10 checkouts per min
     if (!rl.success) {
-      return { error: "Demasiados pedidos de encomenda. Por favor, aguarde um momento." };
+      return { error: "Zu viele Bestellanfragen. Bitte warten Sie einen Moment." };
     }
 
     const email = String(formData.get('email') || '').trim().toLowerCase();
@@ -84,18 +84,18 @@ export async function processCheckout(formData: FormData, cartItems: any[], fina
 
     // ===== INPUT VALIDATION (never trust the client) =====
     if (!email || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return { error: "Por favor, indique um endereço de e-mail válido." };
+      return { error: "Bitte geben Sie eine gültige E-Mail-Adresse ein." };
     }
 
     if (!(ALLOWED_PAYMENT_METHODS as readonly string[]).includes(paymentMethod)) {
-      return { error: "Método de pagamento inválido." };
+      return { error: "Ungültige Zahlungsmethode." };
     }
 
     if (!Array.isArray(cartItems) || cartItems.length === 0) {
-      return { error: "O seu carrinho está vazio." };
+      return { error: "Ihr Warenkorb ist leer." };
     }
     if (cartItems.length > MAX_CART_LINES) {
-      return { error: "Demasiados artigos no carrinho." };
+      return { error: "Zu viele Artikel im Warenkorb." };
     }
 
     // Validate shippingMethodId is a valid UUID to prevent Prisma P2023 errors
@@ -104,17 +104,17 @@ export async function processCheckout(formData: FormData, cartItems: any[], fina
     for (const item of cartItems) {
       const qty = Number(item?.quantity);
       if (!item || typeof item.productId !== 'string' || !uuidRegex.test(item.productId)) {
-        return { error: "Artigo inválido no carrinho. Por favor, atualize o seu carrinho." };
+        return { error: "Ungültiger Artikel im Warenkorb. Bitte aktualisieren Sie Ihren Warenkorb." };
       }
       // SECURITY: negative / fractional / huge quantities would alter the total
       if (!Number.isInteger(qty) || qty < 1 || qty > MAX_QTY_PER_LINE) {
-        return { error: "Quantidade inválida no carrinho." };
+        return { error: "Ungültige Artikelmenge im Warenkorb." };
       }
       item.quantity = qty;
     }
 
     if (!shippingMethodId || !uuidRegex.test(shippingMethodId)) {
-      return { error: "Método de envio inválido. Por favor, atualize a página." };
+      return { error: "Ungültige Versandmethode. Bitte laden Sie die Seite neu." };
     }
 
     // Check that the selected payment method is enabled by the admin
@@ -124,7 +124,7 @@ export async function processCheckout(formData: FormData, cartItems: any[], fina
     const flagMap = Object.fromEntries(paymentFlags.map(s => [s.key, s.value]));
     const flagKey = paymentMethod === 'BANK_TRANSFER' ? 'ENABLE_BANK_TRANSFER' : `ENABLE_${paymentMethod}`;
     if (flagMap[flagKey] === 'false') {
-      return { error: "Este método de pagamento não se encontra disponível." };
+      return { error: "Diese Zahlungsmethode ist derzeit nicht verfügbar." };
     }
 
     const validZone = await prisma.shippingZone.findFirst({
@@ -133,11 +133,11 @@ export async function processCheckout(formData: FormData, cartItems: any[], fina
     });
 
     if (!validZone) {
-      return { error: "Esta zona de entrega não é atualmente abrangida." };
+      return { error: "Diese Versandzone wird derzeit nicht beliefert." };
     }
 
     if (!validZone.methods || validZone.methods.length === 0) {
-      return { error: "Método de envio inválido." };
+      return { error: "Ungültige Versandmethode." };
     }
 
     const selectedShippingMethod = validZone.methods[0];
@@ -158,7 +158,7 @@ export async function processCheckout(formData: FormData, cartItems: any[], fina
     for (const item of cartItems) {
       const dbProduct = productMap.get(item.productId);
       if (!dbProduct) {
-        return { error: `Um dos artigos no seu carrinho já não se encontra disponível. Por favor, atualize o carrinho.` };
+        return { error: `Ein Artikel in Ihrem Warenkorb ist leider nicht mehr verfügbar. Bitte aktualisieren Sie Ihren Warenkorb.` };
       }
 
       let itemPrice = dbProduct.price;
@@ -215,7 +215,7 @@ export async function processCheckout(formData: FormData, cartItems: any[], fina
             }
           });
           if (priorOrder) {
-            return { error: "O cupão de boas-vindas WELCOME10 é exclusivo para a primeira encomenda e já foi utilizado por este cliente." };
+            return { error: "Der Willkommensgutschein WELCOME10 gilt nur für die erste Bestellung und wurde für dieses Kundenkonto bereits eingelöst." };
           }
         }
 
@@ -322,9 +322,9 @@ export async function processCheckout(formData: FormData, cartItems: any[], fina
         const { sendAdminAlertEmail } = await import('@/lib/mailer');
         const { createNotification } = await import('@/lib/notifications');
         sendAdminAlertEmail({
-          title: "Tentativa de pagamento por Cartão (Stripe não configurado)",
-          message: `Um cliente (${email}) tentou pagar uma encomenda de ${verifiedTotal} € por Cartão de Crédito/Débito, mas o Stripe ainda não está configurado na administração.`,
-          details: { Cliente: email, Montante: `${verifiedTotal} €`, 'País': effectiveCountry }
+          title: "Zahlungsversuch per Kreditkarte (Stripe nicht konfiguriert)",
+          message: `Ein Kunde (${email}) hat versucht, eine Bestellung über ${verifiedTotal} € per Kredit-/Debitkarte zu bezahlen, aber Stripe ist im Adminbereich noch nicht eingerichtet.`,
+          details: { Kunde: email, Betrag: `${verifiedTotal} €`, Land: effectiveCountry }
         }).catch(e => console.error('[Supervision Live] Email alert error:', e));
 
         createNotification({
@@ -332,7 +332,7 @@ export async function processCheckout(formData: FormData, cartItems: any[], fina
           type: 'SYSTEM',
           message: JSON.stringify({
             key: 'gateway_not_configured',
-            gateway: 'Stripe (Cartão)',
+            gateway: 'Stripe (Kreditkarte)',
             email,
             amount: `${verifiedTotal} €`
           }),
@@ -353,9 +353,9 @@ export async function processCheckout(formData: FormData, cartItems: any[], fina
         const { sendAdminAlertEmail } = await import('@/lib/mailer');
         const { createNotification } = await import('@/lib/notifications');
         sendAdminAlertEmail({
-          title: "Tentativa de pagamento PayPal (Não configurado)",
-          message: `Um cliente (${email}) tentou pagar uma encomenda de ${verifiedTotal} € via PayPal, mas o PayPal ainda não está configurado na administração.`,
-          details: { Cliente: email, Montante: `${verifiedTotal} €`, 'País': effectiveCountry }
+          title: "Zahlungsversuch per PayPal (Nicht konfiguriert)",
+          message: `Ein Kunde (${email}) hat versucht, eine Bestellung über ${verifiedTotal} € per PayPal zu bezahlen, aber PayPal ist im Adminbereich noch nicht eingerichtet.`,
+          details: { Kunde: email, Betrag: `${verifiedTotal} €`, Land: effectiveCountry }
         }).catch(e => console.error('[Supervision Live] Email alert error:', e));
 
         createNotification({
@@ -538,6 +538,6 @@ export async function processCheckout(formData: FormData, cartItems: any[], fina
 
   } catch (error: any) {
     console.error("Checkout error:", error);
-    return { error: "Ocorreu um erro ao processar a sua encomenda." };
+    return { error: "Bei der Bearbeitung Ihrer Bestellung ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut." };
   }
 }

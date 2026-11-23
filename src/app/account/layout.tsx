@@ -28,8 +28,8 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
         
         {/* Header Breadcrumb / Welcome on Mobile */}
         <div className="mb-4 sm:mb-6">
-          <span className="text-[11px] font-bold text-red-600 uppercase tracking-wider block">Área Reservada</span>
-          <h1 className="text-xl sm:text-3xl font-extrabold text-stone-900">A Minha Conta Silva Dias</h1>
+          <span className="text-[11px] font-bold text-red-600 uppercase tracking-wider block">Kundenbereich</span>
+          <h1 className="text-xl sm:text-3xl font-extrabold text-stone-900">Mein Frank Hausgeräte Konto</h1>
         </div>
 
         <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-start">

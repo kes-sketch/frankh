@@ -3,8 +3,8 @@ import type { Metadata } from 'next';
 import ThankYouContent from '../thank-you/ThankYouContent';
 
 export const metadata: Metadata = {
-  title: 'Obrigado pela sua Inscrição | Lenha & Carvão Silva Dias',
-  description: 'A sua inscrição na nossa comunidade foi realizada com sucesso. Aproveite o seu código de desconto exclusivo de boas-vindas!',
+  title: 'Vielen Dank für Ihre Anmeldung | Frank Hausgeräte',
+  description: 'Ihre Anmeldung war erfolgreich. Nutzen Sie Ihren exklusiven Willkommensgutschein!',
   robots: {
     index: false,
     follow: true,

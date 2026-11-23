@@ -259,7 +259,7 @@ export default function CheckoutClient({ settings, zones }: CheckoutClientProps)
     return (
       <div className="max-w-4xl mx-auto px-4 py-20 text-center">
         <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-stone-600 font-medium text-sm">A carregar os detalhes da sua encomenda...</p>
+        <p className="text-stone-600 font-medium text-sm">Bestelldetails werden geladen...</p>
       </div>
     );
   }
@@ -277,42 +277,42 @@ export default function CheckoutClient({ settings, zones }: CheckoutClientProps)
           </div>
 
           <span className="inline-block px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase bg-amber-100 text-amber-900 border border-amber-300 mb-3">
-            Acesso Condicionado ao Carrinho
+            Warenkorb ist leer
           </span>
 
           <h1 className="text-2xl sm:text-3xl font-extrabold text-stone-900 mb-3 tracking-tight">
-            O seu carrinho de compras está vazio
+            Ihr Warenkorb ist leer
           </h1>
 
           <p className="text-stone-600 text-base max-w-lg mx-auto leading-relaxed mb-8">
-            Para aceder à página de finalização de encomenda (Checkout), é obrigatório ter 
-            <strong className="text-stone-900 font-semibold"> pelo menos um produto adicionado ao seu carrinho</strong>. 
-            Consulte a nossa gama de produtos ou utilize o simulador de frete.
+            Um zur Kasse zu gelangen, legen Sie bitte 
+            <strong className="text-stone-900 font-semibold"> mindestens ein Produkt in Ihren Warenkorb</strong>. 
+            Entdecken Sie unsere hochwertigen Haushaltsgeräte in unserem Sortiment.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto">
             <Link
-              href="/shop"
+              href="/produkt"
               className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg shadow-red-600/25 transition-all text-sm group"
             >
-              <span>Ver Catálogo na Loja</span>
+              <span>Zum Produktkatalog</span>
               <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
             </Link>
 
             <Link
-              href="/#simulador-envio"
+              href="/kontakt"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-stone-900 hover:bg-stone-800 text-white font-semibold rounded-xl transition text-sm"
             >
-              <span>🚚 Simulador de Frete</span>
+              <span>💬 Kundenservice</span>
             </Link>
           </div>
 
           <div className="mt-8 pt-6 border-t border-stone-100 text-xs text-stone-700 flex items-center justify-center gap-2">
-            <span>Precisa de apoio para encomendar?</span>
-            <Link href="/contactos" className="text-red-600 font-semibold hover:underline">
-              Contactar Apoio ao Cliente
+            <span>Benötigen Sie Hilfe bei Ihrer Bestellung?</span>
+            <Link href="/kontakt" className="text-red-600 font-semibold hover:underline">
+              Kundenservice kontaktieren
             </Link>
           </div>
         </div>
@@ -422,36 +422,36 @@ export default function CheckoutClient({ settings, zones }: CheckoutClientProps)
             </div>
           </div>
 
-          {/* Dados de Empresa & NIF / NIPC para faturação comercial */}
+          {/* Firmenangaben & USt-IdNr. für Rechnungsstellung */}
           <div className="bg-stone-50/80 p-4 rounded-xl border border-stone-200/80 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-stone-700 flex items-center gap-1.5">
-                <span>🏢</span> Dados para Faturação Empresarial (Opcional)
+                <span>🏢</span> Firmenangaben &amp; USt-IdNr. (optional)
               </span>
               <span className="text-[11px] text-stone-700 bg-stone-200/70 px-2 py-0.5 rounded font-medium">
-                Empresas & ENI
+                Unternehmen &amp; Gewerbe
               </span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nome da Empresa / Razão Social
+                  Firmenname / Unternehmensbezeichnung
                 </label>
                 <input 
                   type="text" 
                   name="companyName" 
-                  placeholder="Ex: Silva & Filhos Lda" 
+                  placeholder="z.B. Mustermann GmbH" 
                   className="w-full px-4 py-2 border border-gray-200 bg-white rounded focus:ring-red-500 focus:border-red-500 text-sm" 
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  NIF / NIPC (Portugal ou Int.)
+                  USt-IdNr. / Steuer-Nr.
                 </label>
                 <input 
                   type="text" 
                   name="nif" 
-                  placeholder="Ex: 501 234 567" 
+                  placeholder="z.B. DE123456789" 
                   maxLength={25}
                   className="w-full px-4 py-2 border border-gray-200 bg-white rounded focus:ring-red-500 focus:border-red-500 text-sm font-mono" 
                 />
@@ -637,12 +637,12 @@ export default function CheckoutClient({ settings, zones }: CheckoutClientProps)
                 <div className="flex items-center gap-2.5">
                   <span className="text-xl">🚛</span>
                   <div>
-                    <span className="font-extrabold text-xs sm:text-sm block text-emerald-950">Frete Calibrado pelo Simulador Silva Dias</span>
-                    <span className="text-emerald-700 font-medium">{customShipping.label} • {customShipping.district || 'Portugal Continental'}</span>
+                    <span className="font-extrabold text-xs sm:text-sm block text-emerald-950">Berechnete Versandkosten Frank Hausgeräte</span>
+                    <span className="text-emerald-700 font-medium">{customShipping.label} • {customShipping.district || 'Deutschland'}</span>
                   </div>
                 </div>
                 <span className="font-black text-xs sm:text-sm bg-emerald-600 text-white px-2.5 py-1 rounded-md shrink-0">
-                  {customShipping.rate === 0 ? 'GRÁTIS' : `${customShipping.rate.toFixed(2)} €`}
+                  {customShipping.rate === 0 ? 'KOSTENLOS' : `${customShipping.rate.toFixed(2)} €`}
                 </span>
               </div>
             )}

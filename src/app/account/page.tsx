@@ -17,7 +17,7 @@ export default async function AccountDashboard() {
   const t = await getTranslations('Account');
 
   // Get username from user metadata if it exists, otherwise use email
-  const username = user.user_metadata?.username || user.email?.split('@')[0] || "Cliente";
+  const username = user.user_metadata?.username || user.email?.split('@')[0] || "Kunde";
 
   return (
     <div className="bg-white p-5 sm:p-8 rounded-2xl shadow-sm border border-stone-200 h-full space-y-6">
@@ -26,10 +26,10 @@ export default async function AccountDashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-6 border-b border-stone-100">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold text-stone-900">
-            Olá, <span className="text-red-600">{username}</span>!
+            Hallo, <span className="text-red-600">{username}</span>!
           </h2>
           <p className="text-xs sm:text-sm text-stone-500 mt-0.5">
-            Bem-vindo(a) ao painel da sua conta pessoal Silva Dias.
+            Willkommen in Ihrem persönlichen Kundenkonto bei Frank Hausgeräte.
           </p>
         </div>
         <div className="text-xs">
@@ -49,8 +49,8 @@ export default async function AccountDashboard() {
             </svg>
           </div>
           <div>
-            <h3 className="font-bold text-sm text-stone-900 group-hover:text-red-600 transition-colors">Encomendas</h3>
-            <p className="text-xs text-stone-500 mt-0.5">Consultar histórico e rastreio</p>
+            <h3 className="font-bold text-sm text-stone-900 group-hover:text-red-600 transition-colors">Bestellungen</h3>
+            <p className="text-xs text-stone-500 mt-0.5">Bestellhistorie &amp; Sendungsverfolgung</p>
           </div>
         </Link>
 
@@ -64,8 +64,8 @@ export default async function AccountDashboard() {
             </svg>
           </div>
           <div>
-            <h3 className="font-bold text-sm text-stone-900 group-hover:text-red-600 transition-colors">Moradas</h3>
-            <p className="text-xs text-stone-500 mt-0.5">Faturação e entrega</p>
+            <h3 className="font-bold text-sm text-stone-900 group-hover:text-red-600 transition-colors">Adressen</h3>
+            <p className="text-xs text-stone-500 mt-0.5">Rechnungs- und Lieferadressen</p>
           </div>
         </Link>
 
@@ -79,25 +79,25 @@ export default async function AccountDashboard() {
             </svg>
           </div>
           <div>
-            <h3 className="font-bold text-sm text-stone-900 group-hover:text-red-600 transition-colors">Dados da Conta</h3>
-            <p className="text-xs text-stone-500 mt-0.5">Nome, e-mail e segurança</p>
+            <h3 className="font-bold text-sm text-stone-900 group-hover:text-red-600 transition-colors">Kontodetails</h3>
+            <p className="text-xs text-stone-500 mt-0.5">Name, E-Mail und Sicherheit</p>
           </div>
         </Link>
       </div>
 
       <div className="pt-4 border-t border-stone-100 text-xs sm:text-sm text-stone-600 leading-relaxed">
         <p>
-          A partir do painel da sua conta, pode visualizar facilmente as suas{' '}
+          In Ihrer Kontoübersicht können Sie ganz bequem Ihre{' '}
           <Link href="/account/orders" className="text-red-600 hover:underline font-bold">
-            encomendas recentes
+            letzten Bestellungen einsehen
           </Link>
-          , gerir as suas{' '}
+          , Ihre{' '}
           <Link href="/account/addresses" className="text-red-600 hover:underline font-bold">
-            moradas de entrega e faturação
+            Liefer- und Rechnungsadressen verwalten
           </Link>
-          , e editar a sua{' '}
+          {' '}sowie Ihr{' '}
           <Link href="/account/details" className="text-red-600 hover:underline font-bold">
-            palavra-passe e detalhes da conta
+            Passwort und Ihre Kontodaten bearbeiten
           </Link>
           .
         </p>
