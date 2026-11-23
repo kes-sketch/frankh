@@ -288,32 +288,73 @@ export async function sendClientOrderConfirmation(order: any, userEmail: string,
       `;
     }).join('') || '';
 
-    // Bank Details logic for German customers
+    // Bank Details logic for German customers (fully customizable by Admin in Settings > Payments)
     let bankDetailsHtml = '';
     if (order.paymentMethod === 'BANK_TRANSFER') {
       const dbSettings = await prisma.setting.findMany({
-        where: { key: { in: ['BANK_TRANSFER_ACCOUNT_HOLDER', 'BANK_TRANSFER_IBAN', 'BANK_TRANSFER_BIC', 'BANK_TRANSFER_BANK_NAME', 'BANK_TRANSFER_INSTRUCTIONS'] } }
+        where: {
+          key: {
+            in: [
+              'BANK_TRANSFER_ACCOUNT_HOLDER',
+              'BANK_TRANSFER_IBAN',
+              'BANK_TRANSFER_BIC',
+              'BANK_TRANSFER_BANK_NAME',
+              'BANK_TRANSFER_INSTRUCTIONS',
+              'BANK_TRANSFER_EMAIL_TITLE',
+              'BANK_TRANSFER_EMAIL_INTRO',
+              'BANK_TRANSFER_EMAIL_OUTRO',
+              'BANK_TRANSFER_REFERENCE_PREFIX'
+            ]
+          }
+        }
       });
       const settings = dbSettings.reduce((acc, s) => ({ ...acc, [s.key]: s.value }), {} as Record<string, string>);
+
+      const emailTitle = settings.BANK_TRANSFER_EMAIL_TITLE || 'Angaben zur Banküberweisung (Vorkasse)';
+      const formattedTotal = formatPrice(order.total);
+      const formattedOrderId = `#${orderId}`;
+
+      const rawIntro = settings.BANK_TRANSFER_EMAIL_INTRO !== undefined && settings.BANK_TRANSFER_EMAIL_INTRO.trim().length > 0
+        ? settings.BANK_TRANSFER_EMAIL_INTRO
+        : 'Bitte überweisen Sie den Gesamtbetrag auf das unten angegebene Bankkonto. Bitte geben Sie unbedingt Ihre Bestellnummer #{orderId} als Verwendungszweck an.';
+
+      const renderedIntro = escapeHtml(rawIntro)
+        .replace(/\{orderId\}/g, `<strong>${formattedOrderId}</strong>`)
+        .replace(/\{total\}/g, `<strong>${escapeHtml(formattedTotal)}</strong>`)
+        .replace(/\n/g, '<br/>');
+
+      const rawReference = settings.BANK_TRANSFER_REFERENCE_PREFIX || 'Bestellnummer #{orderId}';
+      const renderedReference = escapeHtml(rawReference)
+        .replace(/\{orderId\}/g, formattedOrderId)
+        .replace(/\{total\}/g, escapeHtml(formattedTotal));
+
+      const rawOutro = settings.BANK_TRANSFER_EMAIL_OUTRO !== undefined && settings.BANK_TRANSFER_EMAIL_OUTRO.trim().length > 0
+        ? settings.BANK_TRANSFER_EMAIL_OUTRO
+        : (settings.BANK_TRANSFER_INSTRUCTIONS || 'Nach Eingang Ihrer Überweisung wird Ihre Bestellung umgehend vorbereitet und an Sie versendet.');
+
+      const renderedOutro = escapeHtml(rawOutro)
+        .replace(/\{orderId\}/g, formattedOrderId)
+        .replace(/\{total\}/g, escapeHtml(formattedTotal))
+        .replace(/\n/g, '<br/>');
 
       bankDetailsHtml = `
         <div style="background-color: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 20px; margin-top: 25px; margin-bottom: 25px;">
           <h4 style="margin-top: 0; margin-bottom: 12px; color: #c2410c; font-size: 15px; font-weight: bold;">
-            💳 Angaben zur Banküberweisung (Vorkasse)
+            💳 ${escapeHtml(emailTitle)}
           </h4>
-          <p style="font-size: 13px; color: #431407; margin-bottom: 15px; line-height: 1.5;">
-            Bitte überweisen Sie den Gesamtbetrag auf das unten angegebene Bankkonto. Bitte geben Sie unbedingt Ihre Bestellnummer <strong>#${orderId}</strong> als Verwendungszweck an.
-          </p>
+          ${renderedIntro ? `<p style="font-size: 13px; color: #431407; margin-bottom: 15px; line-height: 1.5;">${renderedIntro}</p>` : ''}
           <table style="width: 100%; font-size: 13px; color: #1e293b; line-height: 1.8;">
             ${settings.BANK_TRANSFER_ACCOUNT_HOLDER ? `<tr><td style="width: 140px; color: #7c2d12;">Kontoinhaber:</td><td><strong>${escapeHtml(settings.BANK_TRANSFER_ACCOUNT_HOLDER)}</strong></td></tr>` : ''}
             ${settings.BANK_TRANSFER_IBAN ? `<tr><td style="color: #7c2d12;">IBAN:</td><td><strong style="letter-spacing: 1px; font-family: monospace;">${escapeHtml(settings.BANK_TRANSFER_IBAN)}</strong></td></tr>` : ''}
             ${settings.BANK_TRANSFER_BIC ? `<tr><td style="color: #7c2d12;">BIC / SWIFT:</td><td><strong>${escapeHtml(settings.BANK_TRANSFER_BIC)}</strong></td></tr>` : ''}
             ${settings.BANK_TRANSFER_BANK_NAME ? `<tr><td style="color: #7c2d12;">Bank:</td><td><strong>${escapeHtml(settings.BANK_TRANSFER_BANK_NAME)}</strong></td></tr>` : ''}
-            <tr><td style="color: #7c2d12;">Verwendungszweck:</td><td><strong style="color: #c2410c;">Bestellnummer #${orderId}</strong></td></tr>
+            <tr><td style="color: #7c2d12;">Verwendungszweck:</td><td><strong style="color: #c2410c;">${renderedReference}</strong></td></tr>
           </table>
-          <p style="font-size: 12px; color: #9a3412; margin-top: 15px; margin-bottom: 0;">
-            Nach Eingang Ihrer Überweisung wird Ihre Bestellung umgehend vorbereitet und an Sie versendet.
-          </p>
+          ${renderedOutro ? `
+            <p style="font-size: 12px; color: #9a3412; margin-top: 15px; margin-bottom: 0;">
+              ${renderedOutro}
+            </p>
+          ` : ''}
         </div>
       `;
     }

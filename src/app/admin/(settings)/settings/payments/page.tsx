@@ -2,7 +2,7 @@ import { getSettings } from '@/actions/settings';
 import PaymentsForm from '@/components/admin/settings/PaymentsForm';
 
 export const metadata = {
-  title: 'Payments Settings | Lenha & Carvao Silva Dias Admin',
+  title: 'Zahlungsmethoden & Bankverbindung | Administration',
 };
 
 export default async function PaymentsSettingsPage() {

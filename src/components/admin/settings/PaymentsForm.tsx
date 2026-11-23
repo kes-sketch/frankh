@@ -19,6 +19,10 @@ export default function PaymentsForm({ initialSettings }: { initialSettings: Rec
   const [bankTransferBic, setBankTransferBic] = useState(initialSettings.BANK_TRANSFER_BIC || '');
   const [bankTransferAccountHolder, setBankTransferAccountHolder] = useState(initialSettings.BANK_TRANSFER_ACCOUNT_HOLDER || '');
   const [bankTransferBankName, setBankTransferBankName] = useState(initialSettings.BANK_TRANSFER_BANK_NAME || '');
+  const [bankTransferEmailTitle, setBankTransferEmailTitle] = useState(initialSettings.BANK_TRANSFER_EMAIL_TITLE || 'Angaben zur Banküberweisung (Vorkasse)');
+  const [bankTransferEmailIntro, setBankTransferEmailIntro] = useState(initialSettings.BANK_TRANSFER_EMAIL_INTRO || 'Bitte überweisen Sie den Gesamtbetrag auf das unten angegebene Bankkonto. Bitte geben Sie unbedingt Ihre Bestellnummer #{orderId} als Verwendungszweck an.');
+  const [bankTransferReferencePrefix, setBankTransferReferencePrefix] = useState(initialSettings.BANK_TRANSFER_REFERENCE_PREFIX || 'Bestellnummer #{orderId}');
+  const [bankTransferEmailOutro, setBankTransferEmailOutro] = useState(initialSettings.BANK_TRANSFER_EMAIL_OUTRO || initialSettings.BANK_TRANSFER_INSTRUCTIONS || 'Nach Eingang Ihrer Überweisung wird Ihre Bestellung umgehend vorbereitet und an Sie versendet.');
   const [bankTransferCheckoutMessage, setBankTransferCheckoutMessage] = useState(initialSettings.BANK_TRANSFER_CHECKOUT_MESSAGE || 'Veuillez effectuer le virement sur le compte ci-dessous.');
   const [bankTransferInstructions, setBankTransferInstructions] = useState(initialSettings.BANK_TRANSFER_INSTRUCTIONS || 'Your order will be processed upon payment receipt.');
 
@@ -41,8 +45,12 @@ export default function PaymentsForm({ initialSettings }: { initialSettings: Rec
       BANK_TRANSFER_BIC: bankTransferBic,
       BANK_TRANSFER_ACCOUNT_HOLDER: bankTransferAccountHolder,
       BANK_TRANSFER_BANK_NAME: bankTransferBankName,
-      BANK_TRANSFER_CHECKOUT_MESSAGE: bankTransferCheckoutMessage,
-      BANK_TRANSFER_INSTRUCTIONS: bankTransferInstructions
+      BANK_TRANSFER_EMAIL_TITLE: bankTransferEmailTitle,
+      BANK_TRANSFER_EMAIL_INTRO: bankTransferEmailIntro,
+      BANK_TRANSFER_REFERENCE_PREFIX: bankTransferReferencePrefix,
+      BANK_TRANSFER_EMAIL_OUTRO: bankTransferEmailOutro,
+      BANK_TRANSFER_INSTRUCTIONS: bankTransferEmailOutro,
+      BANK_TRANSFER_CHECKOUT_MESSAGE: bankTransferCheckoutMessage
     });
 
     setMessage(tSettings('update_success'));
@@ -86,32 +94,119 @@ export default function PaymentsForm({ initialSettings }: { initialSettings: Rec
         </div>
 
         <div className="md:col-span-2 mt-4 flex items-center justify-between border-b pb-2 mb-4">
-          <h4 className="text-md font-bold text-gray-900">{tSettings('bank_transfer_config')}</h4>
-          <div className="flex items-center gap-3">  <button type="button" role="switch" aria-checked={enableBankTransfer} onClick={() => setEnableBankTransfer(!enableBankTransfer)} className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${enableBankTransfer ? "bg-blue-600" : "bg-gray-200"}`}>    <span aria-hidden="true" className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${enableBankTransfer ? "translate-x-5" : "translate-x-0"}`} />  </button>  <span className="text-sm font-medium text-gray-700 cursor-pointer" onClick={() => setEnableBankTransfer(!enableBankTransfer)}>{tSettings('enable_this_mode')}</span></div>
+          <h4 className="text-md font-bold text-gray-900">{tSettings('bank_transfer_config') || 'Banküberweisung (Vorkasse)'}</h4>
+          <div className="flex items-center gap-3">
+            <button type="button" role="switch" aria-checked={enableBankTransfer} onClick={() => setEnableBankTransfer(!enableBankTransfer)} className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${enableBankTransfer ? "bg-blue-600" : "bg-gray-200"}`}>
+              <span aria-hidden="true" className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${enableBankTransfer ? "translate-x-5" : "translate-x-0"}`} />
+            </button>
+            <span className="text-sm font-medium text-gray-700 cursor-pointer" onClick={() => setEnableBankTransfer(!enableBankTransfer)}>{tSettings('enable_this_mode')}</span>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">{tSettings('account_holder') || 'Kontoinhaber'}</label>
+          <input type="text" value={bankTransferAccountHolder} onChange={(e) => setBankTransferAccountHolder(e.target.value)} placeholder="z. B. Frank Hausgeräte e. K." className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">{tSettings('iban')}</label>
-          <input type="text" value={bankTransferIban} onChange={(e) => setBankTransferIban(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500" />
+          <label className="block text-sm font-medium text-gray-700 mb-2">{tSettings('bank_name') || 'Bankname'}</label>
+          <input type="text" value={bankTransferBankName} onChange={(e) => setBankTransferBankName(e.target.value)} placeholder="z. B. Sparkasse / Volksbank" className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">{tSettings('bic_swift')}</label>
-          <input type="text" value={bankTransferBic} onChange={(e) => setBankTransferBic(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500" />
+          <label className="block text-sm font-medium text-gray-700 mb-2">{tSettings('iban') || 'IBAN'}</label>
+          <input type="text" value={bankTransferIban} onChange={(e) => setBankTransferIban(e.target.value)} placeholder="DE..." className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 font-mono" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">{tSettings('account_holder')}</label>
-          <input type="text" value={bankTransferAccountHolder} onChange={(e) => setBankTransferAccountHolder(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500" />
+          <label className="block text-sm font-medium text-gray-700 mb-2">{tSettings('bic_swift') || 'BIC / SWIFT'}</label>
+          <input type="text" value={bankTransferBic} onChange={(e) => setBankTransferBic(e.target.value)} placeholder="GENODEF1..." className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 font-mono" />
         </div>
+
+        <div className="md:col-span-2 pt-4 border-t border-gray-200">
+          <h5 className="text-sm font-bold text-gray-900 mb-1">{tSettings('bank_transfer_email_section') || 'Anpassung des E-Mail-Blocks (Bestellbestätigung)'}</h5>
+          <p className="text-xs text-gray-500 mb-4">{tSettings('bank_transfer_email_desc') || 'Passen Sie alle Texte des Überweisungsblocks an, der dem Kunden in der Bestätigungs-E-Mail gesendet wird.'}</p>
+        </div>
+
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-2">{tSettings('bank_name')}</label>
-          <input type="text" value={bankTransferBankName} onChange={(e) => setBankTransferBankName(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500" />
+          <label className="block text-sm font-medium text-gray-700 mb-2">{tSettings('bank_transfer_email_title') || 'Titel des Blocks im E-Mail'}</label>
+          <input type="text" value={bankTransferEmailTitle} onChange={(e) => setBankTransferEmailTitle(e.target.value)} placeholder="Angaben zur Banküberweisung (Vorkasse)" className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500" />
         </div>
+
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-2">{tSettings('checkout_message')}</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{tSettings('bank_transfer_email_intro') || 'Einleitungstext / Anweisung'}</label>
+          <p className="text-xs text-gray-500 mb-2">{tSettings('bank_transfer_email_intro_help') || 'Verfügbare Platzhalter: {orderId} (Bestellnummer), {total} (Gesamtbetrag)'}</p>
+          <textarea value={bankTransferEmailIntro} onChange={(e) => setBankTransferEmailIntro(e.target.value)} rows={3} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500" />
+        </div>
+
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium text-gray-700 mb-1">{tSettings('bank_transfer_reference_prefix') || 'Verwendungszweck (Format)'}</label>
+          <p className="text-xs text-gray-500 mb-2">{tSettings('bank_transfer_reference_help') || 'Platzhalter {orderId} wird automatisch durch die jeweilige Bestellnummer ersetzt.'}</p>
+          <input type="text" value={bankTransferReferencePrefix} onChange={(e) => setBankTransferReferencePrefix(e.target.value)} placeholder="Bestellnummer #{orderId}" className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500" />
+        </div>
+
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium text-gray-700 mb-2">{tSettings('bank_transfer_email_outro') || 'Abschlusstext / Nachweis'}</label>
+          <textarea value={bankTransferEmailOutro} onChange={(e) => setBankTransferEmailOutro(e.target.value)} rows={2} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500" />
+        </div>
+
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium text-gray-700 mb-2">{tSettings('checkout_message') || 'Hinweis auf der Kassen-Seite (Checkout)'}</label>
           <textarea value={bankTransferCheckoutMessage} onChange={(e) => setBankTransferCheckoutMessage(e.target.value)} rows={2} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500" />
         </div>
-        <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-2">{tSettings('instructions_client')}</label>
-          <textarea value={bankTransferInstructions} onChange={(e) => setBankTransferInstructions(e.target.value)} rows={3} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500" />
+
+        {/* Live Visual Preview of the Email Box */}
+        <div className="md:col-span-2 mt-4 pt-4 border-t border-gray-200">
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm font-bold text-gray-900">{tSettings('bank_transfer_preview') || 'Live-Vorschau in der Kunden-E-Mail'}</label>
+            <span className="text-xs bg-orange-100 text-orange-800 font-semibold px-2.5 py-0.5 rounded-full">E-Mail-Ausschnitt</span>
+          </div>
+          <p className="text-xs text-gray-500 mb-4">{tSettings('bank_transfer_preview_desc') || 'So sieht der Informationsblock in der Bestellbestätigung des Kunden aus:'}</p>
+
+          <div className="rounded-lg p-5 border border-[#fed7aa] bg-[#fff7ed] text-[#1e293b] shadow-sm">
+            <h4 className="text-base font-bold text-[#c2410c] mb-3 flex items-center gap-2">
+              <span>💳</span> {bankTransferEmailTitle || 'Angaben zur Banküberweisung (Vorkasse)'}
+            </h4>
+            <p className="text-xs text-[#431407] mb-4 leading-relaxed whitespace-pre-line">
+              {(bankTransferEmailIntro || 'Bitte überweisen Sie den Gesamtbetrag...')
+                .replace(/\{orderId\}/g, '#72AB53')
+                .replace(/\{total\}/g, '402,69 €')}
+            </p>
+            <div className="bg-white/90 rounded-md p-3.5 border border-[#fed7aa]/50 text-xs text-[#1e293b] space-y-2 mb-3">
+              {bankTransferAccountHolder && (
+                <div className="flex flex-col sm:flex-row sm:justify-between py-0.5 border-b border-orange-50">
+                  <span className="text-[#7c2d12] font-medium">Kontoinhaber:</span>
+                  <span className="font-bold text-slate-900">{bankTransferAccountHolder}</span>
+                </div>
+              )}
+              {bankTransferIban && (
+                <div className="flex flex-col sm:flex-row sm:justify-between py-0.5 border-b border-orange-50 font-mono">
+                  <span className="text-[#7c2d12] font-medium font-sans">IBAN:</span>
+                  <span className="font-bold text-slate-900 tracking-wider">{bankTransferIban}</span>
+                </div>
+              )}
+              {bankTransferBic && (
+                <div className="flex flex-col sm:flex-row sm:justify-between py-0.5 border-b border-orange-50 font-mono">
+                  <span className="text-[#7c2d12] font-medium font-sans">BIC / SWIFT:</span>
+                  <span className="font-bold text-slate-900 tracking-wider">{bankTransferBic}</span>
+                </div>
+              )}
+              {bankTransferBankName && (
+                <div className="flex flex-col sm:flex-row sm:justify-between py-0.5 border-b border-orange-50">
+                  <span className="text-[#7c2d12] font-medium">Bank:</span>
+                  <span className="font-bold text-slate-900">{bankTransferBankName}</span>
+                </div>
+              )}
+              <div className="flex flex-col sm:flex-row sm:justify-between py-1">
+                <span className="text-[#7c2d12] font-medium">Verwendungszweck:</span>
+                <span className="font-bold text-[#c2410c]">
+                  {(bankTransferReferencePrefix || 'Bestellnummer #{orderId}').replace(/\{orderId\}/g, '#72AB53')}
+                </span>
+              </div>
+            </div>
+            {bankTransferEmailOutro && (
+              <p className="text-xs text-[#9a3412] leading-relaxed italic">
+                {bankTransferEmailOutro.replace(/\{orderId\}/g, '#72AB53').replace(/\{total\}/g, '402,69 €')}
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
