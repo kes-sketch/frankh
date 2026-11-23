@@ -9,7 +9,7 @@ const defaultCategories = [
   {
     name: 'Kühlen & Gefrieren',
     desc: 'Kühl-Gefrierkombis & Side-by-Side',
-    href: '/shop?category=kuehlen-gefrieren',
+    href: '/produkt-kategorie/kuehlen-gefrieren',
     badge: 'Beliebt',
     icon: (
       <svg className="w-8 h-8 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -25,7 +25,7 @@ const defaultCategories = [
   {
     name: 'Waschen & Trocknen',
     desc: 'Waschmaschinen & Wärmepumpen',
-    href: '/shop?category=waschen-trocknen',
+    href: '/produkt-kategorie/waschen-trocknen',
     badge: 'A+++ Effizienz',
     icon: (
       <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -42,7 +42,7 @@ const defaultCategories = [
   {
     name: 'Kochen & Backen',
     desc: 'Einbaubacköfen & Induktion',
-    href: '/shop?category=kochen-backen',
+    href: '/produkt-kategorie/kochen-backen',
     badge: 'Top Marken',
     icon: (
       <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -59,7 +59,7 @@ const defaultCategories = [
   {
     name: 'Geschirrspüler',
     desc: 'Vollintegriert, Unterbau & Stand',
-    href: '/shop?category=geschirrspueler',
+    href: '/produkt-kategorie/geschirrspueler',
     badge: 'Flüsterleise',
     icon: (
       <svg className="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -76,7 +76,7 @@ const defaultCategories = [
   {
     name: 'Kaffeevollautomaten',
     desc: 'Bohnen-zu-Tasse & Siebträger',
-    href: '/shop?category=kaffeevollautomaten',
+    href: '/produkt-kategorie/kaffeevollautomaten',
     badge: 'Genuss',
     icon: (
       <svg className="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -93,7 +93,7 @@ const defaultCategories = [
   {
     name: 'Saugroboter & Boden',
     desc: 'Saug- & Wischroboter, Akkusauger',
-    href: '/shop?category=saugroboter',
+    href: '/produkt-kategorie/saugroboter',
     badge: 'Smart Home',
     icon: (
       <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -110,7 +110,7 @@ const defaultCategories = [
   {
     name: 'Klima & Heizen',
     desc: 'Split-Klimageräte & Entfeuchter',
-    href: '/shop?category=klima-heizen',
+    href: '/produkt-kategorie/klima-heizen',
     badge: 'Komfort',
     icon: (
       <svg className="w-8 h-8 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -123,7 +123,7 @@ const defaultCategories = [
   {
     name: 'Küchenkleingeräte',
     desc: 'Heißluftfritteusen, Mixer & Toaster',
-    href: '/shop?category=kuechenkleingeraete',
+    href: '/produkt-kategorie/kuechenkleingeraete',
     badge: 'Kompakt',
     icon: (
       <svg className="w-8 h-8 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

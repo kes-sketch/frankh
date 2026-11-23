@@ -42,17 +42,22 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/product-category/:path*',
-        destination: '/categoria-de-produto/:path*',
+        destination: '/produkt-kategorie/:path*',
+        permanent: true,
+      },
+      {
+        source: '/categoria-de-produto/:path*',
+        destination: '/produkt-kategorie/:path*',
         permanent: true,
       },
       {
         source: '/categoria-produto/:path*',
-        destination: '/categoria-de-produto/:path*',
+        destination: '/produkt-kategorie/:path*',
         permanent: true,
       },
       {
         source: '/categorie-produit/:path*',
-        destination: '/categoria-de-produto/:path*',
+        destination: '/produkt-kategorie/:path*',
         permanent: true,
       },
       {
@@ -62,12 +67,17 @@ const nextConfig: NextConfig = {
       },
       {
         source: '/product/:path*',
-        destination: '/produto/:path*',
+        destination: '/produkt/:path*',
+        permanent: true,
+      },
+      {
+        source: '/produto/:path*',
+        destination: '/produkt/:path*',
         permanent: true,
       },
       {
         source: '/produit/:path*',
-        destination: '/produto/:path*',
+        destination: '/produkt/:path*',
         permanent: true,
       },
       {

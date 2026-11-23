@@ -240,11 +240,10 @@ export default function CategoryProductSection({
                 <button
                   key={tab.id}
                   onClick={() => handleTabChange(tab.id)}
-                  className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
-                    isActive
+                  className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${isActive
                       ? 'bg-[#18181b] text-white shadow-xs'
                       : 'bg-stone-100/80 hover:bg-stone-200/80 text-stone-700 hover:text-stone-900 border border-stone-200/60'
-                  }`}
+                    }`}
                 >
                   {tab.label}
                 </button>
@@ -270,11 +269,10 @@ export default function CategoryProductSection({
                   onClick={() => scroll('left')}
                   disabled={!canScrollLeft}
                   aria-label="Vorherige Produkte"
-                  className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all cursor-pointer ${
-                    canScrollLeft
+                  className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all cursor-pointer ${canScrollLeft
                       ? 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-900 hover:text-white shadow-xs'
                       : 'bg-stone-50/50 border-stone-200/50 text-stone-300 cursor-not-allowed'
-                  }`}
+                    }`}
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
@@ -286,11 +284,10 @@ export default function CategoryProductSection({
                   onClick={() => scroll('right')}
                   disabled={!canScrollRight}
                   aria-label="Nächste Produkte"
-                  className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all cursor-pointer ${
-                    canScrollRight
+                  className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all cursor-pointer ${canScrollRight
                       ? 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-900 hover:text-white shadow-xs'
                       : 'bg-stone-50/50 border-stone-200/50 text-stone-300 cursor-not-allowed'
-                  }`}
+                    }`}
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
@@ -361,11 +358,10 @@ export default function CategoryProductSection({
                       <button
                         type="button"
                         onClick={(e) => handleToggleWishlist(e, prod)}
-                        className={`w-7 h-7 rounded-full flex items-center justify-center transition-all shadow-sm cursor-pointer ${
-                          wishlistStore.hasItem(prod.id)
+                        className={`w-7 h-7 rounded-full flex items-center justify-center transition-all shadow-sm cursor-pointer ${wishlistStore.hasItem(prod.id)
                             ? 'bg-red-600 text-white shadow-red-500/30 ring-2 ring-red-400'
                             : 'bg-white/95 text-stone-700 hover:bg-stone-900 hover:text-white border border-stone-200/80'
-                        }`}
+                          }`}
                         title={wishlistStore.hasItem(prod.id) ? 'Von Wunschliste entfernen' : 'Auf die Wunschliste'}
                         aria-label="Wunschliste"
                       >
@@ -389,7 +385,7 @@ export default function CategoryProductSection({
                     </div>
 
                     {/* Product Image */}
-                    <Link href={`/produto/${prod.slug}`} className="w-full h-full block">
+                    <Link href={`/produkt/${prod.slug}`} className="w-full h-full block">
                       <ProductCardImage
                         src={prod.images && prod.images[0] ? prod.images[0] : undefined}
                         alt={prod.title}
@@ -404,7 +400,7 @@ export default function CategoryProductSection({
                   <div className="text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1 line-clamp-1">
                     {prod.categoryName || badge}
                   </div>
-                  <Link href={`/produto/${prod.slug}`}>
+                  <Link href={`/produkt/${prod.slug}`}>
                     <h4 className="font-extrabold text-stone-900 text-xs sm:text-sm mt-0.5 line-clamp-2 min-h-[36px] group-hover:text-red-600 transition-colors leading-snug">
                       {prod.title}
                     </h4>

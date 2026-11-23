@@ -172,31 +172,31 @@ export default function ThankYouContent() {
             {/* Category Links underneath button */}
             <div className="mt-4 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs text-[#666059]">
               <Link
-                href="/categoria-de-produto/lenha-e-pellets"
+                href="/produkt-kategorie/waschen-trocknen"
                 className="hover:text-red-600 hover:underline transition-colors"
               >
-                Lenha
+                Waschen &amp; Trocknen
               </Link>
               <span className="text-[#CBB89D]">·</span>
               <Link
-                href="/categoria-de-produto/pellets"
+                href="/produkt-kategorie/kuehlen-gefrieren"
                 className="hover:text-red-600 hover:underline transition-colors"
               >
-                Pellets
+                Kühlen &amp; Gefrieren
               </Link>
               <span className="text-[#CBB89D]">·</span>
               <Link
-                href="/categoria-de-produto/salamandras-a-pellets"
+                href="/produkt-kategorie/kochen-backen"
                 className="hover:text-red-600 hover:underline transition-colors"
               >
-                Salamandras
+                Kochen &amp; Backen
               </Link>
               <span className="text-[#CBB89D]">·</span>
               <Link
-                href="/categoria-de-produto/recuperadores-de-calor"
+                href="/produkt-kategorie/kaffeevollautomaten"
                 className="hover:text-red-600 hover:underline transition-colors"
               >
-                Recuperadores de calor
+                Kaffeevollautomaten
               </Link>
             </div>
 

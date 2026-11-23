@@ -13,8 +13,8 @@ type MobileBottomNavProps = {
   onCartClick?: () => void;
 };
 
-export default function MobileBottomNav({ 
-  onSearchClick, 
+export default function MobileBottomNav({
+  onSearchClick,
   onLoginClick,
   userRole = null,
   onCartClick
@@ -49,17 +49,16 @@ export default function MobileBottomNav({
   };
 
   return (
-    <nav 
+    <nav
       aria-label="Navegação móvel inferior"
       className="lg:hidden fixed bottom-0 left-0 right-0 bg-stone-950/95 backdrop-blur-lg text-stone-400 border-t border-stone-800/80 z-[60] px-2 py-1.5 flex justify-around items-center pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.35)]"
     >
       {/* 1. Início (Home) */}
-      <Link 
-        href="/" 
+      <Link
+        href="/"
         aria-label="Início"
-        className={`flex flex-col items-center justify-center py-1 px-2 min-w-[56px] transition-colors ${
-          pathname === '/' ? 'text-red-500 font-bold' : 'hover:text-white'
-        }`}
+        className={`flex flex-col items-center justify-center py-1 px-2 min-w-[56px] transition-colors ${pathname === '/' ? 'text-red-500 font-bold' : 'hover:text-white'
+          }`}
       >
         <svg className="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={pathname === '/' ? 2.3 : 1.8} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -68,7 +67,7 @@ export default function MobileBottomNav({
       </Link>
 
       {/* 2. Pesquisa (Search) */}
-      <button 
+      <button
         type="button"
         onClick={onSearchClick}
         aria-label="Pesquisar artigos"
@@ -81,12 +80,11 @@ export default function MobileBottomNav({
       </button>
 
       {/* 3. Loja / Catálogo (Shop) */}
-      <Link 
-        href="/shop" 
+      <Link
+        href="/shop"
         aria-label="Catálogo da Loja"
-        className={`flex flex-col items-center justify-center py-1 px-2 min-w-[56px] transition-colors ${
-          pathname.startsWith('/shop') || pathname.startsWith('/categoria-de-produto') ? 'text-red-500 font-bold' : 'hover:text-white'
-        }`}
+        className={`flex flex-col items-center justify-center py-1 px-2 min-w-[56px] transition-colors ${pathname.startsWith('/shop') || pathname.startsWith('/produkt-kategorie') || pathname.startsWith('/categoria-de-produto') ? 'text-red-500 font-bold' : 'hover:text-white'
+          }`}
       >
         <svg className="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={pathname.startsWith('/shop') ? 2.3 : 1.8} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -115,13 +113,12 @@ export default function MobileBottomNav({
       </button>
 
       {/* 5. Conta (Account / Login) */}
-      <button 
+      <button
         type="button"
         onClick={handleAccountClick}
         aria-label="Minha Conta"
-        className={`flex flex-col items-center justify-center py-1 px-2 min-w-[56px] transition-colors cursor-pointer ${
-          pathname.startsWith('/account') || pathname.startsWith('/admin') ? 'text-red-500 font-bold' : 'hover:text-white'
-        }`}
+        className={`flex flex-col items-center justify-center py-1 px-2 min-w-[56px] transition-colors cursor-pointer ${pathname.startsWith('/account') || pathname.startsWith('/admin') ? 'text-red-500 font-bold' : 'hover:text-white'
+          }`}
       >
         <svg className="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={pathname.startsWith('/account') ? 2.3 : 1.8} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />

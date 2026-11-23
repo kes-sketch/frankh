@@ -4,6 +4,7 @@ import { getPageBySlug } from '@/actions/pages';
 import SafeHTML from '@/components/SafeHTML';
 import { getContactSettings } from '@/actions/contactSettings';
 import ContactPageContent from '@/components/contact/ContactPageContent';
+import HGFPageContent from '@/components/faq/HGFPageContent';
 import ShopPage from '@/app/shop/page';
 import prisma from '@/lib/prisma';
 import { SITE_URL } from '@/lib/site';
@@ -107,8 +108,12 @@ export default async function CatchAllPage({
     const singleSlug = slug[0];
 
     const contactSettings = await getContactSettings();
-    if (singleSlug === contactSettings.slug) {
+    if (singleSlug === contactSettings.slug || singleSlug === 'contact' || singleSlug === 'kontakt') {
       return <ContactPageContent />;
+    }
+
+    if (singleSlug === 'hgf' || singleSlug === 'faq' || singleSlug === 'haeufig-gestellte-fragen') {
+      return <HGFPageContent />;
     }
 
     const { data: page, success } = await getPageBySlug(singleSlug);
@@ -170,11 +175,10 @@ export default async function CatchAllPage({
                       <Link
                         key={item.slug}
                         href={`/${item.slug}`}
-                        className={`inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-xs font-bold whitespace-nowrap transition-all shadow-xs ${
-                          isActive
+                        className={`inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-xs font-bold whitespace-nowrap transition-all shadow-xs ${isActive
                             ? 'bg-red-600 text-white shadow-red-600/30 ring-2 ring-red-400/50'
                             : 'bg-white text-stone-700 hover:bg-stone-100 hover:text-stone-900 border border-stone-200/90'
-                        }`}
+                          }`}
                       >
                         <span className="text-sm sm:text-base">{item.icon}</span>
                         <span>{item.label}</span>
@@ -259,7 +263,7 @@ export default async function CatchAllPage({
     }
   }
 
-  // 2. Category matching: redirect legacy root-level stripped category URLs to canonical /categoria-de-produto/...
+  // 2. Category matching: redirect legacy root-level stripped category URLs to canonical /produkt-kategorie/...
   const category = await getCategoryByPathSegments(slug);
   if (category) {
     const canonicalPath = await getCategoryCanonicalPath(category);

@@ -12,7 +12,7 @@ export async function submitContactMessage(formData: FormData) {
     const ip = await getClientIp();
     const rateLimit = await checkRateLimit(`contact_${ip}`, 5, 600); // 5 messages per 10 minutes per IP
     if (!rateLimit.success) {
-      return { error: 'Demasiados pedidos. Por favor, aguarde alguns minutos antes de enviar outra mensagem.' };
+      return { error: 'Zu viele Anfragen. Bitte warten Sie einige Minuten, bevor Sie eine weitere Nachricht senden.' };
     }
 
     const name = String(formData.get('name') || '').trim();
@@ -22,20 +22,18 @@ export async function submitContactMessage(formData: FormData) {
     const message = String(formData.get('message') || '').trim();
 
     if (!name || !email || !message) {
-      const t = await getTranslations('Contact');
-      return { error: t('missing_fields') };
+      return { error: 'Bitte füllen Sie alle Pflichtfelder aus.' };
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return { error: 'Por favor, indique um endereço de e-mail válido.' };
+      return { error: 'Bitte geben Sie eine gültige E-Mail-Adresse ein.' };
     }
 
     // Limit field lengths to prevent abuse
     if (name.length > 200 || email.length > 254 || (subject && subject.length > 500) || message.length > 5000) {
-      const t = await getTranslations('Contact');
-      return { error: t('fields_too_long') };
+      return { error: 'Ein oder mehrere Felder überschreiten die maximal zulässige Zeichenanzahl.' };
     }
 
     const { sendEmail, getAdminNotificationEmail } = await import('@/lib/mailer');
@@ -46,17 +44,17 @@ export async function submitContactMessage(formData: FormData) {
       await sendEmail({
         to: receiverEmail,
         replyTo: email,
-        subject: subject ? `Nova Mensagem: "${escapeHtml(subject)}"` : `Nova Mensagem de ${escapeHtml(name)}`,
+        subject: subject ? `[Kontaktformular] ${escapeHtml(subject)}` : `[Kontaktformular] Nachricht von ${escapeHtml(name)}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.5; padding: 20px;">
-            <h2 style="color: #1a1a1a; margin-top: 0;">Recebeu uma nova mensagem de contacto no site.</h2>
-            <p><strong>De:</strong> ${escapeHtml(name)} &lt;${escapeHtml(email)}&gt;</p>
-            ${phone ? `<p><strong>Telefone:</strong> ${escapeHtml(phone)}</p>` : ''}
-            ${subject ? `<p><strong>Assunto:</strong> ${escapeHtml(subject)}</p>` : ''}
+            <h2 style="color: #1a1a1a; margin-top: 0;">Neue Kontaktanfrage über frankhausgeraete.de</h2>
+            <p><strong>Name:</strong> ${escapeHtml(name)} &lt;${escapeHtml(email)}&gt;</p>
+            ${phone ? `<p><strong>Telefon:</strong> ${escapeHtml(phone)}</p>` : ''}
+            ${subject ? `<p><strong>Betreff:</strong> ${escapeHtml(subject)}</p>` : ''}
             <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;"/>
-            <p><strong>Mensagem:</strong><br/><br/>${escapeHtml(message).replace(/\n/g, '<br/>')}</p>
+            <p><strong>Nachricht:</strong><br/><br/>${escapeHtml(message).replace(/\n/g, '<br/>')}</p>
             <br/>
-            <p style="color: #666; font-size: 13px;"><em>Por favor, responda ao cliente logo que possível.</em></p>
+            <p style="color: #666; font-size: 13px;"><em>Antworten Sie direkt auf diese E-Mail, um mit dem Kunden Kontakt aufzunehmen.</em></p>
           </div>
         `,
       });
@@ -64,11 +62,10 @@ export async function submitContactMessage(formData: FormData) {
       console.error('[CONTACT] Failed to send email:', emailErr);
     }
 
-    return { success: true, message: 'A sua mensagem foi enviada com sucesso!' };
+    return { success: true, message: 'Ihre Nachricht wurde erfolgreich gesendet! Unser Team wird sich schnellstmöglich bei Ihnen melden.' };
   } catch (error) {
     console.error('Contact submission error:', error);
-    const t = await getTranslations('Contact');
-    return { error: t('error_sending') };
+    return { error: 'Beim Senden Ihrer Nachricht ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut oder schreiben Sie an kontakt@frankhausgeraete.de.' };
   }
 }
 

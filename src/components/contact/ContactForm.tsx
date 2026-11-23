@@ -2,107 +2,119 @@
 
 import { useState } from 'react';
 import { submitContactMessage } from '@/actions/contact';
-import { useTranslations } from 'next-intl';
 
-export default function ContactForm({ phonePlaceholder }: { phonePlaceholder?: string }) {
-  const t = useTranslations('Contact');
+export default function ContactForm() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [message, setMessage] = useState('');
+  const [feedback, setFeedback] = useState('');
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
     setStatus('loading');
-    setMessage('');
-    
+    setFeedback('');
+
     const formData = new FormData(form);
     const res = await submitContactMessage(formData);
-    
+
     if (res.error) {
       setStatus('error');
-      setMessage(t('error_sending'));
+      setFeedback(res.error);
     } else if (res.success) {
       setStatus('success');
-      setMessage(t('success_sending'));
+      setFeedback(res.message || 'Ihre Nachricht wurde erfolgreich gesendet!');
       form.reset();
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
       {status === 'success' && (
-        <div className="bg-green-50 text-green-700 p-4 rounded-md border border-green-200">
-          {message}
+        <div className="bg-emerald-50 text-emerald-800 p-4 rounded-lg border border-emerald-200 text-sm flex items-start gap-3">
+          <svg className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          <div>
+            <p className="font-semibold">Vielen Dank für Ihre Nachricht!</p>
+            <p className="text-emerald-700 mt-0.5">{feedback}</p>
+          </div>
         </div>
       )}
+
       {status === 'error' && (
-        <div className="bg-red-50 text-red-700 p-4 rounded-md border border-red-200">
-          {message}
+        <div className="bg-red-50 text-red-800 p-4 rounded-lg border border-red-200 text-sm flex items-start gap-3">
+          <svg className="w-5 h-5 text-red-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          <p>{feedback}</p>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <input 
-            type="text" 
-            name="name"
-            required
-            placeholder={t('name_placeholder')} 
-            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded text-sm focus:ring-orange-500 focus:border-orange-500" 
-          />
-        </div>
-        <div>
-          <input 
-            type="email" 
-            name="email"
-            required
-            placeholder="@" 
-            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded text-sm focus:ring-orange-500 focus:border-orange-500" 
-          />
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <input 
-            type="tel" 
-            name="phone"
-            placeholder={phonePlaceholder || t('phone_placeholder')} 
-            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded text-sm focus:ring-orange-500 focus:border-orange-500" 
-          />
-        </div>
-        <div>
-          <select 
-            name="subject"
-            required
-            defaultValue=""
-            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded text-sm focus:ring-orange-500 focus:border-orange-500 text-gray-700" 
-          >
-            <option value="" disabled>{t('subject_placeholder')}</option>
-            <option value={t('subject_order_return')}>{t('subject_order_return')}</option>
-            <option value={t('subject_refund')}>{t('subject_refund')}</option>
-            <option value={t('subject_info')}>{t('subject_info')}</option>
-          </select>
-        </div>
+      {/* Field 1: Name */}
+      <div>
+        <label htmlFor="contact-name" className="block text-xs sm:text-sm font-semibold text-gray-800 mb-1.5">
+          Ihr vollständiger Name <span className="text-red-500">*</span>
+        </label>
+        <input
+          id="contact-name"
+          type="text"
+          name="name"
+          required
+          autoComplete="name"
+          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-md text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-neutral-900 focus:border-neutral-900 transition"
+        />
       </div>
 
+      {/* Field 2: Email */}
       <div>
-        <textarea 
+        <label htmlFor="contact-email" className="block text-xs sm:text-sm font-semibold text-gray-800 mb-1.5">
+          Ihre E-Mail-Adresse <span className="text-red-500">*</span>
+        </label>
+        <input
+          id="contact-email"
+          type="email"
+          name="email"
+          required
+          autoComplete="email"
+          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-md text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-neutral-900 focus:border-neutral-900 transition"
+        />
+      </div>
+
+      {/* Field 3: Subject */}
+      <div>
+        <label htmlFor="contact-subject" className="block text-xs sm:text-sm font-semibold text-gray-800 mb-1.5">
+          Betreff der Nachricht <span className="text-red-500">*</span>
+        </label>
+        <input
+          id="contact-subject"
+          type="text"
+          name="subject"
+          required
+          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-md text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-neutral-900 focus:border-neutral-900 transition"
+        />
+      </div>
+
+      {/* Field 4: Message */}
+      <div>
+        <label htmlFor="contact-message" className="block text-xs sm:text-sm font-semibold text-gray-800 mb-1.5">
+          Ihre Nachricht <span className="text-red-500">*</span>
+        </label>
+        <textarea
+          id="contact-message"
           name="message"
           required
-          placeholder={t('message_placeholder')} 
           rows={6}
-          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded text-sm focus:ring-orange-500 focus:border-orange-500" 
-        ></textarea>
+          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-md text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-neutral-900 focus:border-neutral-900 transition resize-y"
+        />
       </div>
 
-      <div>
-        <button 
-          type="submit" 
+      {/* Submit Button */}
+      <div className="pt-2">
+        <button
+          type="submit"
           disabled={status === 'loading'}
-          className="bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-8 rounded transition-colors mt-2 disabled:opacity-50"
+          className="bg-[#18181b] hover:bg-neutral-800 text-white font-bold text-xs tracking-wider uppercase py-3.5 px-8 rounded transition duration-200 disabled:opacity-60 cursor-pointer"
         >
-          {status === 'loading' ? t('sending') : t('send_btn')}
+          {status === 'loading' ? 'WIRD GESENDET...' : 'NACHRICHT SENDEN'}
         </button>
       </div>
     </form>

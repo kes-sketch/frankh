@@ -30,8 +30,8 @@ export const getCachedAllCategories = unstable_cache(
 );
 
 /**
- * Computes the canonical path for a category matching the original WooCommerce URL structure:
- * /categoria-de-produto/slug or /categoria-de-produto/parent/child
+ * Computes the canonical path for a category matching the German WooCommerce URL structure:
+ * /produkt-kategorie/slug or /produkt-kategorie/parent/child
  */
 export async function getCategoryCanonicalPath(
   category: { id: string; slug: string | null; parentId: string | null } | string,
@@ -44,7 +44,7 @@ export async function getCategoryCanonicalPath(
     ? (catMap.get(category) || cats.find(c => c.slug === category))
     : category;
 
-  if (!targetCat) return '/categoria-de-produto';
+  if (!targetCat) return '/produkt-kategorie';
 
   const segments: string[] = [targetCat.slug || targetCat.id];
   let currentParentId = targetCat.parentId;
@@ -57,7 +57,7 @@ export async function getCategoryCanonicalPath(
     currentParentId = parent.parentId;
   }
 
-  return `/categoria-de-produto/${segments.join('/')}`;
+  return `/produkt-kategorie/${segments.join('/')}`;
 }
 
 /**

@@ -20,5 +20,5 @@ export default async function LegacyProductRedirect({
     }
   }
   const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
-  permanentRedirect(`/produto/${slug}${queryString}`);
+  permanentRedirect(`/produkt/${slug}${queryString}`);
 }

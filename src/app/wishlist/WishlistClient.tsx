@@ -12,7 +12,7 @@ import Image from "next/image";
 export default function WishlistClient() {
   const [products, setProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   const wishlistItems = useWishlistStore((state) => state.items);
   const toggleItem = useWishlistStore((state) => state.toggleItem);
   const cartStore = useCartStore();
@@ -25,7 +25,7 @@ export default function WishlistClient() {
         setIsLoading(false);
         return;
       }
-      
+
       try {
         const fetchedProducts = await getProductsByIds(wishlistItems);
         setProducts(fetchedProducts);
@@ -35,7 +35,7 @@ export default function WishlistClient() {
         setIsLoading(false);
       }
     }
-    
+
     loadWishlist();
   }, [wishlistItems]);
 
@@ -66,8 +66,8 @@ export default function WishlistClient() {
         <div className="text-6xl mb-4">🤍</div>
         <h2 className="text-xl font-bold text-gray-900 mb-2">{t('empty_title')}</h2>
         <p className="text-gray-500 mb-6">{t('empty_subtitle')}</p>
-        <Link 
-          href="/search" 
+        <Link
+          href="/search"
           className="inline-block bg-orange-500 hover:bg-orange-600 text-white font-semibold px-6 py-3 rounded-md transition"
         >
           {t('discover_products')}
@@ -80,7 +80,7 @@ export default function WishlistClient() {
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
       {products.map(p => (
         <div key={p.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition group flex flex-col">
-          <Link href={`/produto/${p.slug}`} className="relative bg-gray-50 aspect-square p-4 flex items-center justify-center">
+          <Link href={`/produkt/${p.slug}`} className="relative bg-gray-50 aspect-square p-4 flex items-center justify-center">
             {p.images && p.images.length > 0 ? (
               <Image width={800} height={800} src={p.images[0]} alt={p.title} className="w-full h-full object-contain group-hover:scale-105 transition duration-300" />
             ) : (
@@ -88,23 +88,23 @@ export default function WishlistClient() {
             )}
           </Link>
           <div className="p-4 flex flex-col flex-1">
-            <Link href={`/produto/${p.slug}`}>
+            <Link href={`/produkt/${p.slug}`}>
               <p className="text-xs text-blue-500 font-semibold mb-1">{p.categories && p.categories.length > 0 ? p.categories[0].name : t('general')}</p>
               <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 mb-2 hover:text-orange-600">{p.title}</h3>
             </Link>
             <div className="mt-auto mb-4">
               <Price amount={p.price} className="font-bold text-red-600" />
             </div>
-            
+
             <div className="flex gap-2 mt-auto pt-4 border-t border-gray-100">
-              <button 
+              <button
                 onClick={() => handleAddToCart(p)}
                 className="flex-1 bg-gray-900 hover:bg-gray-800 text-white text-xs font-semibold py-2 rounded transition flex items-center justify-center gap-1"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                 {t('add_to_cart')}
               </button>
-              <button 
+              <button
                 onClick={() => toggleItem(p.id)}
                 className="p-2 border border-gray-200 hover:bg-red-50 hover:text-red-500 hover:border-red-200 rounded text-gray-500 transition"
                 title={t('remove')}

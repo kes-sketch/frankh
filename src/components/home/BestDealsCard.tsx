@@ -75,7 +75,7 @@ export default function BestDealsCard({
   return (
     <>
       <div
-        onClick={() => router.push(`/produto/${product.slug || product.id}`)}
+        onClick={() => router.push(`/produkt/${product.slug || product.id}`)}
         className="flex-none w-[250px] md:w-[300px] p-5 flex flex-col group/card cursor-pointer hover:shadow-lg transition bg-white border rounded-lg snap-start relative"
         style={{ borderColor }}
       >
@@ -134,7 +134,7 @@ export default function BestDealsCard({
               product.categories.map((c: any, idx: number) => (
                 <React.Fragment key={c.slug || c.id || idx}>
                   <Link
-                    href={`/categoria-de-produto/${c.slug || c.id}`}
+                    href={`/produkt-kategorie/${c.slug || c.id}`}
                     className="hover:text-orange-600 hover:underline transition-colors"
                     onClick={(e) => e.stopPropagation()}
                   >
@@ -145,7 +145,7 @@ export default function BestDealsCard({
               ))
             ) : product.categorySlug ? (
               <Link
-                href={`/categoria-de-produto/${product.categorySlug}`}
+                href={`/produkt-kategorie/${product.categorySlug}`}
                 className="hover:text-orange-600 hover:underline transition-colors"
                 onClick={(e) => e.stopPropagation()}
               >
@@ -156,7 +156,7 @@ export default function BestDealsCard({
             )}
           </div>
           <h3 className="text-sm font-medium text-gray-900 line-clamp-2 mb-2 transition" title={product.title}>
-            <Link href={`/produto/${product.slug || product.id}`} className="hover:text-orange-600" onClick={(e) => e.stopPropagation()}>
+            <Link href={`/produkt/${product.slug || product.id}`} className="hover:text-orange-600" onClick={(e) => e.stopPropagation()}>
               {product.title}
             </Link>
           </h3>

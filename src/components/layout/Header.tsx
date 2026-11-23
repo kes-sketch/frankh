@@ -338,7 +338,7 @@ export default function Header({
                       {searchResults.map((product) => (
                         <li key={product.id}>
                           <Link
-                            href={`/produto/${product.slug}`}
+                            href={`/produkt/${product.slug}`}
                             onClick={() => {
                               setShowSearchResults(false);
                               setSearchQuery('');
@@ -501,7 +501,7 @@ export default function Header({
                     categories.map((cat) => (
                       <Link
                         key={cat.id}
-                        href={`/shop?category=${cat.slug || cat.id}`}
+                        href={`/produkt-kategorie/${cat.slug || cat.id}`}
                         className={`flex items-center justify-between px-5 py-2.5 hover:bg-red-50 hover:text-red-600 transition ${!cat.parentId ? 'font-bold text-stone-900 text-xs bg-stone-50/60' : 'text-stone-600 pl-8 text-xs'}`}
                         onClick={() => setIsBottomCategoryOpen(false)}
                       >
@@ -522,7 +522,7 @@ export default function Header({
                     ].map((cat, idx) => (
                       <Link
                         key={idx}
-                        href={`/shop?category=${cat.slug}`}
+                        href={`/produkt-kategorie/${cat.slug}`}
                         className="flex items-center justify-between px-5 py-2.5 hover:bg-red-50 hover:text-red-600 text-stone-800 text-xs font-semibold transition"
                         onClick={() => setIsBottomCategoryOpen(false)}
                       >
@@ -557,16 +557,16 @@ export default function Header({
                     <span>🔥</span>
                     <span>ANGEBOTE</span>
                   </Link>
-                  <Link href="/shop?category=kuehlen-gefrieren" className="flex items-center px-3 py-3 hover:bg-black/15 rounded transition font-bold text-white text-xs">
+                  <Link href="/produkt-kategorie/kuehlen-gefrieren" className="flex items-center px-3 py-3 hover:bg-black/15 rounded transition font-bold text-white text-xs">
                     <span>KÜHLEN &amp; GEFRIEREN</span>
                   </Link>
-                  <Link href="/shop?category=waschen-trocknen" className="flex items-center px-3 py-3 hover:bg-black/15 rounded transition font-bold text-white text-xs">
+                  <Link href="/produkt-kategorie/waschen-trocknen" className="flex items-center px-3 py-3 hover:bg-black/15 rounded transition font-bold text-white text-xs">
                     <span>WASCHEN &amp; TROCKNEN</span>
                   </Link>
-                  <Link href="/shop?category=kochen-backen" className="flex items-center px-3 py-3 hover:bg-black/15 rounded transition font-bold text-white text-xs">
+                  <Link href="/produkt-kategorie/kochen-backen" className="flex items-center px-3 py-3 hover:bg-black/15 rounded transition font-bold text-white text-xs">
                     <span>KOCHEN &amp; BACKEN</span>
                   </Link>
-                  <Link href="/shop?category=kaffeevollautomaten" className="flex items-center px-3 py-3 hover:bg-black/15 rounded transition font-bold text-white text-xs">
+                  <Link href="/produkt-kategorie/kaffeevollautomaten" className="flex items-center px-3 py-3 hover:bg-black/15 rounded transition font-bold text-white text-xs">
                     <span>KAFFEEVOLLAUTOMATEN</span>
                   </Link>
                   <Link href="/contact" className="flex items-center px-3 py-3 hover:bg-black/15 rounded transition font-bold text-white text-xs">

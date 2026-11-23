@@ -206,7 +206,7 @@ export default function MobileSidebar({
                   {displayCategories.map((cat: any, idx: number) => (
                     <li key={cat.id || idx}>
                       <Link
-                        href={`/categoria-de-produto/${cat.slug || cat.id}`}
+                        href={`/produkt-kategorie/${cat.slug || cat.id}`}
                         onClick={onClose}
                         className="flex items-center justify-between px-3 py-2 text-xs font-semibold text-stone-700 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                       >

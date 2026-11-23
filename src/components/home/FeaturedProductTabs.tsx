@@ -293,7 +293,7 @@ export default function FeaturedProductTabs({ initialProducts = [] }: FeaturedPr
         badgeStyle="text-blue-700 bg-blue-50 border-blue-200"
         title="Große Haushaltsgeräte & Einbauküche"
         subtitle="Entdecken Sie erstklassige Waschmaschinen, energiesparende Geschirrspüler, moderne Induktionskochfelder und geräumige Kühl-Gefrierkombinationen."
-        viewAllHref="/shop?category=grosse-haushaltsgeraete"
+        viewAllHref="/produkt-kategorie/grosse-haushaltsgeraete"
         viewAllText="Alle Großgeräte ansehen"
         tabs={grossTabs}
         products={grossProds}
@@ -311,7 +311,7 @@ export default function FeaturedProductTabs({ initialProducts = [] }: FeaturedPr
         badgeStyle="text-amber-700 bg-amber-50 border-amber-200"
         title="Kaffeevollautomaten & Smarte Haushaltshelfer"
         subtitle="Perfekter Kaffeegenuss von De'Longhi & Jura, intelligente Saugroboter für mühelose Bodenpflege und leistungsstarke Küchenmaschinen."
-        viewAllHref="/shop?category=kleine-haushaltsgeraete"
+        viewAllHref="/produkt-kategorie/kleine-haushaltsgeraete"
         viewAllText="Alle Kleingeräte ansehen"
         tabs={kleinTabs}
         products={kleinProds}
@@ -326,7 +326,7 @@ export default function FeaturedProductTabs({ initialProducts = [] }: FeaturedPr
         badgeStyle="text-purple-700 bg-purple-50 border-purple-200"
         title="Gaming, Konsolen & Zubehör"
         subtitle="Erleben Sie Next-Gen-Gaming mit PlayStation 5 Bundles, Nintendo Switch und erstklassigen Gaming-Headsets zu unschlagbaren Preisen."
-        viewAllHref="/shop?category=gaming-vr"
+        viewAllHref="/produkt-kategorie/gaming-vr"
         viewAllText="Alle Gaming-Angebote ansehen"
         tabs={gamingTabs}
         products={gamingProds}

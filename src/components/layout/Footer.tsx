@@ -187,6 +187,7 @@ export default function Footer({
                 </button>
                 <h3 className="hidden md:block font-bold text-base mb-5" style={{ color: footerHeadingColor }}>Kundenservice</h3>
                 <ul className={`space-y-3 text-xs sm:text-sm text-stone-300 ${openSection === 'service' ? 'block pb-3' : 'hidden md:block'}`}>
+                  <li><Link href="/hgf" className="hover:text-red-400 transition">Häufig gestellte Fragen (HGF)</Link></li>
                   <li><Link href="/order-tracking" className="hover:text-red-400 transition">Bestellung verfolgen</Link></li>
                   <li><Link href="/versand-und-lieferung" className="hover:text-red-400 transition">Versand &amp; Spedition</Link></li>
                   <li><Link href="/rueckgabe" className="hover:text-red-400 transition">30 Tage Rückgaberecht</Link></li>
