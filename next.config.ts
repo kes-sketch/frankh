@@ -81,6 +81,31 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: '/agb',
+        destination: '/allgemeine-geschaeftsbedingungen-agb',
+        permanent: true,
+      },
+      {
+        source: '/datenschutz',
+        destination: '/datenschutzrichtlinie',
+        permanent: true,
+      },
+      {
+        source: '/rueckgabe',
+        destination: '/rueckgabe-und-rueckerstattung',
+        permanent: true,
+      },
+      {
+        source: '/zahlungsarten',
+        destination: '/zahlungsart',
+        permanent: true,
+      },
+      {
+        source: '/about-us',
+        destination: '/ueber-uns',
+        permanent: true,
+      },
+      {
         source: '/team/:path*',
         destination: '/',
         permanent: true,
