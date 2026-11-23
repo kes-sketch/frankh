@@ -14,6 +14,7 @@ export default function SeoForm({ initialSettings }: { initialSettings: Record<s
   const [metaDescription, setMetaDescription] = useState(initialSettings.HOME_META_DESCRIPTION || '');
   const [ogImage, setOgImage] = useState(initialSettings.HEADER_LOGO_IMAGE || '');
   const [googleSiteVerification, setGoogleSiteVerification] = useState(initialSettings.GOOGLE_SITE_VERIFICATION || '');
+  const [bingSiteVerification, setBingSiteVerification] = useState(initialSettings.BING_SITE_VERIFICATION || initialSettings.MSVALIDATE_01 || '');
   const [googleAnalyticsId, setGoogleAnalyticsId] = useState(initialSettings.GOOGLE_ANALYTICS_ID || '');
   
   const [storeCountry, setStoreCountry] = useState(initialSettings.STORE_COUNTRY || 'FR');
@@ -35,6 +36,7 @@ export default function SeoForm({ initialSettings }: { initialSettings: Record<s
       HOME_META_DESCRIPTION: metaDescription,
       HEADER_LOGO_IMAGE: ogImage,
       GOOGLE_SITE_VERIFICATION: googleSiteVerification,
+      BING_SITE_VERIFICATION: bingSiteVerification,
       GOOGLE_ANALYTICS_ID: googleAnalyticsId,
       STORE_COUNTRY: storeCountry,
       RSS_BEFORE_CONTENT: rssBeforeContent,
@@ -111,6 +113,22 @@ export default function SeoForm({ initialSettings }: { initialSettings: Record<s
               value={googleSiteVerification}
               onChange={(e) => setGoogleSiteVerification(e.target.value)}
               placeholder={tSeo('gsc_placeholder') || "votre_code_de_verification"}
+              className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col md:flex-row md:items-start justify-between border-b border-gray-100 pb-6">
+          <div className="mb-4 md:mb-0 md:w-1/3">
+            <label className="block text-sm font-medium text-gray-700">{tSeo('bing_label') || 'Bing Webmaster Tools'}</label>
+            <p className="text-xs text-gray-500 mt-1">{tSeo('bing_help') || 'Bestätigungsschlüssel (msvalidate.01). Erhalten Sie diesen in den Bing Webmaster Tools (HTML-Tag-Methode).'}</p>
+          </div>
+          <div className="md:w-2/3">
+            <input
+              type="text"
+              value={bingSiteVerification}
+              onChange={(e) => setBingSiteVerification(e.target.value)}
+              placeholder={tSeo('bing_placeholder') || "z. B. 1234567890ABCDEF1234567890ABCDEF"}
               className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
             />
           </div>

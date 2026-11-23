@@ -26,7 +26,7 @@ const storeName = process.env.NEXT_PUBLIC_STORE_NAME || "FRANK HAUSGERÄTE";
 
 export async function generateMetadata(): Promise<Metadata> {
   const settingsDb = await prisma.setting.findMany({
-    where: { key: { in: ['FAVICON_IMAGE', 'HOME_META_TITLE', 'HOME_META_DESCRIPTION', 'HEADER_LOGO_IMAGE', 'GOOGLE_SITE_VERIFICATION'] } }
+    where: { key: { in: ['FAVICON_IMAGE', 'HOME_META_TITLE', 'HOME_META_DESCRIPTION', 'HEADER_LOGO_IMAGE', 'GOOGLE_SITE_VERIFICATION', 'BING_SITE_VERIFICATION', 'MSVALIDATE_01'] } }
   });
 
   const settingsMap = settingsDb.reduce((acc, s) => ({ ...acc, [s.key]: s.value }), {} as Record<string, string>);
@@ -36,6 +36,22 @@ export async function generateMetadata(): Promise<Metadata> {
   const ogImage = settingsMap['HEADER_LOGO_IMAGE'] || '/logo.jpg';
 
   const baseUrl = SITE_URL;
+
+  const googleRaw = settingsMap['GOOGLE_SITE_VERIFICATION']?.trim();
+  const bingRaw = (settingsMap['BING_SITE_VERIFICATION'] || settingsMap['MSVALIDATE_01'])?.trim();
+
+  const verification: NonNullable<Metadata['verification']> = {};
+  if (googleRaw) {
+    const gscMatch = googleRaw.match(/content=["']([^"']+)["']/i);
+    verification.google = gscMatch ? gscMatch[1].trim() : googleRaw;
+  }
+  if (bingRaw) {
+    const bingMatch = bingRaw.match(/content=["']([^"']+)["']/i);
+    const bingCode = bingMatch ? bingMatch[1].trim() : bingRaw;
+    verification.other = {
+      'msvalidate.01': [bingCode],
+    };
+  }
 
   return {
     metadataBase: new URL(baseUrl),
@@ -73,9 +89,7 @@ export async function generateMetadata(): Promise<Metadata> {
         { url: faviconUrl },
       ],
     } : undefined,
-    verification: settingsMap['GOOGLE_SITE_VERIFICATION'] ? {
-      google: settingsMap['GOOGLE_SITE_VERIFICATION']
-    } : undefined
+    verification: Object.keys(verification).length > 0 ? verification : undefined
   };
 }
 
