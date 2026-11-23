@@ -160,7 +160,7 @@ export default function FeaturedProductTabs({ initialProducts = [] }: FeaturedPr
   const gamingRegex = /(ps5|playstation|switch|nintendo|xbox|gaming|headset|inzone|konsole|controller)/i;
   const kleinRegex = /(kaffee|espresso|vollautomat|delonghi|jura|sage|acopino|tescoma|roboter|staubsauger|putzroboter|sauger|kuechenmaschine|küchenmaschine|mixer|mikrowelle|kleine-haushalts)/i;
 
-  // Split into 3 pools
+  // Split into 3 pools and sort products with images first
   const { grossProds, kleinProds, gamingProds } = useMemo(() => {
     const gross: ProductItem[] = [];
     const klein: ProductItem[] = [];
@@ -179,6 +179,16 @@ export default function FeaturedProductTabs({ initialProducts = [] }: FeaturedPr
         gross.push(p);
       }
     }
+
+    const sortByImage = (a: ProductItem, b: ProductItem) => {
+      const aHas = a.images && a.images.length > 0 ? 1 : 0;
+      const bHas = b.images && b.images.length > 0 ? 1 : 0;
+      return bHas - aHas;
+    };
+
+    gross.sort(sortByImage);
+    klein.sort(sortByImage);
+    gaming.sort(sortByImage);
 
     return {
       grossProds: gross.length > 0 ? gross : fallbackGross,

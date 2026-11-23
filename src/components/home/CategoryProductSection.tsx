@@ -208,63 +208,63 @@ export default function CategoryProductSection({
   const hasSlider = filteredProducts.length > 4;
 
   return (
-    <section id={id} className={`py-12 sm:py-16 ${bgStyle} border-t border-stone-200/80 relative`}>
+    <section id={id} className={`py-10 sm:py-14 ${bgStyle} border-t border-stone-200/70 relative`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-        {/* Section Header */}
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-6 sm:mb-8">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className={`inline-block px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider border ${badgeStyle}`}>
+        {/* Section Header: Badge, Title & Description (Full Width) */}
+        <div className="mb-5 sm:mb-6">
+          {badge && (
+            <div className="mb-2">
+              <span className={`inline-block px-2.5 py-0.5 rounded text-[11px] font-black uppercase tracking-wider border ${badgeStyle}`}>
                 {badge}
               </span>
-              <span className="text-xs font-bold text-stone-500">
-                {pool.length} Geräte verfügbar
-              </span>
             </div>
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-stone-900 tracking-tight mt-1.5">
-              {title}
-            </h2>
-            {subtitle && (
-              <p className="text-xs sm:text-sm text-stone-500 mt-1 max-w-2xl">
-                {subtitle}
-              </p>
-            )}
+          )}
+          <h2 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
+            {title}
+          </h2>
+          {subtitle && (
+            <p className="text-xs sm:text-sm text-stone-600 mt-1.5 max-w-3xl leading-relaxed">
+              {subtitle}
+            </p>
+          )}
+        </div>
+
+        {/* Subcategories Filter & Navigation Row (Dedicated Bar below title) */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+          {/* Subcategory Filter Tabs */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 max-w-full">
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabChange(tab.id)}
+                  className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
+                    isActive
+                      ? 'bg-[#18181b] text-white shadow-xs'
+                      : 'bg-stone-100/80 hover:bg-stone-200/80 text-stone-700 hover:text-stone-900 border border-stone-200/60'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* Filter Tabs */}
-            <div className="flex items-center gap-1.5 bg-stone-100 p-1 rounded-xl border border-stone-200/70 shadow-xs overflow-x-auto no-scrollbar max-w-full">
-              {tabs.map((tab) => {
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => handleTabChange(tab.id)}
-                    className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-                      isActive
-                        ? 'bg-stone-900 text-white shadow-sm'
-                        : 'text-stone-600 hover:text-stone-900 hover:bg-white/80'
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* View All Category Link */}
+          {/* Right Side: View All Link + Carousel Buttons */}
+          <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
             <Link
               href={viewAllHref}
-              className="hidden sm:inline-flex items-center gap-1 text-xs font-bold text-red-600 hover:text-red-700 transition-colors shrink-0 group ml-2"
+              className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-red-600 hover:text-red-700 transition-colors group shrink-0"
             >
               <span>{viewAllText}</span>
               <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
             </Link>
 
-            {/* Arrows */}
+            {/* Carousel Prev/Next Buttons */}
             {hasSlider && (
-              <div className="hidden sm:flex items-center gap-1.5 shrink-0 ml-1">
+              <div className="flex items-center gap-1.5 shrink-0 ml-1">
                 <button
                   type="button"
                   onClick={() => scroll('left')}
@@ -272,8 +272,8 @@ export default function CategoryProductSection({
                   aria-label="Vorherige Produkte"
                   className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all cursor-pointer ${
                     canScrollLeft
-                      ? 'bg-white border-stone-300 text-stone-800 hover:bg-stone-900 hover:text-white shadow-xs'
-                      : 'bg-stone-100 border-stone-200 text-stone-300 cursor-not-allowed'
+                      ? 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-900 hover:text-white shadow-xs'
+                      : 'bg-stone-50/50 border-stone-200/50 text-stone-300 cursor-not-allowed'
                   }`}
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -288,8 +288,8 @@ export default function CategoryProductSection({
                   aria-label="Nächste Produkte"
                   className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all cursor-pointer ${
                     canScrollRight
-                      ? 'bg-white border-stone-300 text-stone-800 hover:bg-stone-900 hover:text-white shadow-xs'
-                      : 'bg-stone-100 border-stone-200 text-stone-300 cursor-not-allowed'
+                      ? 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-900 hover:text-white shadow-xs'
+                      : 'bg-stone-50/50 border-stone-200/50 text-stone-300 cursor-not-allowed'
                   }`}
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -438,7 +438,7 @@ export default function CategoryProductSection({
                   <button
                     type="button"
                     onClick={() => handleAddToCart(prod)}
-                    className="px-3 py-1.5 bg-stone-900 hover:bg-red-600 text-white rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer flex items-center gap-1"
+                    className="px-4 py-1.5 bg-[#18181b] hover:bg-neutral-800 text-white rounded-full text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer flex items-center gap-1.5"
                     title={`${prod.title} in den Warenkorb`}
                   >
                     <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
