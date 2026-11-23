@@ -64,10 +64,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const settingsMap = await getCachedSettings();
   const enableBuyNow = settingsMap.ENABLE_BUY_NOW_BUTTON === 'true';
   const shippingInfo = [
-    settingsMap.SHIPPING_INFO_1 || '3-5 dias úteis em Portugal Continental',
-    settingsMap.SHIPPING_INFO_2 || '5-7 dias úteis para envios internacionais',
-    settingsMap.SHIPPING_INFO_3 || 'Descarga por plataforma elevatória incluída',
-    settingsMap.SHIPPING_INFO_4 || 'Devolução legal até 14 dias',
+    settingsMap.SHIPPING_INFO_1 || 'Lieferzeit 2-4 Werktage deutschlandweit',
+    settingsMap.SHIPPING_INFO_2 || 'Kostenloser Speditionsversand ab 50 €',
+    settingsMap.SHIPPING_INFO_3 || 'Sichere Lieferung mit Terminankündigung',
+    settingsMap.SHIPPING_INFO_4 || '30 Tage Rückgaberecht & 2 Jahre Garantie',
   ];
 
   // Related products (same category)

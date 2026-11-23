@@ -482,8 +482,8 @@ export default function ThermalHero({ config, showcaseProducts, isPreview, secti
                 <button
                   onClick={handleAddToCart}
                   className={`w-full mt-3.5 py-3.5 px-4 font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer ${added
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-red-600 hover:bg-red-700 active:scale-98 text-white shadow-red-600/30'
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-red-600 hover:bg-red-700 active:scale-98 text-white shadow-red-600/30'
                     }`}
                 >
                   {added ? (

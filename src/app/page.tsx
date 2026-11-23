@@ -110,7 +110,6 @@ export default async function Home() {
             <ThermalHero config={section.settings} showcaseProducts={heroShowcaseProducts} />
             <TrustBar />
             <CategoryExplorer />
-            <BrandCarousel />
           </div>
         );
       case 'FeaturedProductTabs':

@@ -149,7 +149,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const storeName = process.env.NEXT_PUBLIC_STORE_NAME || "My Store";
 
   const storeSettings = {
-    announcement: settingsMap.HEADER_ANNOUNCEMENT_TEXT || settingsMap.HEADER_ANNOUNCEMENT || 'Envios para todo o Portugal Continental com descarga por plataforma elevatória',
+    announcement: settingsMap.HEADER_ANNOUNCEMENT_TEXT || settingsMap.HEADER_ANNOUNCEMENT || '📍 Showroom: Wildbader Straße 51, 75394 Oberreichenbach • 🚚 Kostenloser Speditionsversand ab 50 € • 📞 kontakt@frankhausgeraete.de',
     logoImage: settingsMap.HEADER_LOGO_IMAGE && settingsMap.HEADER_LOGO_IMAGE !== '/logo.png' ? settingsMap.HEADER_LOGO_IMAGE : '',
     supportPhone: settingsMap.FOOTER_SUPPORT_PHONE ?? settingsMap.HEADER_SUPPORT_PHONE ?? '+351 253 000 000',
     supportEmail: settingsMap.FOOTER_SUPPORT_EMAIL ?? settingsMap.HEADER_SUPPORT_EMAIL ?? 'cabeliminizenda@gmail.com',

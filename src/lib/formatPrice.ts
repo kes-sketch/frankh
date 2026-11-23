@@ -8,12 +8,12 @@ export type CurrencyOptions = {
 };
 
 export const defaultCurrencyOptions: CurrencyOptions = {
-  currencySymbol: '$',
-  currencyPosition: 'left',
-  thousandSeparator: ',',
-  decimalSeparator: '.',
+  currencySymbol: '€',
+  currencyPosition: 'right-space',
+  thousandSeparator: '.',
+  decimalSeparator: ',',
   taxIncludedInPrice: true,
-  defaultVatRate: 20,
+  defaultVatRate: 19,
 };
 
 export function formatPriceNumber(
