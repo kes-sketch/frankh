@@ -5,12 +5,32 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 
-export default function ThankYouContent() {
+export default function ThankYouContent({ initialSettings }: { initialSettings?: Record<string, string> }) {
   const searchParams = useSearchParams();
   const isConfirmed = searchParams.get('newsletter') === 'confirmed';
   const [copied, setCopied] = useState(false);
 
-  const couponCode = 'WELCOME10';
+  const eyebrow = initialSettings?.THANK_YOU_EYEBROW || 'WILLKOMMEN BEI FRANK HAUSGERÄTE';
+  const title = initialSettings?.THANK_YOU_TITLE || 'Vielen Dank für Ihre Anmeldung!';
+  const subtitle = initialSettings?.THANK_YOU_SUBTITLE || 'Ihre Anmeldung wurde erfolgreich abgeschlossen.';
+
+  const section1Heading = initialSettings?.THANK_YOU_SECTION1_HEADING || 'Qualität und Komfort für Ihr Zuhause.';
+  const section1Text = initialSettings?.THANK_YOU_SECTION1_TEXT || 'Freuen Sie sich auf exklusive Angebote, wertvolle Expertentipps und die besten Haushaltsgeräte für ein modernes und energieeffizientes Zuhause.';
+
+  const giftEyebrow = initialSettings?.THANK_YOU_GIFT_EYEBROW || 'EIN BESONDERES GESCHENK FÜR SIE';
+  const giftTitle = initialSettings?.THANK_YOU_GIFT_TITLE || 'Ihr persönlicher Willkommensrabatt!';
+  const giftDesc = initialSettings?.THANK_YOU_GIFT_DESC || 'Als Dankeschön für Ihr Vertrauen erhalten Sie einen exklusiven Rabatt auf Ihre nächste Bestellung.';
+
+  const couponBadge = initialSettings?.THANK_YOU_COUPON_BADGE || '10% RABATT';
+  const couponCode = initialSettings?.THANK_YOU_COUPON_CODE || 'WELCOME10';
+  const couponNote = initialSettings?.THANK_YOU_COUPON_NOTE || 'Lösen Sie diesen Code einfach beim Checkout Ihrer Bestellung ein.';
+
+  const ctaText = initialSettings?.THANK_YOU_CTA_TEXT || 'PRODUKTE JETZT ENTDECKEN';
+  const ctaUrl = initialSettings?.THANK_YOU_CTA_URL || '/produkt';
+
+  const signoffHeading = initialSettings?.THANK_YOU_SIGNOFF_HEADING || 'Zuverlässige Technik. Erstklassiger Service. Mehr Lebensqualität.';
+  const signoffText = initialSettings?.THANK_YOU_SIGNOFF_TEXT || 'Vielen Dank, dass Sie Teil unserer Community sind. Bei allen Fragen rund um Ihre Geräte sind wir jederzeit gerne für Sie da!';
+  const signoffName = initialSettings?.THANK_YOU_SIGNOFF_NAME || 'Ihr Team von Frank Hausgeräte e.K.';
 
   const handleCopy = async () => {
     try {
@@ -28,7 +48,7 @@ export default function ThankYouContent() {
         document.body.removeChild(textArea);
       }
       setCopied(true);
-      toast.success('Gutscheincode WELCOME10 erfolgreich kopiert! 🏷️', {
+      toast.success(`Gutscheincode ${couponCode} erfolgreich kopiert! 🏷️`, {
         style: {
           background: '#1c1917',
           color: '#ffffff',
@@ -49,7 +69,7 @@ export default function ThankYouContent() {
   return (
     <div className="w-full bg-[#FAF7F2] py-10 sm:py-16 md:py-20 px-4 sm:px-6 flex items-center justify-center font-sans">
       <div className="w-full max-w-xl mx-auto">
-        
+
         {/* Confirmed pill badge if landing from confirmation email */}
         {isConfirmed && (
           <div className="mb-6 mx-auto inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold shadow-xs">
@@ -62,23 +82,23 @@ export default function ThankYouContent() {
 
         {/* Main Card (harmonized with inspiration image & brand palette) */}
         <div className="bg-white border border-[#E7DFD4] rounded-2xl sm:rounded-3xl shadow-sm p-6 sm:p-10 md:p-12 text-center relative overflow-hidden">
-          
+
           {/* Subtle top brand accent line */}
           <div className="h-1.5 w-full bg-gradient-to-r from-red-600 via-amber-500 to-red-600 absolute top-0 left-0" />
 
           {/* Brand Eyebrow */}
           <p className="text-[11px] sm:text-xs font-bold tracking-widest text-[#8C6D53] uppercase mb-1">
-            WILLKOMMEN BEI FRANK HAUSGERÄTE
+            {eyebrow}
           </p>
 
           {/* Main H1 */}
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1D1A] tracking-tight mt-1">
-            Vielen Dank für Ihre Anmeldung!
+            {title}
           </h1>
 
           {/* Subtitle */}
           <p className="text-xs sm:text-sm text-[#666059] mt-2 font-normal">
-            Ihre Anmeldung wurde erfolgreich abgeschlossen.
+            {subtitle}
           </p>
 
           {/* Thin Divider */}
@@ -86,34 +106,34 @@ export default function ThankYouContent() {
 
           {/* Comfort Heading */}
           <h2 className="text-base sm:text-xl font-bold text-[#1F1D1A]">
-            Qualität und Komfort für Ihr Zuhause.
+            {section1Heading}
           </h2>
 
           {/* Comfort Description */}
           <p className="text-xs sm:text-sm text-[#666059] leading-relaxed mt-2 max-w-md mx-auto">
-            Freuen Sie sich auf exklusive Angebote, wertvolle Expertentipps und die besten Haushaltsgeräte für ein modernes und energieeffizientes Zuhause.
+            {section1Text}
           </p>
 
           {/* Special Gift Container (Box) */}
           <div className="bg-[#FAF7F2] border border-[#E7DFD4] rounded-xl sm:rounded-2xl p-5 sm:p-7 mt-6 sm:mt-7 text-center">
-            
+
             <p className="text-[10px] sm:text-[11px] font-bold text-[#8B5E3C] tracking-widest uppercase">
-              EIN BESONDERES GESCHENK FÜR SIE
+              {giftEyebrow}
             </p>
 
             <h3 className="text-lg sm:text-2xl font-black text-[#1F1D1A] mt-1">
-              Ihr persönlicher Willkommensrabatt!
+              {giftTitle}
             </h3>
 
             <p className="text-xs sm:text-sm text-[#666059] mt-1.5 max-w-sm mx-auto">
-              Als Dankeschön für Ihr Vertrauen erhalten Sie einen exklusiven Rabatt auf Ihre nächste Bestellung.
+              {giftDesc}
             </p>
 
             {/* Dashed Coupon Ticket Box */}
             <div className="border-2 border-dashed border-[#CBB89D] bg-white/80 rounded-lg sm:rounded-xl p-5 sm:p-6 my-5 max-w-sm mx-auto relative shadow-xs">
-              
+
               <div className="text-lg sm:text-2xl font-black text-[#8B5E3C] tracking-wide uppercase">
-                10% RABATT
+                {couponBadge}
               </div>
 
               <div className="text-[10px] font-bold text-[#8C847A] tracking-widest uppercase mt-1">
@@ -151,18 +171,18 @@ export default function ThankYouContent() {
                 </p>
               ) : (
                 <p className="text-[11px] sm:text-xs text-[#78716A]">
-                  Lösen Sie diesen Code einfach beim Checkout Ihrer Bestellung ein.
+                  {couponNote}
                 </p>
               )}
             </div>
 
-            {/* CTA Button -> Frank Hausgeräte /produkt */}
+            {/* CTA Button -> Configurable */}
             <div className="mt-5">
               <Link
-                href="/produkt"
+                href={ctaUrl}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-bold py-3.5 px-8 rounded-lg shadow-sm hover:shadow transition-all text-xs sm:text-sm tracking-wider uppercase"
               >
-                <span>PRODUKTE JETZT ENTDECKEN</span>
+                <span>{ctaText}</span>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
@@ -207,12 +227,12 @@ export default function ThankYouContent() {
 
           {/* Signoff Header */}
           <h3 className="text-sm sm:text-base font-bold text-[#1F1D1A]">
-            Zuverlässige Technik. Erstklassiger Service. Mehr Lebensqualität.
+            {signoffHeading}
           </h3>
 
           {/* Signoff Text */}
           <p className="text-xs sm:text-sm text-[#666059] mt-1.5 max-w-md mx-auto">
-            Vielen Dank, dass Sie Teil unserer Community sind. Bei allen Fragen rund um Ihre Geräte sind wir jederzeit gerne für Sie da!
+            {signoffText}
           </p>
 
           {/* Italic Signoff */}
@@ -222,7 +242,7 @@ export default function ThankYouContent() {
 
           {/* Company Team Signature */}
           <p className="text-xs font-semibold text-[#8C847A] mt-1">
-            Ihr Team von Frank Hausgeräte
+            {signoffName}
           </p>
 
         </div>

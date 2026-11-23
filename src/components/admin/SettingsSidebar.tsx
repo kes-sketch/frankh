@@ -23,7 +23,8 @@ export default function SettingsSidebar() {
       items: [
         { label: tSettings('nav_features') || 'Store features', href: '/admin/settings/store-features', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' },
         { label: tSettings('nav_shipping') || 'Product shipping info', href: '/admin/settings/shipping-info', icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4' },
-        { label: tSettings('nav_taxes') || 'Taxes and VAT', href: '/admin/settings/taxes', icon: 'M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z' }
+        { label: tSettings('nav_taxes') || 'Taxes and VAT', href: '/admin/settings/taxes', icon: 'M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z' },
+        { label: tSettings('nav_thank_you') || 'Thank you page', href: '/admin/settings/thank-you', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' }
       ]
     },
     {

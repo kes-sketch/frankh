@@ -1,6 +1,9 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
+import { getSettings } from '@/actions/settings';
 import ThankYouContent from '../thank-you/ThankYouContent';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Vielen Dank für Ihre Anmeldung | Frank Hausgeräte',
@@ -14,7 +17,9 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ObrigadoPage() {
+export default async function ObrigadoPage() {
+  const settings = await getSettings();
+
   return (
     <Suspense
       fallback={
@@ -23,7 +28,7 @@ export default function ObrigadoPage() {
         </div>
       }
     >
-      <ThankYouContent />
+      <ThankYouContent initialSettings={settings} />
     </Suspense>
   );
 }

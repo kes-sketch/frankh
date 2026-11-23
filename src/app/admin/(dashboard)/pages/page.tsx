@@ -86,6 +86,24 @@ export default async function AdminPagesList({ searchParams }: { searchParams: P
                 </Link>
               </td>
             </tr>
+            {/* Ligne fixe pour la page Thank You */}
+            <tr className="hover:bg-gray-50">
+              <td className="px-6 py-4 font-medium text-gray-900">{t('thank_you_system_page') || 'Page Thank You (Dankeseite)'}</td>
+              <td className="px-6 py-4 text-gray-500">/thank-you</td>
+              <td className="px-6 py-4">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  {t('published')}
+                </span>
+              </td>
+              <td className="px-6 py-4 text-right space-x-3">
+                <Link href="/thank-you" target="_blank" className="text-blue-600 hover:text-blue-900 font-medium text-sm">
+                  {t('view')}
+                </Link>
+                <Link href="/admin/settings/thank-you" className="text-orange-700 hover:text-orange-900 font-medium text-sm">
+                  {t('edit')}
+                </Link>
+              </td>
+            </tr>
             {success && pages && pages.length > 0 ? (
               pages.map((page: any) => (
                 <tr key={page.id} className="hover:bg-gray-50">

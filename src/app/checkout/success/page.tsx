@@ -49,13 +49,13 @@ export default async function CheckoutSuccessPage({
   if (order.destinationAddress) {
     try {
       metadata = JSON.parse(order.destinationAddress);
-    } catch (e) {}
+    } catch (e) { }
   }
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat(locale, { month: 'long', day: 'numeric', year: 'numeric' }).format(date);
   };
-  
+
   const currencyOptions = {
     currencySymbol: settings.currencySymbol || defaultCurrencyOptions.currencySymbol,
     currencyPosition: (settings.currencyPosition as any) || defaultCurrencyOptions.currencyPosition,
@@ -83,9 +83,9 @@ export default async function CheckoutSuccessPage({
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="bg-gray-50 text-gray-700 p-4 rounded mb-8">
-        {t('order_received_thanks')}
+        {settings.ORDER_SUCCESS_MESSAGE || t('order_received_thanks')}
       </div>
-      
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm font-medium text-gray-600 mb-8 border-b border-gray-200 pb-4">
         <div className="flex flex-col sm:block">
           <span className="text-gray-500">{t('order_number')}</span> <strong className="text-gray-900">{order.id.split('-')[0].toUpperCase()}</strong>
@@ -102,7 +102,7 @@ export default async function CheckoutSuccessPage({
       </div>
 
       <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('order_details')}</h2>
-      
+
       <div className="mb-10">
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse border border-gray-200">
@@ -154,7 +154,7 @@ export default async function CheckoutSuccessPage({
             {order.orderItems.map((item) => (
               <div key={item.id} className="p-4 border-b border-gray-200 flex justify-between gap-4">
                 <div className="flex-1">
-                  <span className="text-orange-700 font-medium line-clamp-2">{item.product.title}</span> 
+                  <span className="text-orange-700 font-medium line-clamp-2">{item.product.title}</span>
                   <strong className="text-gray-900 block mt-1">× {item.quantity}</strong>
                 </div>
                 <div className="font-medium text-gray-900">
@@ -162,7 +162,7 @@ export default async function CheckoutSuccessPage({
                 </div>
               </div>
             ))}
-            
+
             <div className="p-4 space-y-3 bg-gray-50">
               <div className="flex justify-between items-center text-sm">
                 <span className="font-bold text-gray-900">{t('subtotal_colon')}</span>
@@ -171,7 +171,7 @@ export default async function CheckoutSuccessPage({
               <div className="flex justify-between items-center text-sm">
                 <span className="font-bold text-gray-900">{t('shipping_colon')}</span>
                 <div className="text-right">
-                  <span className="font-bold">{formatPrice(metadata?.shippingCost || 0)}</span> 
+                  <span className="font-bold">{formatPrice(metadata?.shippingCost || 0)}</span>
                   <span className="text-xs text-gray-500 block">{t('via')} {metadata?.shippingMethodName || t('standard_delivery')}</span>
                 </div>
               </div>
@@ -210,7 +210,7 @@ export default async function CheckoutSuccessPage({
                   {String(addressToShow.phone || metadata?.billing?.phone).substring(0, 3)}***
                 </div>
               )}
-              
+
               {metadata?.billing?.email && (
                 <div className="flex items-center gap-2 mt-1">
                   <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
@@ -238,7 +238,7 @@ export default async function CheckoutSuccessPage({
           </div>
         </div>
       )}
-      
+
       <div className="mt-8 text-center">
         <Link href="/shop" className="inline-block bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-8 rounded transition-colors">
           {tCart('back_to_shop')}
