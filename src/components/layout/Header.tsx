@@ -580,7 +580,7 @@ export default function Header({
             <div className="hidden xl:flex items-center gap-2 text-white/90 text-xs font-bold pl-4 border-l border-white/20 shrink-0">
               <span>🛡️ 2 Jahre Garantie</span>
               <span className="text-white/40">•</span>
-              <span>🚚 Kostenloser Versand ab 50 €</span>
+              <span>🚚 Kostenloser Versand ab 150 €</span>
             </div>
           </div>
         </div>

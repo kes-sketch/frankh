@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import prisma from '@/lib/prisma';
 import { getTranslations, getLocale } from 'next-intl/server';
+import { ARTICLE_CARD_SELECT, getCachedSettings } from '@/lib/cache';
 
 export default async function LatestBlogs({ config }: { config?: any }) {
   const displayMode = config?.displayMode || 'DATE_DESC';
@@ -13,7 +14,7 @@ export default async function LatestBlogs({ config }: { config?: any }) {
       // Pour respecter l'ordre des ids, on fetch puis on trie en JS, ou on utilise IN
       const fetched = await prisma.article.findMany({
         where: { id: { in: ids }, isPublished: true },
-        include: { _count: { select: { comments: { where: { isApproved: true } } } } }
+        select: ARTICLE_CARD_SELECT
       });
       // Reorder according to manual order
       articles = ids.map((id: string) => fetched.find(a => a.id === id)).filter(Boolean);
@@ -23,14 +24,14 @@ export default async function LatestBlogs({ config }: { config?: any }) {
       where: { isPublished: true },
       orderBy: { createdAt: displayMode === 'DATE_ASC' ? 'asc' : 'desc' },
       take: 4,
-      include: { _count: { select: { comments: { where: { isApproved: true } } } } }
+      select: ARTICLE_CARD_SELECT
     });
   }
 
   if (articles.length === 0) return null;
 
-  const settingsDb = await prisma.setting.findMany();
-  const settings = settingsDb.reduce((acc: any, s: any) => ({ ...acc, [s.key]: s.value }), {} as Record<string, string>);
+  const cachedSettings = await getCachedSettings();
+  const settings: Record<string, string> = { ...cachedSettings };
   
   if (config) {
     Object.assign(settings, config);

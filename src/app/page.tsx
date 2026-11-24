@@ -15,56 +15,15 @@ import FeaturedProductTabs from '@/components/home/FeaturedProductTabs';
 import HeatingGuideBlogs from '@/components/home/HeatingGuideBlogs';
 import prisma from '@/lib/prisma';
 import { SectionConfig } from '@/app/admin/(dashboard)/landing/LandingForm';
+import { getCachedSettings, getCachedHomepageProducts } from '@/lib/cache';
 
 export const revalidate = 300;
 
 export default async function Home() {
-  const settings = await import('@/lib/cache').then(m => m.getCachedSettings());
-
-  // Fetch products from Prisma
-  let formattedProducts: any[] = [];
-  let promoProducts: any[] = [];
-
-  try {
-    const allDbProds = await prisma.product.findMany({
-      where: { isDeleted: false },
-      select: {
-        id: true,
-        title: true,
-        slug: true,
-        price: true,
-        compareAtPrice: true,
-        images: true,
-        discountLabel: true,
-        isBestSeller: true,
-        gtin: true,
-        brand: { select: { name: true } },
-        categories: { select: { name: true, slug: true } }
-      },
-      orderBy: { createdAt: 'desc' }
-    });
-
-    formattedProducts = allDbProds.map(p => ({
-      id: p.id,
-      title: p.title,
-      slug: p.slug,
-      price: p.price,
-      compareAtPrice: p.compareAtPrice,
-      images: p.images || [],
-      discountLabel: p.discountLabel || (p.compareAtPrice && p.compareAtPrice > p.price ? `-${Math.round(((p.compareAtPrice - p.price) / p.compareAtPrice) * 100)}%` : null),
-      categorySlug: p.categories[0]?.slug || '',
-      categoryName: p.categories[0]?.name || '',
-      categories: p.categories.map(c => ({ name: c.name, slug: c.slug || '' })),
-      allCategories: p.categories.map(c => `${c.name} ${c.slug}`).join(' ')
-    }));
-
-    promoProducts = formattedProducts.filter(p =>
-      (p.compareAtPrice && p.compareAtPrice > p.price) ||
-      (p.discountLabel && p.discountLabel.trim() !== '')
-    );
-  } catch (e) {
-    console.error('Failed to fetch products for homepage:', e);
-  }
+  const [settings, { formattedProducts, promoProducts }] = await Promise.all([
+    getCachedSettings(),
+    getCachedHomepageProducts()
+  ]);
 
   let layout: SectionConfig[] = [];
   try {

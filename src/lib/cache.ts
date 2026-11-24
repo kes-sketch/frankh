@@ -185,12 +185,42 @@ export const getCachedRelatedProducts = async (categoryIds: string[], excludePro
   )();
 };
 
+// Minimal projection for product cards/catalogs — excludes heavy HTML description, attributes and logs
+export const PRODUCT_CARD_SELECT = {
+  id: true,
+  title: true,
+  slug: true,
+  price: true,
+  compareAtPrice: true,
+  images: true,
+  discountLabel: true,
+  isBestSeller: true,
+  isDealOfTheDay: true,
+  gtin: true,
+  brand: { select: { name: true } },
+  categories: { select: { id: true, name: true, slug: true } },
+  reviews: { select: { rating: true } }
+} as const;
+
+// Minimal projection for blog card lists — excludes heavy HTML content
+export const ARTICLE_CARD_SELECT = {
+  id: true,
+  title: true,
+  slug: true,
+  image: true,
+  excerpt: true,
+  category: true,
+  createdAt: true,
+  authorName: true,
+  _count: { select: { comments: { where: { isApproved: true } } } }
+} as const;
+
 // Caching for Homepage best sellers
 export const getCachedBestSellers = unstable_cache(
   async () => prisma.product.findMany({
     where: { isBestSeller: true, isDeleted: false },
     take: 8,
-    include: { categories: true }
+    select: PRODUCT_CARD_SELECT
   }),
   ['home-best-sellers'],
   { tags: ['products'], revalidate: 3600 }
@@ -202,7 +232,7 @@ export const getCachedLatestProducts = unstable_cache(
     where: { isDeleted: false },
     take: 8,
     orderBy: { createdAt: 'desc' },
-    include: { categories: true }
+    select: PRODUCT_CARD_SELECT
   }),
   ['home-latest-products'],
   { tags: ['products'], revalidate: 3600 }
@@ -295,4 +325,103 @@ export const getCachedProductCounts = unstable_cache(
   },
   ['layout-product-counts'],
   { tags: ['products'], revalidate: 3600 }
+);
+
+// High-performance cached homepage products feed (100 products max with light projection)
+export const getCachedHomepageProducts = unstable_cache(
+  async () => {
+    const allDbProds = await prisma.product.findMany({
+      where: { isDeleted: false },
+      select: PRODUCT_CARD_SELECT,
+      orderBy: { createdAt: 'desc' },
+      take: 120,
+    });
+
+    const formattedProducts = allDbProds.map(p => ({
+      id: p.id,
+      title: p.title,
+      slug: p.slug,
+      price: p.price,
+      compareAtPrice: p.compareAtPrice,
+      images: p.images || [],
+      discountLabel: p.discountLabel || (p.compareAtPrice && p.compareAtPrice > p.price ? `-${Math.round(((p.compareAtPrice - p.price) / p.compareAtPrice) * 100)}%` : null),
+      categorySlug: p.categories[0]?.slug || '',
+      categoryName: p.categories[0]?.name || '',
+      categories: p.categories.map(c => ({ name: c.name, slug: c.slug || '' })),
+      allCategories: p.categories.map(c => `${c.name} ${c.slug}`).join(' ')
+    }));
+
+    const promoProducts = formattedProducts.filter(p =>
+      (p.compareAtPrice && p.compareAtPrice > p.price) ||
+      (p.discountLabel && p.discountLabel.trim() !== '')
+    );
+
+    return { formattedProducts, promoProducts };
+  },
+  ['homepage-products-feed'],
+  { tags: ['products'], revalidate: 3600 }
+);
+
+// High-performance cached shop filter metadata (categories count, price range, brands count, card style)
+export const getCachedShopFilterMetadata = unstable_cache(
+  async () => {
+    const [allCategories, priceAgg, allBrands, settingsDb] = await Promise.all([
+      prisma.category.findMany({
+        include: {
+          _count: {
+            select: { products: { where: { isDeleted: false } } }
+          }
+        },
+        orderBy: { name: 'asc' }
+      }),
+      prisma.product.aggregate({
+        where: { isDeleted: false },
+        _min: { price: true },
+        _max: { price: true }
+      }),
+      prisma.brand.findMany({
+        include: {
+          _count: {
+            select: { products: { where: { isDeleted: false } } }
+          }
+        },
+        orderBy: { name: 'asc' }
+      }),
+      prisma.setting.findMany({
+        where: { key: { in: ['SHOP_CARD_STYLE', 'SHOP_CARD_BORDER_COLOR'] } }
+      })
+    ]);
+
+    const globalMinPrice = Math.floor(priceAgg._min?.price || 0);
+    const globalMaxPrice = Math.ceil(priceAgg._max?.price || 1000);
+
+    const settingsMap = settingsDb.reduce((acc, s) => ({ ...acc, [s.key]: s.value }), {} as Record<string, string>);
+    const cardStyle = (settingsMap.SHOP_CARD_STYLE as 'design1' | 'design2') || 'design2';
+    const borderColor = settingsMap.SHOP_CARD_BORDER_COLOR || '';
+
+    return {
+      allCategories,
+      globalMinPrice,
+      globalMaxPrice,
+      allBrands,
+      cardStyle,
+      borderColor
+    };
+  },
+  ['shop-filter-metadata'],
+  { tags: ['products', 'categories', 'brands', 'settings'], revalidate: 3600 }
+);
+
+// Caching for public blog article previews (excludes heavy content field)
+export const getCachedArticles = unstable_cache(
+  async (limit: number = 20) => {
+    return prisma.article.findMany({
+      where: { isPublished: true },
+      select: ARTICLE_CARD_SELECT,
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+  },
+  ['public-articles-list'],
+  { tags: ['articles'], revalidate: 3600 }
 );

@@ -5,7 +5,7 @@ import { getRecentComments } from '@/actions/blog';
 import { getTranslations, getLocale } from 'next-intl/server';
 import Image from "next/image";
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 export default async function BlogIndexPage({
   searchParams,
@@ -21,8 +21,19 @@ export default async function BlogIndexPage({
       isPublished: true,
       ...(query ? { title: { contains: query, mode: 'insensitive' } } : {})
     },
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      image: true,
+      excerpt: true,
+      category: true,
+      createdAt: true,
+      authorName: true,
+      _count: { select: { comments: { where: { isApproved: true } } } }
+    },
     orderBy: { createdAt: 'desc' },
-    include: { _count: { select: { comments: { where: { isApproved: true } } } } }
+    take: 30
   });
 
   const recentArticles = await prisma.article.findMany({
@@ -79,7 +90,7 @@ export default async function BlogIndexPage({
                       </span>
                     </div>
                     <p className="text-sm text-gray-600 line-clamp-3 mb-4 flex-1">
-                      {article.excerpt || article.content.replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ').substring(0, 150) + '...'}
+                      {article.excerpt || ''}
                     </p>
                     <Link href={`/blog/${article.slug}`} className="inline-block mt-auto bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-6 rounded transition self-start">
                       {t('read_more')}

@@ -568,6 +568,7 @@ export async function bulkDeleteProducts(ids: string[]) {
 
     revalidatePath('/admin/products');
     revalidatePath('/');
+    refreshCacheTag('products');
     return { success: true };
   } catch (error: any) {
     console.error(error);
@@ -614,6 +615,7 @@ export async function duplicateProduct(id: string) {
     });
     revalidatePath('/admin/products');
     revalidatePath('/');
+    refreshCacheTag('products');
     return { success: true };
   } catch (error: any) {
     console.error(error);
@@ -639,6 +641,7 @@ export async function quickEditProduct(id: string, data: { title: string, catego
     });
     revalidatePath('/admin/products');
     revalidatePath('/');
+    refreshCacheTag('products');
     return { success: true };
   } catch (error: any) {
     console.error(error);

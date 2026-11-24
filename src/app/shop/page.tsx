@@ -5,6 +5,7 @@ import ShopSort from '@/components/shop/ShopSort';
 import ShopPagination from '@/components/shop/ShopPagination';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
+import { getCachedShopFilterMetadata } from '@/lib/cache';
 
 const storeName = process.env.NEXT_PUBLIC_STORE_NAME || "FRANK HAUSGERÄTE";
 
@@ -18,12 +19,12 @@ export async function generateMetadata({
 }) {
   const params = await searchParams;
   const storeName = process.env.NEXT_PUBLIC_STORE_NAME || "FRANK HAUSGERÄTE";
-  
+
   // Extract category
   const categoryParams = params.category;
   const rawCategories = Array.isArray(categoryParams) ? categoryParams : categoryParams ? [categoryParams] : [];
   const categories = rawCategories.map(c => decodeURIComponent(c));
-  
+
   if (categories.length === 1) {
     const rawCat = categories[0];
     const orCond: any[] = [{ slug: rawCat }];
@@ -33,7 +34,7 @@ export async function generateMetadata({
     const category = await prisma.category.findFirst({
       where: { OR: orCond }
     });
-    
+
     if (category) {
       return {
         title: category.metaTitle ? category.metaTitle : `${category.name} | ${storeName}`,
@@ -61,22 +62,22 @@ export default async function ShopPage({
 }) {
   const params = await searchParams;
   const t = await getTranslations('Shop');
-  
+
   // Extract query params
   const categoryParams = params.category;
   const rawCategories = Array.isArray(categoryParams) ? categoryParams : categoryParams ? [categoryParams] : [];
   const categories = rawCategories.map(c => decodeURIComponent(c));
-  
+
   const brandParams = params.brand;
   const rawBrands = Array.isArray(brandParams) ? brandParams : brandParams ? [brandParams] : [];
   const brandsFilter = rawBrands.map(b => decodeURIComponent(b));
-  
+
   const minPrice = params.minPrice ? parseFloat(params.minPrice as string) : undefined;
   const maxPrice = params.maxPrice ? parseFloat(params.maxPrice as string) : undefined;
-  
+
   const ratingParams = params.rating;
   const ratings = Array.isArray(ratingParams) ? ratingParams.map(Number) : ratingParams ? [Number(ratingParams)] : [];
-  
+
   const sort = params.sort as string;
   const page = params.page ? parseInt(params.page as string) : 1;
   const limit = 12;
@@ -85,7 +86,7 @@ export default async function ShopPage({
   const where: any = {
     isDeleted: false,
   };
-  
+
   if (categories.length > 0) {
     const catUuids = categories.filter(isUuid);
     const catSlugs = categories.filter(s => !isUuid(s));
@@ -101,7 +102,7 @@ export default async function ShopPage({
       };
     }
   }
-  
+
   if (brandsFilter.length > 0) {
     const brandUuids = brandsFilter.filter(isUuid);
     const brandSlugs = brandsFilter.filter(s => !isUuid(s));
@@ -120,49 +121,22 @@ export default async function ShopPage({
       };
     }
   }
-  
+
   if (minPrice !== undefined || maxPrice !== undefined) {
     where.price = {};
     if (minPrice !== undefined && !isNaN(minPrice)) where.price.gte = minPrice;
     if (maxPrice !== undefined && !isNaN(maxPrice)) where.price.lte = maxPrice;
   }
 
-  // Fetch all categories for the filter sidebar with product counts
-  const allCategories = await prisma.category.findMany({
-    include: {
-      _count: {
-        select: { products: { where: { isDeleted: false } } }
-      }
-    },
-    orderBy: { name: 'asc' }
-  });
-
-  // Get global min/max price for the slider
-  const priceAgg = await prisma.product.aggregate({
-    where: { isDeleted: false },
-    _min: { price: true },
-    _max: { price: true }
-  });
-  const globalMinPrice = Math.floor(priceAgg._min?.price || 0);
-  const globalMaxPrice = Math.ceil(priceAgg._max?.price || 1000);
-
-  // Fetch all brands for the filter sidebar with product counts
-  const allBrands = await prisma.brand.findMany({
-    include: {
-      _count: {
-        select: { products: { where: { isDeleted: false } } }
-      }
-    },
-    orderBy: { name: 'asc' }
-  });
-
-  // Fetch shop specific settings
-  const settingsDb = await prisma.setting.findMany({
-    where: { key: { in: ['SHOP_CARD_STYLE', 'SHOP_CARD_BORDER_COLOR'] } }
-  });
-  const settingsMap = settingsDb.reduce((acc, s) => ({ ...acc, [s.key]: s.value }), {} as Record<string, string>);
-  const cardStyle = (settingsMap.SHOP_CARD_STYLE as 'design1' | 'design2') || 'design2';
-  const borderColor = settingsMap.SHOP_CARD_BORDER_COLOR || '';
+  // High-performance cached shop filter metadata (categories with counts, price min/max, brands with counts, card style)
+  const {
+    allCategories,
+    globalMinPrice,
+    globalMaxPrice,
+    allBrands,
+    cardStyle,
+    borderColor
+  } = await getCachedShopFilterMetadata();
 
   // Since filtering by average rating requires relation aggregation not directly supported 
   // in a simple where clause, we fetch products and filter in memory if ratings filter is active.
@@ -201,8 +175,8 @@ export default async function ShopPage({
     });
 
     const filtered = products.filter(p => {
-      const avg = p.reviews.length > 0 
-        ? p.reviews.reduce((acc, curr) => acc + curr.rating, 0) / p.reviews.length 
+      const avg = p.reviews.length > 0
+        ? p.reviews.reduce((acc, curr) => acc + curr.rating, 0) / p.reviews.length
         : 0;
       const roundedAvg = Math.round(avg);
       return ratings.includes(roundedAvg) || (ratings.includes(0) && p.reviews.length === 0);
@@ -275,7 +249,7 @@ export default async function ShopPage({
       <div className="max-w-7xl mx-auto px-4 sm:px-8 py-10">
         <h1 className="text-3xl font-extrabold text-gray-900 mb-8">{pageTitle}</h1>
         <div className="flex flex-col lg:flex-row gap-8">
-          
+
           {/* Left Sidebar (Filters) */}
           <aside className="w-full lg:w-1/4 flex-shrink-0">
             <ShopFilters categories={validCategories} brands={validBrands} globalMinPrice={globalMinPrice} globalMaxPrice={globalMaxPrice} />
@@ -283,7 +257,7 @@ export default async function ShopPage({
 
           {/* Main Content (Products) */}
           <section className="w-full lg:w-3/4">
-            
+
             <ShopSort totalResults={totalResults} currentRange={currentRange} />
 
             {paginatedProducts.length > 0 ? (

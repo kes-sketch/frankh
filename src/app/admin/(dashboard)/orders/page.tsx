@@ -21,7 +21,11 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
       include: {
         user: true,
         orderItems: {
-          include: { product: true }
+          include: {
+            product: {
+              select: { id: true, title: true, price: true, images: true }
+            }
+          }
         }
       },
       orderBy: { createdAt: 'desc' }
