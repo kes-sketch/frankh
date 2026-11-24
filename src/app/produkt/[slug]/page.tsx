@@ -54,7 +54,13 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   }
 
   // SEO Fallback: If URL slug differs from canonical product slug, 301 redirect
-  if (slug !== product.slug) {
+  // Normalise both by decoding so that percent-encoding casing differences (e.g., %c2%b2 vs %C2%B2 vs ²) don't trigger unnecessary redirects
+  let decodedParamSlug = slug;
+  try { decodedParamSlug = decodeURIComponent(slug).toLowerCase(); } catch (e) {}
+  let decodedProductSlug = product.slug;
+  try { decodedProductSlug = decodeURIComponent(product.slug).toLowerCase(); } catch (e) {}
+
+  if (decodedParamSlug !== decodedProductSlug) {
     permanentRedirect(`/produkt/${product.slug}`);
   }
 

@@ -43,25 +43,42 @@ export const getCachedSettings = unstable_cache(
 // We need a helper for dynamic tags per slug since unstable_cache tags must be statically defined in the wrapper
 // A common pattern is a factory function:
 export const getCachedProductBySlug = async (slug: string) => {
+  let decodedSlug = slug;
+  try { decodedSlug = decodeURIComponent(slug); } catch (e) {}
+
   return unstable_cache(
     async () => {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(slug);
+
+      const reEncodedLower = encodeURIComponent(decodedSlug).toLowerCase();
+      const reEncodedUpper = encodeURIComponent(decodedSlug);
       const encodedSlugLower = encodeURIComponent(slug).toLowerCase();
       const encodedSlugUpper = encodeURIComponent(slug);
-      let decodedSlug = slug;
-      try { decodedSlug = decodeURIComponent(slug); } catch (e) {}
 
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(slug);
+      const candidates = Array.from(new Set([
+        slug,
+        slug.toLowerCase(),
+        decodedSlug,
+        decodedSlug.toLowerCase(),
+        reEncodedLower,
+        reEncodedUpper,
+        encodedSlugLower,
+        encodedSlugUpper,
+      ])).filter(Boolean);
+
+      const orConditions: any[] = candidates.flatMap(c => [
+        { slug: c },
+        { slug: { equals: c, mode: 'insensitive' } }
+      ]);
+
+      if (isUuid) {
+        orConditions.push({ id: slug });
+      }
 
       let product = await prisma.product.findFirst({
         where: { 
           isDeleted: false,
-          OR: [
-            { slug: slug },
-            { slug: encodedSlugLower },
-            { slug: encodedSlugUpper },
-            { slug: decodedSlug },
-            ...(isUuid ? [{ id: slug }] : [])
-          ]
+          OR: orConditions
         },
         include: {
           categories: true,
@@ -82,9 +99,10 @@ export const getCachedProductBySlug = async (slug: string) => {
         product = await prisma.product.findFirst({
           where: {
             isDeleted: false,
-            slug: {
-              startsWith: `${decodedSlug}-`
-            }
+            OR: [
+              { slug: { startsWith: `${decodedSlug}-`, mode: 'insensitive' } },
+              { slug: { startsWith: `${reEncodedLower}-`, mode: 'insensitive' } }
+            ]
           },
           include: {
             categories: true,
@@ -104,10 +122,14 @@ export const getCachedProductBySlug = async (slug: string) => {
       // SEO Migration Fallback 2: If not found and input slug ends with numeric suffix (e.g. `-481`), check without suffix
       if (!product && /-\d+$/.test(decodedSlug)) {
         const strippedSlug = decodedSlug.replace(/-\d+$/, '');
+        const strippedReEncoded = encodeURIComponent(strippedSlug).toLowerCase();
         product = await prisma.product.findFirst({
           where: {
             isDeleted: false,
-            slug: strippedSlug
+            OR: [
+              { slug: { equals: strippedSlug, mode: 'insensitive' } },
+              { slug: { equals: strippedReEncoded, mode: 'insensitive' } }
+            ]
           },
           include: {
             categories: true,
@@ -141,8 +163,8 @@ export const getCachedProductBySlug = async (slug: string) => {
         reviews: sanitizedReviews,
       };
     },
-    ['product-details', slug],
-    { tags: ['products', `product-${slug}`], revalidate: 3600 }
+    ['product-details', decodedSlug.toLowerCase()],
+    { tags: ['products', `product-${decodedSlug.toLowerCase()}`], revalidate: 3600 }
   )();
 };
 
