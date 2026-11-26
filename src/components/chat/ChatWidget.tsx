@@ -142,7 +142,7 @@ export default function ChatWidget({ enabled, storeName, storeIcon }: ChatWidget
     setMessages(prev => prev.map(m => m.id === tempMsg.id ? savedMsg : m));
   };
 
-  if (!enabled) return null;
+  if (!enabled || pathname?.startsWith('/admin')) return null;
 
   const isCheckoutOrCart = pathname?.includes('/checkout') || pathname?.includes('/cart');
   const isAnyDrawerOpen = isCartDrawerOpen || isWishlistDrawerOpen;
