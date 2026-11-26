@@ -3,6 +3,10 @@
 /**
  * Custom Image Loader that directly optimizes images via Cloudinary & Unsplash CDN,
  * bypassing Vercel's 5,000 image transformation monthly limit completely.
+ *
+ * Anti-Quota Cloudinary Optimization:
+ * Quantizes image widths into 4 fixed tiers (384, 640, 1080, 1600) to maximize CDN cache
+ * hits across all screen sizes and avoid consuming the 25 monthly free transformation credits.
  */
 export default function imageLoader({
   src,
@@ -15,12 +19,22 @@ export default function imageLoader({
 }): string {
   if (!src) return '';
 
+  // Regrouper la largeur demandée en 4 paliers fixes (quantization / bucketing)
+  let targetWidth = 1600;
+  if (width <= 384) {
+    targetWidth = 384;
+  } else if (width <= 640) {
+    targetWidth = 640;
+  } else if (width <= 1080) {
+    targetWidth = 1080;
+  } else {
+    targetWidth = 1600;
+  }
+
   // 1. Cloudinary on-the-fly CDN transformation
   if (src.includes('res.cloudinary.com') && src.includes('/image/upload/')) {
-    const q = quality ? `q_${quality}` : 'q_auto';
-    // f_auto: deliver WebP/AVIF automatically based on browser
-    // c_limit: scale down only if original is larger than requested width
-    const transform = `f_auto,${q},c_limit,w_${width}`;
+    // Injecter les transformations Cloudinary: f_auto,q_auto:good,c_limit,w_${targetWidth}
+    const transform = `f_auto,q_auto:good,c_limit,w_${targetWidth}`;
 
     const uploadIndex = src.indexOf('/image/upload/');
     if (uploadIndex !== -1) {
@@ -42,7 +56,7 @@ export default function imageLoader({
   if (src.includes('images.unsplash.com')) {
     try {
       const url = new URL(src);
-      url.searchParams.set('w', width.toString());
+      url.searchParams.set('w', targetWidth.toString());
       url.searchParams.set('auto', 'format');
       if (quality) {
         url.searchParams.set('q', quality.toString());
