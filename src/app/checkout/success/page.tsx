@@ -224,19 +224,66 @@ export default async function CheckoutSuccessPage({
         </div>
       </div>
 
-      {order.paymentMethod === 'BANK_TRANSFER' && (settings.BANK_TRANSFER_IBAN || settings.BANK_TRANSFER_ACCOUNT_HOLDER || settings.BANK_TRANSFER_BIC || settings.BANK_TRANSFER_BANK_NAME) && (
-        <div className="mt-8 bg-gray-50 border border-gray-200 rounded-lg p-6">
-          <h3 className="font-bold text-gray-900 mb-2">{t('bank_transfer_instructions_title')}</h3>
-          <p className="text-sm text-gray-600 mb-4">
-            {settings.BANK_TRANSFER_INSTRUCTIONS || t('bank_transfer_instructions_desc')}
-          </p>
-          <div className="bg-white p-4 rounded border border-gray-200 font-mono text-sm space-y-2">
-            {settings.BANK_TRANSFER_ACCOUNT_HOLDER && <p><strong>{t('account_holder')}</strong> {settings.BANK_TRANSFER_ACCOUNT_HOLDER}</p>}
-            {settings.BANK_TRANSFER_IBAN && <p><strong>{t('iban')}</strong> {settings.BANK_TRANSFER_IBAN}</p>}
-            {settings.BANK_TRANSFER_BIC && <p><strong>{t('bic')}</strong> {settings.BANK_TRANSFER_BIC}</p>}
-            {settings.BANK_TRANSFER_BANK_NAME && <p><strong>{t('bank')}</strong> {settings.BANK_TRANSFER_BANK_NAME}</p>}
-          </div>
-        </div>
+      {order.paymentMethod === 'BANK_TRANSFER' && (
+        (() => {
+          const shortOrderId = order.id.split('-')[0].toUpperCase();
+          const emailTitle = settings.BANK_TRANSFER_EMAIL_TITLE || 'Angaben zur Banküberweisung (Vorkasse)';
+          const rawIntro = settings.BANK_TRANSFER_EMAIL_INTRO || 'Bitte überweisen Sie den Gesamtbetrag auf das unten angegebene Bankkonto. Bitte geben Sie unbedingt Ihre Bestellnummer #{orderId} als Verwendungszweck an.';
+          const renderedIntro = rawIntro
+            .replace(/\{orderId\}/g, `#${shortOrderId}`)
+            .replace(/\{total\}/g, formatPrice(order.total));
+          const rawReference = settings.BANK_TRANSFER_REFERENCE_PREFIX || 'Bestellnummer #{orderId}';
+          const renderedReference = rawReference
+            .replace(/\{orderId\}/g, `#${shortOrderId}`)
+            .replace(/\{total\}/g, formatPrice(order.total));
+          const outroText = settings.BANK_TRANSFER_EMAIL_OUTRO || settings.BANK_TRANSFER_INSTRUCTIONS || 'Nach Eingang Ihrer Überweisung wird Ihre Bestellung umgehend vorbereitet und an Sie versendet.';
+
+          return (
+            <div className="mt-8 rounded-lg p-6 border border-[#fed7aa] bg-[#fff7ed] text-[#1e293b] shadow-sm">
+              <h3 className="text-lg font-bold text-[#c2410c] mb-3 flex items-center gap-2">
+                <span>💳</span> {emailTitle}
+              </h3>
+              <p className="text-sm text-[#431407] mb-4 leading-relaxed whitespace-pre-line">
+                {renderedIntro}
+              </p>
+              <div className="bg-white/95 rounded-md p-4 border border-[#fed7aa]/60 text-sm text-[#1e293b] space-y-2 mb-4">
+                {settings.BANK_TRANSFER_ACCOUNT_HOLDER && (
+                  <div className="flex flex-col sm:flex-row sm:justify-between py-1 border-b border-orange-50">
+                    <span className="text-[#7c2d12] font-medium">{t('account_holder')}:</span>
+                    <strong className="text-slate-900">{settings.BANK_TRANSFER_ACCOUNT_HOLDER}</strong>
+                  </div>
+                )}
+                {settings.BANK_TRANSFER_IBAN && (
+                  <div className="flex flex-col sm:flex-row sm:justify-between py-1 border-b border-orange-50 font-mono">
+                    <span className="text-[#7c2d12] font-medium font-sans">{t('iban')}:</span>
+                    <strong className="text-slate-900 tracking-wider">{settings.BANK_TRANSFER_IBAN}</strong>
+                  </div>
+                )}
+                {settings.BANK_TRANSFER_BIC && (
+                  <div className="flex flex-col sm:flex-row sm:justify-between py-1 border-b border-orange-50 font-mono">
+                    <span className="text-[#7c2d12] font-medium font-sans">{t('bic')}:</span>
+                    <strong className="text-slate-900 tracking-wider">{settings.BANK_TRANSFER_BIC}</strong>
+                  </div>
+                )}
+                {settings.BANK_TRANSFER_BANK_NAME && (
+                  <div className="flex flex-col sm:flex-row sm:justify-between py-1 border-b border-orange-50">
+                    <span className="text-[#7c2d12] font-medium">{t('bank')}:</span>
+                    <strong className="text-slate-900">{settings.BANK_TRANSFER_BANK_NAME}</strong>
+                  </div>
+                )}
+                <div className="flex flex-col sm:flex-row sm:justify-between py-1">
+                  <span className="text-[#7c2d12] font-medium">Verwendungszweck:</span>
+                  <strong className="text-[#c2410c] font-bold">{renderedReference}</strong>
+                </div>
+              </div>
+              {outroText && (
+                <p className="text-xs text-[#9a3412] leading-relaxed italic">
+                  {outroText.replace(/\{orderId\}/g, `#${shortOrderId}`).replace(/\{total\}/g, formatPrice(order.total))}
+                </p>
+              )}
+            </div>
+          );
+        })()
       )}
 
       <div className="mt-8 text-center">

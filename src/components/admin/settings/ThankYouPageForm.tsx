@@ -37,6 +37,16 @@ export default function ThankYouPageForm({ initialSettings }: { initialSettings:
   // Checkout order confirmation page message
   const [orderSuccessMessage, setOrderSuccessMessage] = useState(initialSettings.ORDER_SUCCESS_MESSAGE || 'Vielen Dank. Ihre Bestellung ist bei uns eingegangen.');
 
+  // Bank Transfer (Confirmation Email & Checkout Success Page)
+  const [bankTransferEmailTitle, setBankTransferEmailTitle] = useState(initialSettings.BANK_TRANSFER_EMAIL_TITLE || 'Angaben zur Banküberweisung (Vorkasse)');
+  const [bankTransferEmailIntro, setBankTransferEmailIntro] = useState(initialSettings.BANK_TRANSFER_EMAIL_INTRO || 'Bitte überweisen Sie den Gesamtbetrag auf das unten angegebene Bankkonto. Bitte geben Sie unbedingt Ihre Bestellnummer #{orderId} als Verwendungszweck an.');
+  const [bankTransferReferencePrefix, setBankTransferReferencePrefix] = useState(initialSettings.BANK_TRANSFER_REFERENCE_PREFIX || 'Bestellnummer #{orderId}');
+  const [bankTransferEmailOutro, setBankTransferEmailOutro] = useState(initialSettings.BANK_TRANSFER_EMAIL_OUTRO || initialSettings.BANK_TRANSFER_INSTRUCTIONS || 'Nach Eingang Ihrer Überweisung wird Ihre Bestellung umgehend vorbereitet und an Sie versendet.');
+  const [bankTransferAccountHolder, setBankTransferAccountHolder] = useState(initialSettings.BANK_TRANSFER_ACCOUNT_HOLDER || '');
+  const [bankTransferBankName, setBankTransferBankName] = useState(initialSettings.BANK_TRANSFER_BANK_NAME || '');
+  const [bankTransferIban, setBankTransferIban] = useState(initialSettings.BANK_TRANSFER_IBAN || '');
+  const [bankTransferBic, setBankTransferBic] = useState(initialSettings.BANK_TRANSFER_BIC || '');
+
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -62,7 +72,16 @@ export default function ThankYouPageForm({ initialSettings }: { initialSettings:
       THANK_YOU_SIGNOFF_HEADING: signoffHeading,
       THANK_YOU_SIGNOFF_TEXT: signoffText,
       THANK_YOU_SIGNOFF_NAME: signoffName,
-      ORDER_SUCCESS_MESSAGE: orderSuccessMessage
+      ORDER_SUCCESS_MESSAGE: orderSuccessMessage,
+      BANK_TRANSFER_EMAIL_TITLE: bankTransferEmailTitle,
+      BANK_TRANSFER_EMAIL_INTRO: bankTransferEmailIntro,
+      BANK_TRANSFER_REFERENCE_PREFIX: bankTransferReferencePrefix,
+      BANK_TRANSFER_EMAIL_OUTRO: bankTransferEmailOutro,
+      BANK_TRANSFER_INSTRUCTIONS: bankTransferEmailOutro,
+      BANK_TRANSFER_ACCOUNT_HOLDER: bankTransferAccountHolder,
+      BANK_TRANSFER_BANK_NAME: bankTransferBankName,
+      BANK_TRANSFER_IBAN: bankTransferIban,
+      BANK_TRANSFER_BIC: bankTransferBic
     });
 
     setMessage(tSettings('update_success') || 'Paramètres mis à jour avec succès.');
@@ -267,6 +286,8 @@ export default function ThankYouPageForm({ initialSettings }: { initialSettings:
       <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 space-y-4">
         <h3 className="text-md font-bold text-gray-900 border-b border-gray-200 pb-2">5. Message de confirmation de commande (/checkout/success)</h3>
         <p className="text-xs text-gray-500">Ce message s'affiche sur la page de succès après qu'un client a passé une commande.</p>
+        <h3 className="text-md font-bold text-gray-900 border-b border-gray-200 pb-2">5. Message général de confirmation de commande (/checkout/success)</h3>
+        <p className="text-xs text-gray-500">Ce message d'introduction s'affiche sur la page de succès après qu'un client a validé sa commande.</p>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Message de confirmation</label>
           <textarea
@@ -275,6 +296,169 @@ export default function ThankYouPageForm({ initialSettings }: { initialSettings:
             onChange={(e) => setOrderSuccessMessage(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500"
           />
+        </div>
+      </div>
+
+      {/* Section 6: Bloc Virement bancaire (E-Mail & Checkout) */}
+      <div className="bg-amber-50/70 p-6 rounded-lg border border-amber-200 space-y-5">
+        <div className="border-b border-amber-200/80 pb-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-md font-bold text-amber-950 flex items-center gap-2">
+              <span>💳</span> 6. Bloc Virement bancaire (Angaben zur Banküberweisung)
+            </h3>
+            <span className="text-xs bg-amber-200 text-amber-900 font-semibold px-2.5 py-0.5 rounded-full">
+              E-Mail & Page de confirmation
+            </span>
+          </div>
+          <p className="text-xs text-amber-800 mt-1">
+            Ce bloc est inclus dans l&apos;e-mail de confirmation de commande envoyé au client et sur la page de confirmation de commande lorsqu&apos;il choisit le paiement par virement bancaire.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-800 mb-1">Titre de l&apos;encadré</label>
+            <input
+              type="text"
+              value={bankTransferEmailTitle}
+              onChange={(e) => setBankTransferEmailTitle(e.target.value)}
+              placeholder="Angaben zur Banküberweisung (Vorkasse)"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white focus:ring-amber-500"
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-800 mb-1">Texte d&apos;instructions (Intro)</label>
+            <p className="text-xs text-gray-500 mb-1.5">Variables disponibles : {'{orderId}'} (numéro de commande), {'{total}'} (montant total)</p>
+            <textarea
+              rows={3}
+              value={bankTransferEmailIntro}
+              onChange={(e) => setBankTransferEmailIntro(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white focus:ring-amber-500"
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-800 mb-1">Motif du virement (Verwendungszweck)</label>
+            <p className="text-xs text-gray-500 mb-1.5">La variable {'{orderId}'} sera automatiquement remplacée par le numéro de commande du client.</p>
+            <input
+              type="text"
+              value={bankTransferReferencePrefix}
+              onChange={(e) => setBankTransferReferencePrefix(e.target.value)}
+              placeholder="Bestellnummer #{orderId}"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white focus:ring-amber-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-800 mb-1">Titulaire du compte (Kontoinhaber)</label>
+            <input
+              type="text"
+              value={bankTransferAccountHolder}
+              onChange={(e) => setBankTransferAccountHolder(e.target.value)}
+              placeholder="z. B. Frank Hausgeräte e. K."
+              className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white focus:ring-amber-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-800 mb-1">Nom de la banque (Bankname)</label>
+            <input
+              type="text"
+              value={bankTransferBankName}
+              onChange={(e) => setBankTransferBankName(e.target.value)}
+              placeholder="z. B. Sparkasse"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white focus:ring-amber-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-800 mb-1">IBAN</label>
+            <input
+              type="text"
+              value={bankTransferIban}
+              onChange={(e) => setBankTransferIban(e.target.value)}
+              placeholder="DE..."
+              className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white font-mono focus:ring-amber-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-800 mb-1">BIC / SWIFT</label>
+            <input
+              type="text"
+              value={bankTransferBic}
+              onChange={(e) => setBankTransferBic(e.target.value)}
+              placeholder="GENODEF1..."
+              className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white font-mono focus:ring-amber-500"
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-800 mb-1">Texte de conclusion (Outro)</label>
+            <textarea
+              rows={2}
+              value={bankTransferEmailOutro}
+              onChange={(e) => setBankTransferEmailOutro(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white focus:ring-amber-500"
+            />
+          </div>
+        </div>
+
+        {/* Live Visual Preview of the Bank Transfer Box */}
+        <div className="mt-4 pt-4 border-t border-amber-200">
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm font-bold text-amber-950">Aperçu direct du bloc virement (E-Mail & Confirmation)</label>
+            <span className="text-xs bg-orange-100 text-orange-800 font-semibold px-2 py-0.5 rounded">Rendu client</span>
+          </div>
+
+          <div className="rounded-lg p-5 border border-[#fed7aa] bg-[#fff7ed] text-[#1e293b] shadow-xs">
+            <h4 className="text-base font-bold text-[#c2410c] mb-3 flex items-center gap-2">
+              <span>💳</span> {bankTransferEmailTitle || 'Angaben zur Banküberweisung (Vorkasse)'}
+            </h4>
+            <p className="text-xs text-[#431407] mb-4 leading-relaxed whitespace-pre-line">
+              {(bankTransferEmailIntro || 'Bitte überweisen Sie den Gesamtbetrag...')
+                .replace(/\{orderId\}/g, '#72AB53')
+                .replace(/\{total\}/g, '402,69 €')}
+            </p>
+            <div className="bg-white/95 rounded-md p-3.5 border border-[#fed7aa]/50 text-xs text-[#1e293b] space-y-2 mb-3">
+              {bankTransferAccountHolder && (
+                <div className="flex flex-col sm:flex-row sm:justify-between py-0.5 border-b border-orange-50">
+                  <span className="text-[#7c2d12] font-medium">Kontoinhaber:</span>
+                  <span className="font-bold text-slate-900">{bankTransferAccountHolder}</span>
+                </div>
+              )}
+              {bankTransferIban && (
+                <div className="flex flex-col sm:flex-row sm:justify-between py-0.5 border-b border-orange-50 font-mono">
+                  <span className="text-[#7c2d12] font-medium font-sans">IBAN:</span>
+                  <span className="font-bold text-slate-900 tracking-wider">{bankTransferIban}</span>
+                </div>
+              )}
+              {bankTransferBic && (
+                <div className="flex flex-col sm:flex-row sm:justify-between py-0.5 border-b border-orange-50 font-mono">
+                  <span className="text-[#7c2d12] font-medium font-sans">BIC / SWIFT:</span>
+                  <span className="font-bold text-slate-900 tracking-wider">{bankTransferBic}</span>
+                </div>
+              )}
+              {bankTransferBankName && (
+                <div className="flex flex-col sm:flex-row sm:justify-between py-0.5 border-b border-orange-50">
+                  <span className="text-[#7c2d12] font-medium">Bank:</span>
+                  <span className="font-bold text-slate-900">{bankTransferBankName}</span>
+                </div>
+              )}
+              <div className="flex flex-col sm:flex-row sm:justify-between py-1">
+                <span className="text-[#7c2d12] font-medium">Verwendungszweck:</span>
+                <span className="font-bold text-[#c2410c]">
+                  {(bankTransferReferencePrefix || 'Bestellnummer #{orderId}').replace(/\{orderId\}/g, '#72AB53')}
+                </span>
+              </div>
+            </div>
+            {bankTransferEmailOutro && (
+              <p className="text-xs text-[#9a3412] leading-relaxed italic">
+                {bankTransferEmailOutro.replace(/\{orderId\}/g, '#72AB53').replace(/\{total\}/g, '402,69 €')}
+              </p>
+            )}
+          </div>
         </div>
       </div>
 

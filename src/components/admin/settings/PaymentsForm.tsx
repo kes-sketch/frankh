@@ -121,8 +121,8 @@ export default function PaymentsForm({ initialSettings }: { initialSettings: Rec
         </div>
 
         <div className="md:col-span-2 pt-4 border-t border-gray-200">
-          <h5 className="text-sm font-bold text-gray-900 mb-1">{tSettings('bank_transfer_email_section') || 'Anpassung des E-Mail-Blocks (Bestellbestätigung)'}</h5>
-          <p className="text-xs text-gray-500 mb-4">{tSettings('bank_transfer_email_desc') || 'Passen Sie alle Texte des Überweisungsblocks an, der dem Kunden in der Bestätigungs-E-Mail gesendet wird.'}</p>
+          <h5 className="text-sm font-bold text-gray-900 mb-1">{tSettings('bank_transfer_email_section') || 'Anpassung des Überweisungsblocks (E-Mail & Bestellbestätigung)'}</h5>
+          <p className="text-xs text-gray-500 mb-4">{tSettings('bank_transfer_email_desc') || 'Passen Sie alle Texte des Überweisungsblocks an, der dem Kunden in der Bestätigungs-E-Mail und auf der Checkout-Erfolgsseite (/checkout/success) angezeigt wird.'}</p>
         </div>
 
         <div className="md:col-span-2">
