@@ -204,18 +204,16 @@ export default function AdminChatClient({ initialSessions }: { initialSessions: 
             <button
               type="button"
               onClick={() => setStatusFilter('ALL')}
-              className={`flex-1 py-1 rounded-md font-medium transition ${
-                statusFilter === 'ALL' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-600 hover:text-gray-900'
-              }`}
+              className={`flex-1 py-1 rounded-md font-medium transition ${statusFilter === 'ALL' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-600 hover:text-gray-900'
+                }`}
             >
               Alle ({counts.all})
             </button>
             <button
               type="button"
               onClick={() => setStatusFilter('OPEN')}
-              className={`flex-1 py-1 rounded-md font-medium transition flex items-center justify-center gap-1 ${
-                statusFilter === 'OPEN' ? 'bg-white text-green-700 shadow-xs' : 'text-gray-600 hover:text-gray-900'
-              }`}
+              className={`flex-1 py-1 rounded-md font-medium transition flex items-center justify-center gap-1 ${statusFilter === 'OPEN' ? 'bg-white text-green-700 shadow-xs' : 'text-gray-600 hover:text-gray-900'
+                }`}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
               Offen ({counts.open})
@@ -223,9 +221,8 @@ export default function AdminChatClient({ initialSessions }: { initialSessions: 
             <button
               type="button"
               onClick={() => setStatusFilter('CLOSED')}
-              className={`flex-1 py-1 rounded-md font-medium transition ${
-                statusFilter === 'CLOSED' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-600 hover:text-gray-900'
-              }`}
+              className={`flex-1 py-1 rounded-md font-medium transition ${statusFilter === 'CLOSED' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-600 hover:text-gray-900'
+                }`}
             >
               Geschlossen ({counts.closed})
             </button>
@@ -245,16 +242,14 @@ export default function AdminChatClient({ initialSessions }: { initialSessions: 
                 key={s.id}
                 type="button"
                 onClick={() => setActiveSessionId(s.id)}
-                className={`w-full text-left p-3.5 transition flex items-start gap-3 relative ${
-                  isActive
+                className={`w-full text-left p-3.5 transition flex items-start gap-3 relative ${isActive
                     ? 'bg-orange-50/80 border-l-4 border-l-orange-600'
                     : 'hover:bg-gray-100/70 border-l-4 border-l-transparent bg-white'
-                }`}
+                  }`}
               >
                 {/* Guest Avatar */}
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0 ${
-                  isActive ? 'bg-orange-600 text-white' : 'bg-gray-200 text-gray-700'
-                }`}>
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0 ${isActive ? 'bg-orange-600 text-white' : 'bg-gray-200 text-gray-700'
+                  }`}>
                   {displayName.charAt(0).toUpperCase()}
                 </div>
 
@@ -279,11 +274,10 @@ export default function AdminChatClient({ initialSessions }: { initialSessions: 
                     <p className="text-xs text-gray-500 truncate flex-1">
                       {lastMessage || t('no_messages') || 'Keine Nachrichten'}
                     </p>
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${
-                      s.status === 'OPEN'
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${s.status === 'OPEN'
                         ? 'bg-green-100 text-green-700'
                         : 'bg-gray-200 text-gray-600'
-                    }`}>
+                      }`}>
                       {s.status}
                     </span>
                   </div>
@@ -318,11 +312,10 @@ export default function AdminChatClient({ initialSessions }: { initialSessions: 
                     <h3 className="font-bold text-gray-900 text-base truncate">
                       {activeSession.guestName || `${t('guest') || 'Gast'} #${activeSession.guestId?.substring(0, 6)}`}
                     </h3>
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                      activeSession.status === 'OPEN'
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${activeSession.status === 'OPEN'
                         ? 'bg-green-100 text-green-700'
                         : 'bg-gray-200 text-gray-600'
-                    }`}>
+                      }`}>
                       {activeSession.status}
                     </span>
                   </div>
@@ -388,11 +381,10 @@ export default function AdminChatClient({ initialSessions }: { initialSessions: 
                     </div>
 
                     <div
-                      className={`max-w-[75%] sm:max-w-[65%] rounded-2xl px-4 py-2.5 text-sm shadow-xs leading-relaxed break-words whitespace-pre-wrap ${
-                        isAdmin
+                      className={`max-w-[75%] sm:max-w-[65%] rounded-2xl px-4 py-2.5 text-sm shadow-xs leading-relaxed break-words whitespace-pre-wrap ${isAdmin
                           ? 'bg-orange-600 text-white rounded-br-none'
                           : 'bg-white border border-gray-200 text-gray-900 rounded-bl-none'
-                      }`}
+                        }`}
                     >
                       {msg.content}
                     </div>
@@ -416,12 +408,9 @@ export default function AdminChatClient({ initialSessions }: { initialSessions: 
                 <button
                   type="submit"
                   disabled={!newMessage.trim() || isSending}
-                  className="bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white px-5 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-1.5 shadow-xs"
+                  className="bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white px-6 py-2 rounded-lg text-sm font-semibold transition shadow-xs"
                 >
-                  <span>{t('send') || 'Senden'}</span>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                  </svg>
+                  {t('send') || 'Senden'}
                 </button>
               </form>
             </div>
