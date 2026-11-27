@@ -327,36 +327,159 @@ export const getCachedProductCounts = unstable_cache(
   { tags: ['products'], revalidate: 3600 }
 );
 
-// High-performance cached homepage products feed (100 products max with light projection)
+// Slugs for homepage section feeds
+const HOMEPAGE_GROSS_WASCHEN_SLUGS = [
+  'waschmaschinen', 'frontlader-waschmaschinen', 'toplader-waschmaschinen', 'waschtrockner', 'freistehende-waschtrockner', 'trockner', 'waermepumpentrockner', 'kondenstrockner', 'ablufttrockner'
+];
+const HOMEPAGE_GROSS_GESCHIRR_SLUGS = [
+  'geschirrspueler', 'einbau-geschirrspueler', 'vollintegrierbare-geschirrspueler', 'teilintegrierbare-geschirrspueler', 'unterbaugeschirrspueler', 'freistehende-geschirrspueler', 'standgeschirrspueler'
+];
+const HOMEPAGE_GROSS_KOCHEN_SLUGS = [
+  'herde', 'kochfelder', 'induktions-kochfelder', 'einbauherdsets', 'einbau-induktionsherd', 'elektroherde', 'glaskeramik-herd', 'glaskeramik-kochfelder', 'induktionsherde', 'gas-kochfelder', 'gasherde', 'dunstabzugshauben'
+];
+const HOMEPAGE_GROSS_KUEHLEN_SLUGS = [
+  'kuehlen-gefrieren', 'kuehlschraenke', 'kuehl-gefrierkombinationen', 'freistehende-kuehl-gefrierkombination', 'french-door-kuehlschraenke', 'side-by-side-kuehlgefrierkombinationen', 'kuehlschraenke-mit-eiswuerfelspender', 'kuehlschrank-mit-gefrierfach', 'gefrierschraenke-freistehend'
+];
+const HOMEPAGE_GROSS_KLIMA_SLUGS = [
+  'heizen-klima', 'luftentfeuchter', 'mobile-klimaanlagen-klimageraete', 'split-klimaanlagen'
+];
+
+const HOMEPAGE_KLEIN_KAFFEE_SLUGS = [
+  'kaffeemaschinen', 'kaffeevollautomaten', 'kaffeevollautomat-mit-milchschlauch', 'kaffeevollautomat-mit-integriertem-milchbehaelter', 'kaffeevollautomat-ohne-milchloesung', 'kapselmaschinen', 'padmaschinen', 'espressokocher', 'glaskaffeemaschine', 'elektrische-kaffeemuehle'
+];
+const HOMEPAGE_KLEIN_SAUGEN_SLUGS = [
+  'staubsauger-reiniger', 'roboter-staubsauger', 'putzroboter', 'staubsauger-kabellos'
+];
+const HOMEPAGE_KLEIN_KUECHE_SLUGS = [
+  'kuechenmaschinen'
+];
+const HOMEPAGE_KLEIN_MIKRO_SLUGS = [
+  'mikrowellen', 'mikrowellen-mit-grill', 'einbau-mikrowellen', 'mikrowellen-freistehend', 'mikrowellen-mit-dampfgarfunktion', 'mikrowellen-mit-heissluft'
+];
+
+const HOMEPAGE_GAMING_PS_SLUGS = [
+  'playstation', 'playstation-5-konsolen', 'playstation-4-konsolen', 'ps5-zubehoer', 'ps4-zubehoer', 'playstation-5-spiele'
+];
+const HOMEPAGE_GAMING_NINTENDO_SLUGS = [
+  'nintendo', 'nintendo-switch-konsolen', 'nintendo-switch-spiele'
+];
+const HOMEPAGE_GAMING_XBOX_SLUGS = [
+  'microsoft-xbox', 'xbox-zubehoer'
+];
+const HOMEPAGE_GAMING_ACCESSORIES_SLUGS = [
+  'pc-gaming-zubehoer', 'vr-brillen', 'kopfhoerer'
+];
+
+// Helper to format raw product for homepage cards
+function formatCardProduct(p: any) {
+  return {
+    id: p.id,
+    title: p.title,
+    slug: p.slug,
+    price: p.price,
+    compareAtPrice: p.compareAtPrice,
+    images: p.images || [],
+    discountLabel: p.discountLabel || (p.compareAtPrice && p.compareAtPrice > p.price ? `-${Math.round(((p.compareAtPrice - p.price) / p.compareAtPrice) * 100)}%` : null),
+    categorySlug: p.categories[0]?.slug || '',
+    categoryName: p.categories[0]?.name || '',
+    categories: p.categories.map((c: any) => ({ name: c.name, slug: c.slug || '' })),
+    allCategories: p.categories.map((c: any) => `${c.name} ${c.slug}`).join(' ')
+  };
+}
+
+// High-performance cached homepage products feed: balanced across all 3 key departments
 export const getCachedHomepageProducts = unstable_cache(
   async () => {
-    const allDbProds = await prisma.product.findMany({
-      where: { isDeleted: false },
-      select: PRODUCT_CARD_SELECT,
-      orderBy: { createdAt: 'desc' },
-      take: 120,
-    });
+    const [
+      // Großgeräte cluster (10 per category)
+      grossWasch, grossSpuel, grossKoch, grossKuehl, grossKlima,
+      // Kleingeräte cluster (12 per category)
+      kleinKaffee, kleinSaugen, kleinKueche, kleinMikro,
+      // Gaming cluster (10-12 per category)
+      gamingPs, gamingNintendo, gamingXbox, gamingAccessories
+    ] = await Promise.all([
+      prisma.product.findMany({
+        where: { isDeleted: false, categories: { some: { slug: { in: HOMEPAGE_GROSS_WASCHEN_SLUGS } } } },
+        select: PRODUCT_CARD_SELECT, orderBy: { createdAt: 'desc' }, take: 10
+      }),
+      prisma.product.findMany({
+        where: { isDeleted: false, categories: { some: { slug: { in: HOMEPAGE_GROSS_GESCHIRR_SLUGS } } } },
+        select: PRODUCT_CARD_SELECT, orderBy: { createdAt: 'desc' }, take: 10
+      }),
+      prisma.product.findMany({
+        where: { isDeleted: false, categories: { some: { slug: { in: HOMEPAGE_GROSS_KOCHEN_SLUGS } } } },
+        select: PRODUCT_CARD_SELECT, orderBy: { createdAt: 'desc' }, take: 10
+      }),
+      prisma.product.findMany({
+        where: { isDeleted: false, categories: { some: { slug: { in: HOMEPAGE_GROSS_KUEHLEN_SLUGS } } } },
+        select: PRODUCT_CARD_SELECT, orderBy: { createdAt: 'desc' }, take: 10
+      }),
+      prisma.product.findMany({
+        where: { isDeleted: false, categories: { some: { slug: { in: HOMEPAGE_GROSS_KLIMA_SLUGS } } } },
+        select: PRODUCT_CARD_SELECT, orderBy: { createdAt: 'desc' }, take: 10
+      }),
+      prisma.product.findMany({
+        where: { isDeleted: false, categories: { some: { slug: { in: HOMEPAGE_KLEIN_KAFFEE_SLUGS } } } },
+        select: PRODUCT_CARD_SELECT, orderBy: { createdAt: 'desc' }, take: 12
+      }),
+      prisma.product.findMany({
+        where: { isDeleted: false, categories: { some: { slug: { in: HOMEPAGE_KLEIN_SAUGEN_SLUGS } } } },
+        select: PRODUCT_CARD_SELECT, orderBy: { createdAt: 'desc' }, take: 12
+      }),
+      prisma.product.findMany({
+        where: { isDeleted: false, categories: { some: { slug: { in: HOMEPAGE_KLEIN_KUECHE_SLUGS } } } },
+        select: PRODUCT_CARD_SELECT, orderBy: { createdAt: 'desc' }, take: 12
+      }),
+      prisma.product.findMany({
+        where: { isDeleted: false, categories: { some: { slug: { in: HOMEPAGE_KLEIN_MIKRO_SLUGS } } } },
+        select: PRODUCT_CARD_SELECT, orderBy: { createdAt: 'desc' }, take: 12
+      }),
+      prisma.product.findMany({
+        where: { isDeleted: false, categories: { some: { slug: { in: HOMEPAGE_GAMING_PS_SLUGS } } } },
+        select: PRODUCT_CARD_SELECT, orderBy: { createdAt: 'desc' }, take: 12
+      }),
+      prisma.product.findMany({
+        where: { isDeleted: false, categories: { some: { slug: { in: HOMEPAGE_GAMING_NINTENDO_SLUGS } } } },
+        select: PRODUCT_CARD_SELECT, orderBy: { createdAt: 'desc' }, take: 12
+      }),
+      prisma.product.findMany({
+        where: { isDeleted: false, categories: { some: { slug: { in: HOMEPAGE_GAMING_XBOX_SLUGS } } } },
+        select: PRODUCT_CARD_SELECT, orderBy: { createdAt: 'desc' }, take: 10
+      }),
+      prisma.product.findMany({
+        where: { isDeleted: false, categories: { some: { slug: { in: HOMEPAGE_GAMING_ACCESSORIES_SLUGS } } } },
+        select: PRODUCT_CARD_SELECT, orderBy: { createdAt: 'desc' }, take: 12
+      }),
+    ]);
 
-    const formattedProducts = allDbProds.map(p => ({
-      id: p.id,
-      title: p.title,
-      slug: p.slug,
-      price: p.price,
-      compareAtPrice: p.compareAtPrice,
-      images: p.images || [],
-      discountLabel: p.discountLabel || (p.compareAtPrice && p.compareAtPrice > p.price ? `-${Math.round(((p.compareAtPrice - p.price) / p.compareAtPrice) * 100)}%` : null),
-      categorySlug: p.categories[0]?.slug || '',
-      categoryName: p.categories[0]?.name || '',
-      categories: p.categories.map(c => ({ name: c.name, slug: c.slug || '' })),
-      allCategories: p.categories.map(c => `${c.name} ${c.slug}`).join(' ')
-    }));
+    // Format section products
+    const grossProducts = [
+      ...grossWasch, ...grossSpuel, ...grossKoch, ...grossKuehl, ...grossKlima
+    ].map(formatCardProduct);
+
+    const kleinProducts = [
+      ...kleinKaffee, ...kleinSaugen, ...kleinKueche, ...kleinMikro
+    ].map(formatCardProduct);
+
+    const gamingProducts = [
+      ...gamingPs, ...gamingNintendo, ...gamingXbox, ...gamingAccessories
+    ].map(formatCardProduct);
+
+    // Combined unique products list for generic components (Hero showcase, BestDeals, etc.)
+    const prodsMap = new Map<string, ReturnType<typeof formatCardProduct>>();
+    for (const p of [...grossProducts, ...kleinProducts, ...gamingProducts]) {
+      if (!prodsMap.has(p.id)) {
+        prodsMap.set(p.id, p);
+      }
+    }
+    const formattedProducts = Array.from(prodsMap.values());
 
     const promoProducts = formattedProducts.filter(p =>
       (p.compareAtPrice && p.compareAtPrice > p.price) ||
       (p.discountLabel && p.discountLabel.trim() !== '')
     );
 
-    return { formattedProducts, promoProducts };
+    return { formattedProducts, promoProducts, grossProducts, kleinProducts, gamingProducts };
   },
   ['homepage-products-feed'],
   { tags: ['products'], revalidate: 3600 }

@@ -20,7 +20,7 @@ import { getCachedSettings, getCachedHomepageProducts } from '@/lib/cache';
 export const revalidate = 300;
 
 export default async function Home() {
-  const [settings, { formattedProducts, promoProducts }] = await Promise.all([
+  const [settings, { formattedProducts, promoProducts, grossProducts, kleinProducts, gamingProducts }] = await Promise.all([
     getCachedSettings(),
     getCachedHomepageProducts()
   ]);
@@ -120,7 +120,7 @@ export default async function Home() {
         return (
           <GrossgeraeteSection
             key={section.id}
-            initialProducts={formattedProducts}
+            initialProducts={grossProducts}
             config={section.settings}
           />
         );
@@ -130,7 +130,7 @@ export default async function Home() {
         return (
           <KleingeraeteSection
             key={section.id}
-            initialProducts={formattedProducts}
+            initialProducts={kleinProducts}
             config={section.settings}
           />
         );
@@ -138,7 +138,7 @@ export default async function Home() {
         return (
           <GamingSection
             key={section.id}
-            initialProducts={formattedProducts}
+            initialProducts={gamingProducts}
             config={section.settings}
           />
         );

@@ -445,6 +445,14 @@ export default function CategoryProductSection({
                 </div>
               </div>
             ))}
+            {filteredProducts.length === 0 && (
+              <div className="w-full py-12 text-center text-stone-500">
+                <div className="flex flex-col items-center justify-center gap-2">
+                  <span className="text-3xl">🔍</span>
+                  <span className="text-sm font-medium">Aktuell keine Artikel in dieser Kategorie vorhanden.</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

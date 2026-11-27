@@ -4,46 +4,6 @@ import React, { useMemo } from 'react';
 import CategoryProductSection, { CategoryTab } from './CategoryProductSection';
 import { ProductItem } from './FeaturedProductTabs';
 
-// Fallback products for Kleingeräte
-const fallbackKlein: ProductItem[] = [
-  {
-    id: 'fb-kaffee-1',
-    title: 'De\'Longhi Magnifica S Kaffeevollautomat mit Milchschaumdüse',
-    slug: 'delonghi-magnifica-s-kaffeevollautomat',
-    price: 329.00,
-    compareAtPrice: 449.00,
-    images: ['https://images.unsplash.com/photo-1517668808822-9ebb02f2a0e6?auto=format&fit=crop&q=80&w=800'],
-    discountLabel: 'Bestseller',
-    categorySlug: 'kaffeevollautomaten',
-    categoryName: 'Kaffeevollautomaten',
-    allCategories: 'kaffeevollautomaten delonghi kaffee'
-  },
-  {
-    id: 'fb-saugen-1',
-    title: 'Dreame L10s Ultra Saug- und Wischroboter mit Absaugstation',
-    slug: 'dreame-l10s-ultra-saug-wischroboter',
-    price: 699.00,
-    compareAtPrice: 899.00,
-    images: ['https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=800'],
-    discountLabel: 'Smart Home',
-    categorySlug: 'saugroboter',
-    categoryName: 'Saug- & Wischroboter',
-    allCategories: 'saugroboter staubsauger dreame'
-  },
-  {
-    id: 'fb-kueche-1',
-    title: 'Kenwood Titanium Chef Patissier XL Küchenmaschine 1400W',
-    slug: 'kenwood-titanium-chef-patissier-xl',
-    price: 749.00,
-    compareAtPrice: 999.00,
-    images: ['https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&q=80&w=800'],
-    discountLabel: '-25% Aktion',
-    categorySlug: 'kuechenmaschinen',
-    categoryName: 'Küchenmaschinen',
-    allCategories: 'kuechenmaschinen kenwood mixer'
-  }
-];
-
 interface KleingeraeteSectionProps {
   initialProducts?: ProductItem[];
   config?: {
@@ -71,29 +31,29 @@ export default function KleingeraeteSection({ initialProducts = [], config }: Kl
       return bHas - aHas;
     });
 
-    return prods.length > 0 ? prods : fallbackKlein;
+    return prods;
   }, [initialProducts]);
 
   const kleinTabs: CategoryTab[] = useMemo(() => [
     {
       id: 'alle-klein',
-      label: '☕ Alle Kleingeräte',
+      label: '⚡ Alle Kleingeräte',
       filter: () => true
     },
     {
       id: 'kaffee',
       label: '☕ Kaffeevollautomaten',
-      filter: (p: ProductItem) => /(kaffee|espresso|vollautomat|delonghi|jura|sage|acopino|tescoma)/i.test(`${p.title} ${p.allCategories}`)
+      filter: (p: ProductItem) => /(kaffee|espresso|vollautomat|siebträger|kapsel|padmaschine|mühle|muehle|delonghi|jura|sage|melitta|philips|siemens|krups)/i.test(`${p.title} ${p.allCategories}`)
     },
     {
       id: 'saugen',
       label: '🧹 Saug- & Wischroboter',
-      filter: (p: ProductItem) => /(roboter|staubsauger|putzroboter|sauger|dyson|dreame)/i.test(`${p.title} ${p.allCategories}`)
+      filter: (p: ProductItem) => /(roboter|staubsauger|sauger|putzroboter|wisch|dyson|dreame|irobot|schbot)/i.test(`${p.title} ${p.allCategories}`)
     },
     {
       id: 'kueche',
       label: '🥣 Küchenmaschinen & Mixer',
-      filter: (p: ProductItem) => /(kuechenmaschine|küchen|mixer|waage|patissier)/i.test(`${p.title} ${p.allCategories}`)
+      filter: (p: ProductItem) => /(kuechenmaschine|küchenmaschine|küche|kueche|mixer|rühr|knet|blender|kitchenaid|kenwood|bosch mum)/i.test(`${p.title} ${p.allCategories}`)
     },
     {
       id: 'mikrowelle',
@@ -113,7 +73,7 @@ export default function KleingeraeteSection({ initialProducts = [], config }: Kl
       viewAllText={config?.viewAllText || "Alle Kleingeräte ansehen"}
       tabs={kleinTabs}
       products={kleinProds}
-      fallbackProducts={fallbackKlein}
+      fallbackProducts={[]}
       bgStyle="bg-white"
     />
   );

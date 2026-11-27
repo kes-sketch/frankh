@@ -4,58 +4,6 @@ import React, { useMemo } from 'react';
 import CategoryProductSection, { CategoryTab } from './CategoryProductSection';
 import { ProductItem } from './FeaturedProductTabs';
 
-// Fallback products for Großgeräte
-const fallbackGross: ProductItem[] = [
-  {
-    id: 'fb-wasch-1',
-    title: 'Bosch Serie 6 Waschmaschine 9kg 1400 U/min EcoSilence',
-    slug: 'bosch-serie-6-waschmaschine-9kg',
-    price: 649.00,
-    compareAtPrice: 849.00,
-    images: ['https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?auto=format&fit=crop&q=80&w=800'],
-    discountLabel: 'A+++ Effizienz',
-    categorySlug: 'waschen-trocknen',
-    categoryName: 'Waschmaschinen',
-    allCategories: 'waschen-trocknen waschmaschinen bosch'
-  },
-  {
-    id: 'fb-geschirr-1',
-    title: 'Miele G 7110 SCi Teilintegrierter Geschirrspüler 60cm',
-    slug: 'miele-g-7110-geschirrspueler',
-    price: 1049.00,
-    compareAtPrice: 1299.00,
-    images: ['https://images.unsplash.com/photo-1585837575652-267c041d77d4?auto=format&fit=crop&q=80&w=800'],
-    discountLabel: 'Premium Miele',
-    categorySlug: 'geschirrspueler',
-    categoryName: 'Geschirrspüler',
-    allCategories: 'geschirrspueler spuelmaschine miele'
-  },
-  {
-    id: 'fb-kuehl-1',
-    title: 'Liebherr NoFrost Kühl-Gefrierkombination Premium BioFresh',
-    slug: 'liebherr-nofrost-kuehl-gefrierkombination-premium',
-    price: 1199.00,
-    compareAtPrice: 1599.00,
-    images: ['https://images.unsplash.com/photo-1584992236310-6edddc08acff?auto=format&fit=crop&q=80&w=800'],
-    discountLabel: '-25% Rabatt',
-    categorySlug: 'kuehlen-gefrieren',
-    categoryName: 'Kühlen & Gefrieren',
-    allCategories: 'kuehlen-gefrieren kuehlschrank liebherr'
-  },
-  {
-    id: 'fb-back-1',
-    title: 'Siemens iQ500 Einbaubackofen mit Pyrolyse & 3D Heißluft',
-    slug: 'siemens-iq500-einbaubackofen-pyrolyse',
-    price: 699.00,
-    compareAtPrice: 949.00,
-    images: ['https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&q=80&w=800'],
-    discountLabel: '-26% Sparpreis',
-    categorySlug: 'kochen-backen',
-    categoryName: 'Herde & Backöfen',
-    allCategories: 'kochen-backen backofen siemens'
-  }
-];
-
 interface GrossgeraeteSectionProps {
   initialProducts?: ProductItem[];
   config?: {
@@ -68,9 +16,9 @@ interface GrossgeraeteSectionProps {
 }
 
 export default function GrossgeraeteSection({ initialProducts = [], config }: GrossgeraeteSectionProps) {
-  const grossRegex = /(wasch|trockner|geschirr|spül|spuel|herd|kochfeld|backofen|induktion|kuehl|kühlschrank|gefrier|klima|luftentfeuchter|grosse-haushalts)/i;
-  const gamingRegex = /(ps5|playstation|switch|nintendo|xbox|gaming|headset|inzone|konsole|controller)/i;
-  const kleinRegex = /(kaffee|espresso|vollautomat|delonghi|jura|sage|acopino|tescoma|roboter|staubsauger|putzroboter|sauger|kuechenmaschine|küchenmaschine|mixer|mikrowelle|kleine-haushalts)/i;
+  const grossRegex = /(wasch|trockn|geschirr|spül|spuel|herd|kochfeld|backofen|induktion|dunstabzug|kuehl|kühlschrank|gefrier|klima|luftentfeuchter|heizen|grosse-haushalts)/i;
+  const gamingRegex = /(ps5|playstation|switch|nintendo|xbox|gaming|inzone|konsole|controller)/i;
+  const kleinRegex = /(kaffee|espresso|vollautomat|delonghi|jura|sage|acopino|tescoma|roboter|staubsauger|putzroboter|kuechenmaschine|küchenmaschine|mixer|mikrowelle|kleine-haushalts)/i;
 
   const grossProds = useMemo(() => {
     const prods: ProductItem[] = [];
@@ -93,7 +41,7 @@ export default function GrossgeraeteSection({ initialProducts = [], config }: Gr
       return bHas - aHas;
     });
 
-    return prods.length > 0 ? prods : fallbackGross;
+    return prods;
   }, [initialProducts]);
 
   const grossTabs: CategoryTab[] = useMemo(() => [
@@ -105,7 +53,7 @@ export default function GrossgeraeteSection({ initialProducts = [], config }: Gr
     {
       id: 'waschen',
       label: '🧺 Waschen & Trocknen',
-      filter: (p: ProductItem) => /(wasch|trockner|frontlader|waermepumpen)/i.test(`${p.title} ${p.allCategories}`)
+      filter: (p: ProductItem) => /(wasch|trockn|frontlader|toplader|waermepumpen)/i.test(`${p.title} ${p.allCategories}`)
     },
     {
       id: 'geschirr',
@@ -115,17 +63,17 @@ export default function GrossgeraeteSection({ initialProducts = [], config }: Gr
     {
       id: 'kochen',
       label: '🍳 Kochen & Backen',
-      filter: (p: ProductItem) => /(herd|kochfeld|backofen|induktion)/i.test(`${p.title} ${p.allCategories}`)
+      filter: (p: ProductItem) => /(herd|kochfeld|backofen|induktion|dunstabzug)/i.test(`${p.title} ${p.allCategories}`)
     },
     {
       id: 'kuehlen',
       label: '❄️ Kühlen & Gefrieren',
-      filter: (p: ProductItem) => /(kuehl|kühlschrank|gefrier|side by side|liebherr)/i.test(`${p.title} ${p.allCategories}`)
+      filter: (p: ProductItem) => /(kuehl|kühlschrank|gefrier|side-by-side|french-door|liebherr)/i.test(`${p.title} ${p.allCategories}`)
     },
     {
       id: 'klima',
       label: '💨 Klima & Heizen',
-      filter: (p: ProductItem) => /(klima|luftentfeuchter|heizen)/i.test(`${p.title} ${p.allCategories}`)
+      filter: (p: ProductItem) => /(klima|luftentfeuchter|heizen|split-klima)/i.test(`${p.title} ${p.allCategories}`)
     }
   ], []);
 
@@ -140,7 +88,7 @@ export default function GrossgeraeteSection({ initialProducts = [], config }: Gr
       viewAllText={config?.viewAllText || "Alle Großgeräte ansehen"}
       tabs={grossTabs}
       products={grossProds}
-      fallbackProducts={fallbackGross}
+      fallbackProducts={[]}
       bgStyle="bg-stone-50/60"
     />
   );
