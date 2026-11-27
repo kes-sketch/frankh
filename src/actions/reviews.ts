@@ -1,7 +1,7 @@
 'use server';
 
 import prisma from '@/lib/prisma';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, updateTag } from 'next/cache';
 import { requireAuth, requireAdmin } from '@/lib/auth';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -65,6 +65,7 @@ export async function submitReview(productId: string, rating: number, comment: s
       }
     });
 
+    revalidatePath(`/admin/reviews`);
     revalidatePath(`/produkt/[slug]`, 'page');
     revalidatePath(`/product/[slug]`, 'page');
     revalidatePath(`/account/reviews`);
@@ -80,47 +81,84 @@ export async function submitReview(productId: string, rating: number, comment: s
 
 export async function toggleReviewApproval(reviewId: string, isApproved: boolean) {
   await requireAdmin();
-  if (!reviewId || !UUID_REGEX.test(reviewId)) return;
+  if (!reviewId || !UUID_REGEX.test(reviewId)) return { error: "ID invalide." };
 
-  await prisma.review.update({
+  const review = await prisma.review.update({
     where: { id: reviewId },
-    data: { isApproved: Boolean(isApproved) }
+    data: { isApproved: Boolean(isApproved) },
+    select: {
+      id: true,
+      isApproved: true,
+      product: { select: { slug: true } }
+    }
   });
 
+  updateTag('products');
+  if (review?.product?.slug) {
+    updateTag(`product-${review.product.slug.toLowerCase()}`);
+    revalidatePath(`/produkt/${review.product.slug}`, 'page');
+    revalidatePath(`/product/${review.product.slug}`, 'page');
+  }
   revalidatePath('/admin/reviews');
   revalidatePath(`/produkt/[slug]`, 'page');
   revalidatePath(`/product/[slug]`, 'page');
+
+  return { success: true, isApproved: review.isApproved };
 }
 
 export async function updateReview(reviewId: string, rating: number, comment: string, createdAtStr: string) {
   await requireAdmin();
-  if (!reviewId || !UUID_REGEX.test(reviewId)) return;
+  if (!reviewId || !UUID_REGEX.test(reviewId)) return { error: "ID invalide." };
 
   const intRating = Math.min(Math.max(1, Math.round(Number(rating) || 5)), 5);
 
-  await prisma.review.update({
+  const review = await prisma.review.update({
     where: { id: reviewId },
     data: { 
       rating: intRating, 
       comment: String(comment || '').trim().slice(0, 5000),
       createdAt: new Date(createdAtStr)
+    },
+    select: {
+      id: true,
+      product: { select: { slug: true } }
     }
   });
 
+  updateTag('products');
+  if (review?.product?.slug) {
+    updateTag(`product-${review.product.slug.toLowerCase()}`);
+    revalidatePath(`/produkt/${review.product.slug}`, 'page');
+    revalidatePath(`/product/${review.product.slug}`, 'page');
+  }
   revalidatePath('/admin/reviews');
   revalidatePath(`/produkt/[slug]`, 'page');
   revalidatePath(`/product/[slug]`, 'page');
+
+  return { success: true };
 }
 
 export async function deleteReview(reviewId: string) {
   await requireAdmin();
-  if (!reviewId || !UUID_REGEX.test(reviewId)) return;
+  if (!reviewId || !UUID_REGEX.test(reviewId)) return { error: "ID invalide." };
 
-  await prisma.review.delete({
-    where: { id: reviewId }
+  const review = await prisma.review.delete({
+    where: { id: reviewId },
+    select: {
+      id: true,
+      product: { select: { slug: true } }
+    }
   });
 
+  updateTag('products');
+  if (review?.product?.slug) {
+    updateTag(`product-${review.product.slug.toLowerCase()}`);
+    revalidatePath(`/produkt/${review.product.slug}`, 'page');
+    revalidatePath(`/product/${review.product.slug}`, 'page');
+  }
   revalidatePath('/admin/reviews');
   revalidatePath(`/produkt/[slug]`, 'page');
   revalidatePath(`/product/[slug]`, 'page');
+
+  return { success: true };
 }

@@ -1288,6 +1288,8 @@
     "col_actions": "Actions",
     "approved": "Approuvé",
     "pending": "En attente",
+    "approve": "Approuver et publier sous le produit",
+    "unapprove": "Retirer l'approbation (mettre en attente)",
     "save": "Enregistrer",
     "cancel": "Annuler",
     "edit": "Modifier",

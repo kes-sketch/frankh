@@ -1284,6 +1284,8 @@
     "col_actions": "Ações",
     "approved": "Aprobado",
     "pending": "Pendente",
+    "approve": "Aprovar e publicar no artigo",
+    "unapprove": "Desaprovar (marcar como pendente)",
     "save": "Guardar",
     "cancel": "Cancelar",
     "edit": "Editar",

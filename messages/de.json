@@ -1286,6 +1286,8 @@
     "col_actions": "Aktionen",
     "approved": "Genehmigt",
     "pending": "Ausstehend",
+    "approve": "Genehmigen und veröffentlichen",
+    "unapprove": "Ausblenden (In Wartestellung)",
     "save": "Speichern",
     "cancel": "Stornieren",
     "edit": "Bearbeiten",

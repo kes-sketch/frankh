@@ -1286,6 +1286,8 @@
     "col_actions": "Actions",
     "approved": "Approved",
     "pending": "Pending",
+    "approve": "Approve and publish under product",
+    "unapprove": "Unapprove (set to pending)",
     "save": "Save",
     "cancel": "Cancel",
     "edit": "Edit",
